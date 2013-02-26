@@ -50,6 +50,8 @@ import bpy
 #    0.6
 #    - Removed ability to populate the item panel with all selected objects,
 #    objects constraints, modifiers, object's data, bones and bone constraints.
+#    - Removed visibility and selectability options from the left and right of
+#    active bone name input field in favor of the default item panel's format.
 #    - Code cleanup
 #    0.5
 #    - Optimized code, followed many PEP8 guidelines.
@@ -88,17 +90,25 @@ import bpy
 #    naming operator.
 #    0.9
 #    - See if there is something I can do to make the menus for types a bit
-#    more easily readable, i.e. recreate the same menu that
-#    operator_menu_enum of object.add_modifier would create.
+#    more easily readable, i.e. recreate the same menu that operator_menu_enum
+#    of object.add_modifier would create.
 #    - If everything is working well, remove some of the props default values
 #    so that the value is stored for the next time it is called.
 #    - Unregister blenders default item panel when this addon is active
 #    1.0
+#    - Add ability to display vertex groups and shapekeys in item panel, vertex
+#    groups should have a quick select and deselect option, shapekeys ideally
+#    would have the slider available but just where it should be placed is
+#    unclear.
+#    - Create batch naming functionality for vertex groups & shapekeys, ideally
+#    this would be accessed from within a menu rather then as part of the
+#    'target row', may as whell include options for uv maps and vertex colors.
+#    - Actually fill out the docstrings.
 #    - Commit addon
 #
 # ##### END VERSION BLOCK #####
 
-# PEP8 Compliant
+  # PEP8 Compliant
 
 ###############
 ## FUNCTIONS ##
@@ -118,9 +128,11 @@ def rename(self, data_path, batch_name, find, replace, prefix, suffix,
         target = target[trim_start:]
     if trim_end > 0:
         target = target[:-trim_end]
-    target = re.sub(find, replace, target)
+    target = re.sub(find, replace, target)  # re will send an error if using
+                                            # toolshelf in the find field while
+                                            # typing out the expression.
     target = prefix + target + suffix
-    if data_path in {'con', 'mod'}:
+    if data_path in {'constraint', 'modifier'}:
         data_path.name = target
     else:
         data_path.name = target[:]
@@ -138,15 +150,16 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
         for object in context.selected_objects:
             if object_type in 'ALL':
                 data_path = object
-                rename(self, data_path, batch_name, find, replace, prefix,
-                       suffix, trim_start, trim_end)
             else:
                 if object_type in object.type:
                     data_path = object
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
                 else:
                     pass
+            try:
+                rename(self, data_path, batch_name, find, replace, prefix,
+                       suffix, trim_start, trim_end)
+            except:
+                pass
     else:
         pass
   # Object Constraints
@@ -155,15 +168,16 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
             for constraint in object.constraints[:]:
                 if constraint_type in 'ALL':
                     data_path = constraint
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
                 else:
-                    if constraint_type in contraint.type:
+                    if constraint_type in constraint.type:
                         data_path = constraint
-                        rename(self, data_path, batch_name, find, replace,
-                               prefix, suffix, trim_start, trim_end)
                     else:
                         pass
+                try:
+                    rename(self, data_path, batch_name, find, replace, prefix,
+                           suffix, trim_start, trim_end)
+                except:
+                    pass
     else:
         pass
   # Object Modifiers
@@ -172,50 +186,48 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
             for modifier in object.modifiers[:]:
                 if modifier_type in 'ALL':
                     data_path = modifier
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
                 else:
                     if modifier_type in modifier.type:
                         data_path = modifier
-                        rename(self, data_path, batch_name, find, replace,
-                               prefix, suffix, trim_start, trim_end)
                     else:
                         pass
+                try:
+                    rename(self, data_path, batch_name, find, replace, prefix,
+                           suffix, trim_start, trim_end)
+                except:
+                    pass
     else:
         pass
   # Objects Data
     if batch_objects_data:
         for object in context.selected_objects:
-            if object.data.users == 1:  # TODO: object.data.users > 1
-                if object_type in 'ALL':
-                    data_path = object.data
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
-                else:
-                    if object_type in object.type:
-                        data_path = object.data
-                        rename(self, data_path, batch_name, find, replace,
-                               prefix, suffix, trim_start, trim_end)
-                    else:
-                        pass
+            if object_type in 'ALL':
+                data_path = object.data
             else:
+                if object_type in object.type:
+                    data_path = object.data
+                else:
+                    pass
+            try:
+                rename(self, data_path, batch_name, find, replace, prefix,
+                       suffix, trim_start, trim_end)
+            except:
                 pass
     else:
         pass
   # Bones
     if batch_bones:
         if context.selected_editable_bones:
-            for bone in context.selected_editable_bones:
-                data_path = bone
+            selected_bones = selected_editable_bones
+        else:  # context.selected_pose_bones
+            selected_bones = selected_pose_bones  # lint:ok
+        for bone in context.selected_bones:
+            data_path = bone
+            try:
                 rename(self, data_path, batch_name, find, replace, prefix,
                        suffix, trim_start, trim_end)
-        elif context.selected_pose_bones:
-            for bone in context.selected_pose_bones:
-                data_path = bone
-                rename(self, data_path, batch_name, find, replace, prefix,
-                       suffix, trim_start, trim_end)
-        else:
-            pass
+            except:
+                pass
     else:
         pass
   # Bone Constraints
@@ -224,15 +236,16 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
             for constraint in bone.constraints[:]:
                 if constraint_type in 'ALL':
                     data_path = constraint
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
                 else:
                     if constraint_type in contraint.type:
                         data_path = constraint
-                        rename(self, data_path, batch_name, find, replace,
-                               prefix, suffix, trim_start, trim_end)
                     else:
                         pass
+                try:
+                    rename(self, data_path, batch_name, find, replace, prefix,
+                           suffix, trim_start, trim_end)
+                except:
+                    pass
     else:
         pass
 
@@ -393,6 +406,11 @@ class VIEW3D_OT_batch_naming(Operator):
                     ('ALL', 'All Modifiers', ""),
                     ], default='ALL')
 
+    @classmethod
+    def poll(cls, context):
+        """docstring"""
+        return context.space_data.type in 'VIEW_3D'
+
     def draw(self, context):
         """docstring"""
         layout = self.layout
@@ -440,11 +458,6 @@ class VIEW3D_OT_batch_naming(Operator):
         row.label(text="Trim End:")
         row.prop(props, 'trim_end', text="")
 
-    @classmethod
-    def poll(cls, context):
-        """docstring"""
-        return context.space_data.type in 'VIEW_3D'
-
     def execute(self, context):
         """docstring"""
         batch_rename(self, context, self.batch_name, self.find, self.replace,
@@ -454,13 +467,12 @@ class VIEW3D_OT_batch_naming(Operator):
                      self.batch_bones, self.batch_bone_constraints,
                      self.object_type, self.constraint_type,
                      self.modifier_type)
-
         return {'FINISHED'}
 
     def invoke(self, context, event):
         """docstring"""
         wm = context.window_manager
-        wm.invoke_props_dialog(self, width=200)
+        wm.invoke_props_dialog(self, width=225)
 
         return {'RUNNING_MODAL'}
 
@@ -468,13 +480,12 @@ class VIEW3D_OT_batch_naming(Operator):
 ## INTERFACE ##
 ###############
   # Imports
-from bpy.types import Panel
+from bpy.types import Panel, PropertyGroup
 
 
   # Item Panel Property Group
-class ItemPanel(bpy.types.PropertyGroup):
+class Item(PropertyGroup):
     """Property group for item panel."""
-  # TODO: item panel property values
     view_options = BoolProperty(name='Show/hide view options',
                                 description="Toggle view options for this pane"
                                 "l, the state that they are in is uneffected b"
@@ -492,7 +503,7 @@ class ItemPanel(bpy.types.PropertyGroup):
 
 
   # View 3D Item (PT)
-class VIEW3D_PT_item_panel(Panel):
+class VIEW3D_PT_item(Panel):
     """docstring"""
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -501,7 +512,7 @@ class VIEW3D_PT_item_panel(Panel):
     def draw_header(self, context):
         """docstring"""
         layout = self.layout
-        wm_props = context.window_manager.itempanel
+        wm_props = context.window_manager.item
 
         layout.prop(wm_props, 'view_options', text="")
 
@@ -509,7 +520,7 @@ class VIEW3D_PT_item_panel(Panel):
         """docstring"""
         layout = self.layout
         col = layout.column()
-        wm_props = context.window_manager.itempanel
+        wm_props = context.window_manager.item
   # View options row
         split = col.split(align=True)
         if wm_props.view_options:
@@ -528,31 +539,31 @@ class VIEW3D_PT_item_panel(Panel):
         row.template_ID(context.scene.objects, 'active')
         row.operator('view3d.batch_naming', text="", icon='AUTO')
         if wm_props.view_constraints:
-            for con in context.active_object.constraints:
+            for constraint in context.active_object.constraints:
                 row = col.row(align=True)
                 sub = row.row()
                 sub.scale_x = 1.6
                 sub.label(text="", icon='DOT')
-                if con.mute:
+                if constraint.mute:
                     ico = 'RESTRICT_VIEW_ON'
                 else:
                     ico = 'RESTRICT_VIEW_OFF'
-                row.prop(con, 'mute', text="", icon=ico)
-                row.prop(con, 'name', text="")
+                row.prop(constraint, 'mute', text="", icon=ico)
+                row.prop(constraint, 'name', text="")
         else:
             pass
         if wm_props.view_modifiers:
-            for mod in context.active_object.modifiers:
+            for modifier in context.active_object.modifiers:
                 row = col.row(align=True)
                 sub = row.row()
                 sub.scale_x = 1.6
                 sub.label(text="", icon='DOT')
-                if mod.show_viewport:
+                if modifier.show_viewport:
                     ico = 'RESTRICT_VIEW_OFF'
                 else:
                     ico = 'RESTRICT_VIEW_ON'
-                row.prop(mod, 'show_viewport', text="", icon=ico)
-                row.prop(mod, 'name', text="")
+                row.prop(modifier, 'show_viewport', text="", icon=ico)
+                row.prop(modifier, 'name', text="")
         else:
             pass
         if context.object.type in 'EMPTY':
@@ -573,7 +584,7 @@ class VIEW3D_PT_item_panel(Panel):
             row.prop(context.active_bone, 'name', text="")
             if context.object.mode in 'POSE':
                 if wm_props.view_bone_constraints:
-                    for con in context.active_pose_bone.constraints:
+                    for constraint in context.active_pose_bone.constraints:
                         row = col.row(align=True)
                         sub = row.row()
                         sub.scale_x = 1.6
@@ -582,8 +593,8 @@ class VIEW3D_PT_item_panel(Panel):
                             ico = 'RESTRICT_VIEW_ON'
                         else:
                             ico = 'RESTRICT_VIEW_OFF'
-                        row.prop(con, 'mute', text="", icon=ico)
-                        row.prop(con, 'name', text="")
+                        row.prop(constraint, 'mute', text="", icon=ico)
+                        row.prop(constraint, 'name', text="")
                 else:
                     pass
             else:
@@ -600,7 +611,8 @@ def register():
     """Register"""
     wm = bpy.types.WindowManager
     bpy.utils.register_module(__name__)
-    wm.itempanel = bpy.props.PointerProperty(type=ItemPanel)
+    wm.item = bpy.props.PointerProperty(type=Item)
+    bpy.context.window_manager.item.name = 'Item Panel Properties'
 
 
 def unregister():
@@ -608,7 +620,7 @@ def unregister():
     wm = bpy.types.WindowManager
     bpy.utils.unregister_module(__name__)
     try:
-        del wm.itempanel
+        del wm.item
     except:
         pass
 

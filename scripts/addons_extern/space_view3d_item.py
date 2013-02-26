@@ -16,8 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-bl_info = {
-           'name': 'Item Panel & Batch Naming',
+bl_info = {'name': 'Item Panel & Batch Naming',
            'author': 'proxe',
            'version': (0, 7, 0),
            'blender': (2, 66, 0),
@@ -27,8 +26,7 @@ bl_info = {
            #'tracker_url': '',
            'description': "An improved item panel for the 3D View with include"
                           "d batch naming tools.",
-           'category': '3D View'
-          }
+           'category': '3D View'}
 
 import bpy
 
@@ -36,21 +34,23 @@ import bpy
 #
 #    Author: Trentin Frederick (a.k.a, proxe)
 #    Contact: trentin.frederick@gmail.com, proxe.err0r@gmail.com
-#    Version: 0.7.0
+#    Version: 0.7.2
 #
 # ##### END INFO BLOCK #####
 
 # ##### BEGIN VERSION BLOCK #####
 #
 #    0.7
-#    - Restored ability to pupulate panel for the active objects/bones
+#    - Updated Object_type, constraint_type and modifier_type enumProperty
+#    formats to 2.66
+#    - Restored ability to populate panel for the active objects/bones
 #    constraints, modifiers, bone constraints.
 #    - Create target menu allowing user to rename specific types of objects,
 #    constraints, modifiers, object data and bone constraints.
 #    0.6
 #    - Removed ability to populate the item panel with all selected objects,
 #    objects constraints, modifiers, object's data, bones and bone constraints.
-#    - Removed visibility and selectability options from the left and right of
+#    - Removed visibility and select-ability options from the left and right of
 #    active bone name input field in favor of the default item panel's format.
 #    - Code cleanup
 #    0.5
@@ -61,11 +61,11 @@ import bpy
 #    0.4
 #    - Created batch naming functions and operator, added ui prop to access
 #    this located next to active object input field.
-#    - Added visibility and selectability options for active bone, located to
+#    - Added visibility and select-ability options for active bone, located to
 #    the left and right of the name input field for active bone.
 #    0.3
-#    - Added item panel property group, used to control visibiliy options of
-#    selected objects/bones, by allowing them to pupulate the panel when
+#    - Added item panel property group, used to control visibility options of
+#    selected objects/bones, by allowing them to populate the panel when
 #    selected.
 #    - Made the item panel display all selected objects, object constraints,
 #    modifiers, object data, bones and bone constraints
@@ -73,12 +73,12 @@ import bpy
 #    0.2
 #    - Replaced the item panel's input field for object and active object with
 #    the template_ID used in properties window for both items.
-#    - Added a blank Icon for active_bone, for visual seperation.
+#    - Added a blank Icon for active_bone, for visual separation.
 #    0.1
-#    - Created the item panel addon.
+#    - Created the item panel add-on.
 #    - Added object data naming field to item panel.
 #
-#    TODO:
+#    Todo: 
 #    0.8
 #    - Add ability to populate the panel with active objects materials, and
 #    their textures if applicable.
@@ -94,17 +94,24 @@ import bpy
 #    of object.add_modifier would create.
 #    - If everything is working well, remove some of the props default values
 #    so that the value is stored for the next time it is called.
-#    - Unregister blenders default item panel when this addon is active
+#    - Unregister blenders default item panel when this add-on is active
 #    1.0
-#    - Add ability to display vertex groups and shapekeys in item panel, vertex
-#    groups should have a quick select and deselect option, shapekeys ideally
-#    would have the slider available but just where it should be placed is
-#    unclear.
-#    - Create batch naming functionality for vertex groups & shapekeys, ideally
-#    this would be accessed from within a menu rather then as part of the
-#    'target row', may as whell include options for uv maps and vertex colors.
-#    - Actually fill out the docstrings.
-#    - Commit addon
+#    - Add ability to display vertex groups and shape-keys in item panel,
+#    vertex groups should have a quick select and deselect option, shape-keys
+#    ideally would have the slider available but just where it should be placed
+#    is unclear.
+#    - Create batch naming functionality for vertex groups & shape-keys,
+#    ideally this would be accessed from within a menu rather then as part of
+#    the 'target row', may as well include options for UV maps and vertex
+#    colors.
+#    - add a global rename option, renaming all objects, this may or may not be
+#    ideal, the menu is going to get much longer, as it would have a menu for
+#    which scenes would be effected if not all, and would use a bpy.data
+#    structure, which will lengthen the code and brings up the question as to
+#    whether or not I should use that structure throughout the add-on, rather
+#    then its current form, arguably this would be the better option in the
+#    end.
+#    - Commit add-on
 #
 # ##### END VERSION BLOCK #####
 
@@ -120,18 +127,22 @@ import re
   # Rename
 def rename(self, data_path, batch_name, find, replace, prefix, suffix,
            trim_start, trim_end):
-    """docstring"""
-    if not batch_name:
-        target = data_path.name[trim_start:]
-    else:
+    """
+    Renames single proper data_path variable received from batch_rename, check
+    variable values from operator class.
+    """
+    if not batch_name:  # Not using name field in GUI.
+        target = data_path.name[trim_start:]  # Trim start is always performed.
+    else:  # Name field in GUI if in use.
         target = batch_name
         target = target[trim_start:]
-    if trim_end > 0:
+    if trim_end > 0:  # Skip trim end if its not in use, i.e. 0.
         target = target[:-trim_end]
-    target = re.sub(find, replace, target)  # re will send an error if using
-                                            # toolshelf in the find field while
-                                            # typing out the expression.
-    target = prefix + target + suffix
+    target = re.sub(find, replace, target)  # TODO: Tool-shelf RE error.
+                                            # RE will send an error if using
+                                            # tool-shelf in the find field
+                                            # while typing out the expression.
+    target = prefix + target + suffix  # Final target value.
     if data_path in {'constraint', 'modifier'}:
         data_path.name = target
     else:
@@ -144,7 +155,9 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
                  batch_modifiers, batch_objects_data, batch_bones,
                  batch_bone_constraints, object_type, constraint_type,
                  modifier_type):
-    """docstring"""
+    """
+    Send data_path values to rename, check variable values from operator class.
+    """
   # Objects
     if batch_objects:
         for object in context.selected_objects:
@@ -161,7 +174,10 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
             except:
                 pass
     else:
-        pass
+        pass  # Unnecessary, python does this automatically, used here for
+              # clarification purposes, as a personal preference. If it turns
+              # out that this is a cost in performance I will remove,
+              # otherwise, it stays.
   # Object Constraints
     if batch_object_constraints:
         for object in context.selected_objects:
@@ -219,7 +235,7 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
     if batch_bones:
         if context.selected_editable_bones:
             selected_bones = selected_editable_bones
-        else:  # context.selected_pose_bones
+        else:
             selected_bones = selected_pose_bones  # lint:ok
         for bone in context.selected_bones:
             data_path = bone
@@ -267,158 +283,413 @@ class VIEW3D_OT_batch_naming(Operator):
     batch_name = StringProperty(name='Name', description="Designate a new name"
                                 ", if blank, the current names are effected by"
                                 " any changes to the parameters below.")
+
     find = StringProperty(name='Find', description="Find this text and remove "
                           "it from the names.")
+
     replace = StringProperty(name='Replace', description="Replace found text w"
                              "ithin the names with the text entered here.")
+
     prefix = StringProperty(name='Prefix', description="Designate a prefix to "
                             "use for the names.")
+
     suffix = StringProperty(name='Suffix', description="Designate a suffix to "
                             "use for the names")
+
     trim_start = IntProperty(name='Trim Start', description="Trim the beginnin"
-                             "g of the names by this amount.",
-                             min=0, max=50, default=0)
+                             "g of the names by this amount.", min=0, max=50,
+                             default=0)
+
     trim_end = IntProperty(name='Trim End', description="Trim the ending of th"
-                           "e names by this amount.",
-                           min=0, max=50, default=0)
+                           "e names by this amount.", min=0, max=50, default=0)
+
     batch_objects = BoolProperty(name='Objects', description="Apply batch nami"
-                                 "ng to the selected objects.",
-                                 default=False)
+                                 "ng to the selected objects.", default=False)
+
     batch_object_constraints = BoolProperty(name='Object Constraints',
                                             description="Apply batch naming to"
                                             " the constraints of the selected "
-                                            "objects.",
-                                            default=False)
+                                            "objects.", default=False)
+
     batch_modifiers = BoolProperty(name='Modifiers', description="Apply batch "
                                    "naming to the modifiers of the selected ob"
-                                   "jects.",
-                                   default=False)
+                                   "jects.", default=False)
+
     batch_objects_data = BoolProperty(name='Object Data', description="Apply b"
                                       "atch naming to the object data of the s"
-                                      "elected objects.",
-                                      default=False)
+                                      "elected objects.", default=False)
+
     batch_bones = BoolProperty(name='Bones', description="Apply batch naming t"
-                               "o the selected bones.",
-                               default=False)
+                               "o the selected bones.", default=False)
+
     batch_bone_constraints = BoolProperty(name='Bone Constraints',
                                           description="Apply batch naming to t"
                                           "he constraints of the selected bone"
-                                          "s.",
-                                          default=False)
+                                          "s.", default=False)
+
     object_type = EnumProperty(name='Type', description="The type of object th"
                                "at the batch naming operations will be perform"
                                "ed on.",
-                               items=[
-                                     ('LAMP', 'Lamp', ""),
-                                     ('CAMERA', 'Camera', ""),
-                                     ('SPEAKER', 'Speaker', ""),
-                                     ('EMPTY', 'Empty', ""),
-                                     ('LATTICE', 'Lattice', ""),
-                                     ('ARMATURE', 'Armature', ""),
-                                     ('FONT', 'Font', ""),
-                                     ('META', 'Meta', ""),
-                                     ('SURFACE', 'Surface', ""),
-                                     ('CURVE', 'Curve', ""),
-                                     ('MESH', 'Mesh', ""),
-                                     ('ALL', 'All Objects', ""),
-                                     ], default='ALL')
+                               items=[('LAMP',
+                                       'Lamp',
+                                       "",
+                                       '', 11),
+                                      ('CAMERA',
+                                        'Camera',
+                                        "",
+                                       '', 10),
+                                      ('SPEAKER',
+                                        'Speaker',
+                                        "",
+                                       '', 9),
+                                      ('EMPTY',
+                                        'Empty',
+                                        "",
+                                       '', 8),
+                                      ('LATTICE',
+                                        'Lattice',
+                                        "",
+                                       '', 7),
+                                      ('ARMATURE',
+                                        'Armature',
+                                        "",
+                                       '', 6),
+                                      ('FONT',
+                                        'Font',
+                                        "",
+                                       '', 5),
+                                      ('META',
+                                        'Meta',
+                                        "",
+                                       '', 4),
+                                      ('SURFACE',
+                                        'Surface',
+                                        "",
+                                       '', 3),
+                                      ('CURVE',
+                                        'Curve',
+                                        "",
+                                       '', 2),
+                                      ('MESH',
+                                        'Mesh',
+                                        "",
+                                       '', 1),
+                                      ('ALL',
+                                        'All Objects',
+                                        "",
+                                       '', 0)], default='ALL')
+
     constraint_type = EnumProperty(name='Type', description="The type of const"
                                    "raint that the batch naming operations wil"
                                    "l be performed on.",
-                                   items=[
-                                  ('SHRINKWRAP', 'Shrinkwrap', ""),
-                                  ('SCRIPT', 'Script', ""),
-                                  ('RIGID_BODY_JOINT', 'Rigid Body Joint', ""),
-                                  ('PIVOT', 'Pivot', ""),
-                                  ('FOLLOW_PATH', 'Follow Path', ""),
-                                  ('FLOOR', 'Floor', ""),
-                                  ('CHILD_OF', 'ChildOf', ""),
-                                  ('ACTION', 'Action', ""),
-                                  ('TRACK_TO', 'TrackTo', ""),
-                                  ('STRETCH_TO', 'Stretch To', ""),
-                                  ('SPLINE_IK', 'Spline IK', ""),
-                                  ('LOCKED_TRACK', 'Locked Track', ""),
-                                  ('IK', 'IK', ""),
-                                  ('DAMPED_TRACK', 'Damped Track', ""),
-                                  ('CLAMP_TO', 'Clamp To', ""),
-                                  ('TRANSFORM', 'Transformation', ""),
-                                  ('MAINTAIN_VOLUME', 'Maintain Volume', ""),
-                                  ('LIMIT_SCALE', 'Limit Scale', ""),
-                                  ('LIMIT_ROTATION', 'Limit Rotation', ""),
-                                  ('LIMIT_LOCATION', 'Limit Location', ""),
-                                  ('LIMIT_DISTANCE', 'Limit Distance', ""),
-                                  ('COPY_TRANSFORMS', 'Copy Transforms', ""),
-                                  ('COPY_SCALE', 'Copy Scale', ""),
-                                  ('COPY_ROTATION', 'Copy Rotation', ""),
-                                  ('COPY_LOCATION', 'Copy Location', ""),
-                                  ('FOLLOW_TRACK', 'Follow Track', ""),
-                                  ('OBJECT_SOLVER', 'Object Solver', ""),
-                                  ('CAMERA_SOLVER', 'Camera Solver', ""),
-                                  ('ALL', 'All Constraints', ""),
-                                   ], default='ALL')
+                                   items=[('SHRINKWRAP',
+                                            'Shrinkwrap',
+                                            "",
+                                           '', 28),
+                                          ('SCRIPT',
+                                            'Script',
+                                            "",
+                                           '', 27),
+                                          ('RIGID_BODY_JOINT',
+                                            'Rigid Body Joint',
+                                            "",
+                                           '', 26),
+                                          ('PIVOT',
+                                            'Pivot',
+                                            "",
+                                           '', 25),
+                                          ('FOLLOW_PATH',
+                                            'Follow Path',
+                                            "",
+                                           '', 24),
+                                          ('FLOOR',
+                                            'Floor',
+                                            "",
+                                           '', 23),
+                                          ('CHILD_OF',
+                                            'ChildOf',
+                                            "",
+                                           '', 22),
+                                          ('ACTION',
+                                            'Action',
+                                            "",
+                                           '', 21),
+                                          ('TRACK_TO',
+                                            'TrackTo',
+                                            "",
+                                           '', 20),
+                                          ('STRETCH_TO',
+                                            'Stretch To',
+                                            "",
+                                           '', 19),
+                                          ('SPLINE_IK',
+                                            'Spline IK',
+                                            "",
+                                           '', 18),
+                                          ('LOCKED_TRACK',
+                                            'Locked Track',
+                                            "",
+                                           '', 17),
+                                          ('IK',
+                                            'IK',
+                                            "",
+                                           '', 16),
+                                          ('DAMPED_TRACK',
+                                            'Damped Track',
+                                            "",
+                                           '', 15),
+                                          ('CLAMP_TO',
+                                            'Clamp To',
+                                            "",
+                                           '', 14),
+                                          ('TRANSFORM',
+                                            'Transformation',
+                                            "",
+                                           '', 13),
+                                          ('MAINTAIN_VOLUME',
+                                            'Maintain Volume',
+                                            "",
+                                           '', 12),
+                                          ('LIMIT_SCALE',
+                                            'Limit Scale',
+                                            "",
+                                           '', 11),
+                                          ('LIMIT_ROTATION',
+                                            'Limit Rotation',
+                                            "",
+                                           '', 10),
+                                          ('LIMIT_LOCATION',
+                                            'Limit Location',
+                                            "",
+                                           '', 9),
+                                          ('LIMIT_DISTANCE',
+                                            'Limit Distance',
+                                            "",
+                                           '', 8),
+                                          ('COPY_TRANSFORMS',
+                                            'Copy Transforms',
+                                            "",
+                                           '', 7),
+                                          ('COPY_SCALE',
+                                            'Copy Scale',
+                                            "",
+                                           '', 6),
+                                          ('COPY_ROTATION',
+                                            'Copy Rotation',
+                                            "", 
+                                           '', 5),
+                                          ('COPY_LOCATION',
+                                            'Copy Location',
+                                            "",
+                                           '', 4),
+                                          ('FOLLOW_TRACK',
+                                            'Follow Track',
+                                            "",
+                                           '', 3),
+                                          ('OBJECT_SOLVER',
+                                            'Object Solver',
+                                            "",
+                                           '', 2),
+                                          ('CAMERA_SOLVER',
+                                            'Camera Solver',
+                                            "",
+                                           '', 1),
+                                          ('ALL',
+                                            'All Constraints',
+                                            "",
+                                           '', 0)], default='ALL')
+
     modifier_type = EnumProperty(name='Type', description="The type of modifie"
                                  "r that the batch naming operations will be p"
                                  "erformed on.",
-                                 items=[
-                    ('SOFT_BODY', 'Soft Body', ""),
-                    ('SMOKE', 'Smoke', ""),
-                    ('PARTICLE_SYSTEM', 'Particle System', ""),
-                    ('PARTICLE_INSTANCE', 'Particle Instance', ""),
-                    ('OCEAN', 'Ocean', ""),
-                    ('FLUID_SIMULATION', 'Fluid Simulation', ""),
-                    ('EXPLODE', 'Explode', ""),
-                    ('DYNAMIC_PAINT', 'Dynamic Paint', ""),
-                    ('COLLISION', 'Collision', ""),
-                    ('CLOTH', 'Cloth', ""),
-                    ('WAVE', 'Wave', ""),
-                    ('WARP', 'Warp', ""),
-                    ('SMOOTH', 'Smooth', ""),
-                    ('SIMPLE_DEFORM', 'Simple Deform', ""),
-                    ('SHRINKWRAP', 'Shrinkwrap', ""),
-                    ('MESH_DEFORM', 'Mesh Deform', ""),
-                    ('LATTICE', 'Lattice', ""),
-                    ('LAPLACIANSMOOTH', 'Laplacian Smooth', ""),
-                    ('HOOK', 'Hook', ""),
-                    ('DISPLACE', 'Displace', ""),
-                    ('CURVE', 'Curve', ""),
-                    ('CAST', 'Cast', ""),
-                    ('ARMATURE', 'Armature', ""),
-                    ('TRIANGULATE', 'Triangulate', ""),
-                    ('SUBSURF', 'Subdivision Surface', ""),
-                    ('SOLIDIFY', 'Solidify', ""),
-                    ('SKIN', 'Skin', ""),
-                    ('SCREW', 'Screw', ""),
-                    ('REMESH', 'Remesh', ""),
-                    ('MULTIRES', 'Multiresolution', ""),
-                    ('MIRROR', 'Mirror', ""),
-                    ('MASK', 'Mask', ""),
-                    ('EDGE_SPLIT', 'Edge Split', ""),
-                    ('DECIMATE', 'Decimate', ""),
-                    ('BUILD', 'Build', ""),
-                    ('BOOLEAN', 'Boolean', ""),
-                    ('BEVEL', 'Bevel', ""),
-                    ('ARRAY', 'Array', ""),
-                    ('VERTEX_WEIGHT_PROXIMITY', 'Vertex Weight Proximity', ""),
-                    ('VERTEX_WEIGHT_EDIT', 'Vertex Weight Edit', ""),
-                    ('UV_WARP', 'UV Warp', ""),
-                    ('UV_PROJECT', 'UV Project', ""),
-                    ('MESH_CACHE', 'Mesh Cache', ""),
-                    ('ALL', 'All Modifiers', ""),
-                    ], default='ALL')
+                                 items=[('SOFT_BODY', 
+                                          'Soft Body', 
+                                          "", 
+                                         '', 43),
+                                        ('SMOKE',
+                                          'Smoke',
+                                          "",
+                                         '', 42),
+                                        ('PARTICLE_SYSTEM', 
+                                          'Particle System', 
+                                          "", 
+                                         '', 41),
+                                        ('PARTICLE_INSTANCE', 
+                                          'Particle Instance', 
+                                          "", 
+                                         '', 40),
+                                        ('OCEAN', 
+                                          'Ocean', 
+                                          "", 
+                                         '', 39),
+                                        ('FLUID_SIMULATION', 
+                                          'Fluid Simulation', 
+                                          "", 
+                                         '', 38),
+                                        ('EXPLODE', 
+                                          'Explode', 
+                                          "", 
+                                         '', 37),
+                                        ('DYNAMIC_PAINT', 
+                                          'Dynamic Paint', 
+                                          "", 
+                                         '', 36),
+                                        ('COLLISION', 
+                                          'Collision', 
+                                          "", 
+                                         '', 35),
+                                        ('CLOTH', 
+                                          'Cloth', 
+                                          "", 
+                                         '', 34),
+                                        ('WAVE', 
+                                          'Wave', 
+                                          "", 
+                                         '', 33),
+                                        ('WARP', 
+                                          'Warp', 
+                                          "", 
+                                         '', 32),
+                                        ('SMOOTH', 
+                                          'Smooth', 
+                                          "", 
+                                         '', 31),
+                                        ('SIMPLE_DEFORM', 
+                                          'Simple Deform', 
+                                          "", 
+                                         '', 30),
+                                        ('SHRINKWRAP', 
+                                          'Shrinkwrap', 
+                                          "", 
+                                         '', 29),
+                                        ('MESH_DEFORM', 
+                                          'Mesh Deform', 
+                                          "", 
+                                         '', 28),
+                                        ('LATTICE', 
+                                          'Lattice', 
+                                          "", 
+                                         '', 27),
+                                        ('LAPLACIANSMOOTH', 
+                                          'Laplacian Smooth', 
+                                          "", 
+                                         '', 26),
+                                        ('HOOK', 
+                                          'Hook', 
+                                          "", 
+                                         '', 25),
+                                        ('DISPLACE', 
+                                          'Displace', 
+                                          "", 
+                                         '', 24),
+                                        ('CURVE', 
+                                        'Curve', 
+                                        "", 
+                                        '', 23),
+                                        ('CAST', 
+                                          'Cast', 
+                                          "", 
+                                         '', 22),
+                                        ('ARMATURE', 
+                                          'Armature', 
+                                          "", 
+                                         '', 21),
+                                        ('TRIANGULATE', 
+                                          'Triangulate', 
+                                          "", 
+                                         '', 20),
+                                        ('SUBSURF', 
+                                          'Subdivision Surface', 
+                                          "", 
+                                         '', 19),
+                                        ('SOLIDIFY', 
+                                          'Solidify', 
+                                          "", 
+                                         '', 18),
+                                        ('SKIN', 
+                                          'Skin', 
+                                          "", 
+                                         '', 17),
+                                        ('SCREW', 
+                                          'Screw', 
+                                          "", 
+                                         '', 16),
+                                        ('REMESH', 
+                                          'Remesh', 
+                                          "", 
+                                         '', 15),
+                                        ('MULTIRES', 
+                                          'Multiresolution', 
+                                          "", 
+                                         '', 14),
+                                        ('MIRROR', 
+                                          'Mirror', 
+                                          "", 
+                                         '', 13),
+                                        ('MASK', 
+                                          'Mask', 
+                                          "", 
+                                         '', 12),
+                                        ('EDGE_SPLIT', 
+                                          'Edge Split', 
+                                          "", 
+                                         '', 11),
+                                        ('DECIMATE', 
+                                          'Decimate', 
+                                          "", 
+                                         '', 10),
+                                        ('BUILD', 
+                                          'Build', 
+                                          "", 
+                                         '', 9),
+                                        ('BOOLEAN', 
+                                          'Boolean', 
+                                          "", 
+                                         '', 8),
+                                        ('BEVEL', 
+                                          'Bevel', 
+                                          "", 
+                                         '', 7),
+                                        ('ARRAY', 
+                                          'Array', 
+                                          "", 
+                                         '', 6),
+                                        ('VERTEX_WEIGHT_PROXIMITY', 
+                                          'Vertex Weight Proximity', 
+                                          "", 
+                                         '', 5),
+                                        ('VERTEX_WEIGHT_EDIT', 
+                                          'Vertex Weight Edit', 
+                                          "", 
+                                         '', 4),
+                                        ('UV_WARP', 
+                                          'UV Warp', 
+                                          "", 
+                                         '', 3),
+                                        ('UV_PROJECT', 
+                                          'UV Project', 
+                                          "", 
+                                         '', 2),
+                                        ('MESH_CACHE', 
+                                          'Mesh Cache', 
+                                          "", 
+                                         '', 1),
+                                        ('ALL', 
+                                          'All Modifiers', 
+                                          "", 
+                                         '', 0)], default='ALL')
 
     @classmethod
     def poll(cls, context):
-        """docstring"""
+        """Space data type must be in 3D view."""
         return context.space_data.type in 'VIEW_3D'
 
     def draw(self, context):
-        """docstring"""
+        """Draw the operator panel/menu."""
         layout = self.layout
         col = layout.column()
         props = self.properties
-
-        row = col.row(align=True)  # Bug? icon_only doesn't appear to work.
-                                   # using empty text parameter instead.
+        row = col.row(align=True)
   # Target Row
         split = col.split(align=True)
         split.prop(props, 'batch_objects', text="", icon='OBJECT_DATA')
@@ -459,7 +730,7 @@ class VIEW3D_OT_batch_naming(Operator):
         row.prop(props, 'trim_end', text="")
 
     def execute(self, context):
-        """docstring"""
+        """Execute the operator."""
         batch_rename(self, context, self.batch_name, self.find, self.replace,
                      self.prefix, self.suffix, self.trim_start, self.trim_end,
                      self.batch_objects, self.batch_object_constraints,
@@ -470,7 +741,7 @@ class VIEW3D_OT_batch_naming(Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        """docstring"""
+        """Invoke the operator panel/menu, control its width."""
         wm = context.window_manager
         wm.invoke_props_dialog(self, width=225)
 
@@ -504,20 +775,25 @@ class Item(PropertyGroup):
 
   # View 3D Item (PT)
 class VIEW3D_PT_item(Panel):
-    """docstring"""
+    """Item panel, props created in Item property group, stored in wm.item."""
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_label = 'Item'
 
+    @classmethod
+    def poll(cls, context):
+        """There must be an active object."""
+        return bpy.context.active_object
+
     def draw_header(self, context):
-        """docstring"""
+        """Item panel header."""
         layout = self.layout
         wm_props = context.window_manager.item
 
         layout.prop(wm_props, 'view_options', text="")
 
     def draw(self, context):
-        """docstring"""
+        """Item panel body."""
         layout = self.layout
         col = layout.column()
         wm_props = context.window_manager.item
@@ -589,7 +865,7 @@ class VIEW3D_PT_item(Panel):
                         sub = row.row()
                         sub.scale_x = 1.6
                         sub.label(text="", icon='DOT')
-                        if con.mute:
+                        if constraint.mute:
                             ico = 'RESTRICT_VIEW_ON'
                         else:
                             ico = 'RESTRICT_VIEW_OFF'

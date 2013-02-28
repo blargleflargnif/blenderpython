@@ -21,7 +21,7 @@
 bl_info = {
 	'name': 'Ruler',
 	'author': 'chromoly - adapted for 2.63 by Gert De Roost',
-	'version': (2, 2, 1),	'blender': (2, 6, 3),
+	'version': (2, 2, 0),	'blender': (2, 6, 3),
 	'location': 'View3D > Properties > Ruler',
 	'category': '3D View'}
 
@@ -2978,7 +2978,7 @@ class VIEW3D_OT_display_ruler(bpy.types.Operator):
 		scn = bpy.context.scene
 #		started = 1
 		
-		color_background = bpy.context.user_preferences.themes['Default'].user_preferences.space.back
+		color_background = bpy.context.user_preferences.themes['Default'].view_3d.space.back
 		default_config['color_background'] = list(color_background) + [1.0]	# alpha
 		bpy.types.Scene.ruler_config = PointerProperty(name='Ruler Config',
 													   type=RulerConfig,

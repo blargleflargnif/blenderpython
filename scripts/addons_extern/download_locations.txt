@@ -196,13 +196,13 @@ Stereoscopic camera rig (stereoscopic_camera_1_6_7.py) -- by Sebastian Schneider
 Face bones (rig_face_bone_tool.py) -- by khuuyj
 	https://sites.google.com/site/khuuyjblend/home/blender/script/face-bone-tool
 	
-View armature data (space_view3d_armature_data.py) -- by proxe
+View armature data (space_view3d_armatureData.py) -- by proxe
 
 Stored viewport views (space_view3d_stored_views.py) -- by nfloyd
 	http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/3D_interaction/stored_views
 	http://blenderartists.org/forum/showthread.php?t=218403
 	
-Item Panel & Batch Naming (space_view3d_item.py) -- by proxe
+Item Panel & Batch Naming (space_view_3d_item.py) -- by proxe
 	http://blenderartists.org/forum/showthread.php?272086-Addon-Item-Panel-amp-Batch-Naming
 	
 Ivy Animation (ivygen_build_animation.py) -- by TheFinalCut

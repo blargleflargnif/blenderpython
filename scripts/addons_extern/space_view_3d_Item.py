@@ -234,10 +234,10 @@ def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
   # Bones
     if batch_bones:
         if context.selected_editable_bones:
-            selected_bones = selected_editable_bones
+            selected_bones = context.selected_editable_bones
         else:
-            selected_bones = selected_pose_bones  # lint:ok
-        for bone in context.selected_bones:
+            selected_bones = context.selected_pose_bones
+        for bone in selected_bones:
             data_path = bone
             try:
                 rename(self, data_path, batch_name, find, replace, prefix,
@@ -697,7 +697,7 @@ class VIEW3D_OT_batch_naming(Operator):
                    icon='CONSTRAINT')
         split.prop(props, 'batch_modifiers', text="", icon='MODIFIER')
         split.prop(props, 'batch_objects_data', text="", icon='MESH_DATA')
-        if context.object.mode in {'POSE', 'EDIT_ARMATURE'}:
+        if context.object.mode in 'POSE' or 'EDIT_ARMATURE':
             split.prop(props, 'batch_bones', text="", icon='BONE_DATA')
             if context.selected_pose_bones:
                 split.prop(props, 'batch_bone_constraints', text="",

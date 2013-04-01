@@ -18,14 +18,14 @@
 
 bl_info = {'name': 'Item Panel & Batch Naming',
            'author': 'proxe',
-           'version': (0, 7, 0),
+           'version': (0, 8, 4),
            'blender': (2, 66, 0),
            'location': '3D View > Properties Panel',
            'warning': 'Work in Progress',
            #'wiki_url': '',
            #'tracker_url': '',
-           'description': "An improved item panel for the 3D View with include"
-                          "d batch naming tools.",
+           'description': "An improved item panel for the 3D View with included"
+                          " batch naming tools.",
            'category': '3D View'}
 
 import bpy
@@ -34,88 +34,11 @@ import bpy
 #
 #    Author: Trentin Frederick (a.k.a, proxe)
 #    Contact: trentin.frederick@gmail.com, proxe.err0r@gmail.com
-#    Version: 0.7.2
+#    Version: 0.8.4
 #
 # ##### END INFO BLOCK #####
 
-# ##### BEGIN VERSION BLOCK #####
-#
-#    0.7
-#    - Updated Object_type, constraint_type and modifier_type enumProperty
-#    formats to 2.66
-#    - Restored ability to populate panel for the active objects/bones
-#    constraints, modifiers, bone constraints.
-#    - Create target menu allowing user to rename specific types of objects,
-#    constraints, modifiers, object data and bone constraints.
-#    0.6
-#    - Removed ability to populate the item panel with all selected objects,
-#    objects constraints, modifiers, object's data, bones and bone constraints.
-#    - Removed visibility and select-ability options from the left and right of
-#    active bone name input field in favor of the default item panel's format.
-#    - Code cleanup
-#    0.5
-#    - Optimized code, followed many PEP8 guidelines.
-#    - Altered batch naming functions and operators to account for all selected
-#    object's constraints's and modifiers, and to account for all selected bone
-#    constraints.
-#    0.4
-#    - Created batch naming functions and operator, added ui prop to access
-#    this located next to active object input field.
-#    - Added visibility and select-ability options for active bone, located to
-#    the left and right of the name input field for active bone.
-#    0.3
-#    - Added item panel property group, used to control visibility options of
-#    selected objects/bones, by allowing them to populate the panel when
-#    selected.
-#    - Made the item panel display all selected objects, object constraints,
-#    modifiers, object data, bones and bone constraints
-#    - Added visibility controls for displayed constraints and modifiers
-#    0.2
-#    - Replaced the item panel's input field for object and active object with
-#    the template_ID used in properties window for both items.
-#    - Added a blank Icon for active_bone, for visual separation.
-#    0.1
-#    - Created the item panel add-on.
-#    - Added object data naming field to item panel.
-#
-#    Todo: 
-#    0.8
-#    - Add ability to populate the panel with active objects materials, and
-#    their textures if applicable.
-#    - Add ability to populate the panel with the active objects particle
-#    systems.
-#    - Account for batch naming materials, textures and particle systems in
-#    the batch naming functions
-#    - Include the materials, textures and particle systems in the batch
-#    naming operator.
-#    0.9
-#    - See if there is something I can do to make the menus for types a bit
-#    more easily readable, i.e. recreate the same menu that operator_menu_enum
-#    of object.add_modifier would create.
-#    - If everything is working well, remove some of the props default values
-#    so that the value is stored for the next time it is called.
-#    - Unregister blenders default item panel when this add-on is active
-#    1.0
-#    - Add ability to display vertex groups and shape-keys in item panel,
-#    vertex groups should have a quick select and deselect option, shape-keys
-#    ideally would have the slider available but just where it should be placed
-#    is unclear.
-#    - Create batch naming functionality for vertex groups & shape-keys,
-#    ideally this would be accessed from within a menu rather then as part of
-#    the 'target row', may as well include options for UV maps and vertex
-#    colors.
-#    - add a global rename option, renaming all objects, this may or may not be
-#    ideal, the menu is going to get much longer, as it would have a menu for
-#    which scenes would be effected if not all, and would use a bpy.data
-#    structure, which will lengthen the code and brings up the question as to
-#    whether or not I should use that structure throughout the add-on, rather
-#    then its current form, arguably this would be the better option in the
-#    end.
-#    - Commit add-on
-#
-# ##### END VERSION BLOCK #####
-
-  # PEP8 Compliant
+  # PEP8 Compliant (mostly)
 
 ###############
 ## FUNCTIONS ##
@@ -124,142 +47,138 @@ import bpy
 import re
 
 
-  # Rename
-def rename(self, data_path, batch_name, find, replace, prefix, suffix,
-           trim_start, trim_end):
+  # reName
+def rename(self, dataPath, batchName, find, replace, prefix, suffix,
+           trimStart, trimEnd):
     """
-    Renames single proper data_path variable received from batch_rename, check
+    Names single proper dataPath variable received from batchRename, check
     variable values from operator class.
     """
-    if not batch_name:  # Not using name field in GUI.
-        target = data_path.name[trim_start:]  # Trim start is always performed.
-    else:  # Name field in GUI if in use.
-        target = batch_name
-        target = target[trim_start:]
-    if trim_end > 0:  # Skip trim end if its not in use, i.e. 0.
-        target = target[:-trim_end]
-    target = re.sub(find, replace, target)  # TODO: Tool-shelf RE error.
-                                            # RE will send an error if using
-                                            # tool-shelf in the find field
-                                            # while typing out the expression.
-    target = prefix + target + suffix  # Final target value.
-    if data_path in {'constraint', 'modifier'}:
-        data_path.name = target
+    if not batchName:
+        targetName = dataPath.name[trimStart:]
     else:
-        data_path.name = target[:]
+        targetName = batchName
+        targetName = targetName[trimStart:]
+    if trimEnd > 0:
+        targetName = targetName[:-trimEnd]
+    targetName = re.sub(find, replace, targetName)  # XXX: Tool-shelf RE error.
+    targetName = prefix + targetName + suffix
+    if dataPath in {'constraint', 'modifier'}:
+        dataPath.name = targetName
+    else:
+        dataPath.name = targetName[:]
 
 
   # Batch Rename
-def batch_rename(self, context, batch_name, find, replace, prefix, suffix,
-                 trim_start, trim_end, batch_objects, batch_object_constraints,
-                 batch_modifiers, batch_objects_data, batch_bones,
-                 batch_bone_constraints, object_type, constraint_type,
-                 modifier_type):
+def batchRename(self, context, batchName, find, replace, prefix, suffix,
+                trimStart, trimEnd, batchObjects, batchObjectConstraints,
+                batchModifiers, batchObjectData, batchBones,
+                batchBoneConstraints, objectType, constraintType, modifierType):
     """
-    Send data_path values to rename, check variable values from operator class.
+    Send dataPath values to rename, check variable values from operator class.
     """
   # Objects
-    if batch_objects:
+    if batchObjects:
         for object in context.selected_objects:
-            if object_type in 'ALL':
-                data_path = object
+            if objectType in 'ALL':
+                dataPath = object
             else:
-                if object_type in object.type:
-                    data_path = object
+                if objectType in object.type:
+                    dataPath = object
                 else:
                     pass
             try:
-                rename(self, data_path, batch_name, find, replace, prefix,
-                       suffix, trim_start, trim_end)
+                rename(self, dataPath, batchName, find, replace, prefix,
+                       suffix, trimStart, trimEnd)
             except:
                 pass
     else:
-        pass  # Unnecessary, python does this automatically, used here for
-              # clarification purposes, as a personal preference. If it turns
-              # out that this is a cost in performance I will remove,
-              # otherwise, it stays.
+        pass
   # Object Constraints
-    if batch_object_constraints:
+    if batchObjectConstraints:
         for object in context.selected_objects:
             for constraint in object.constraints[:]:
-                if constraint_type in 'ALL':
-                    data_path = constraint
+                if constraintType in 'ALL':
+                    dataPath = constraint
                 else:
-                    if constraint_type in constraint.type:
-                        data_path = constraint
+                    if constraintType in constraint.type:
+                        dataPath = constraint
                     else:
                         pass
                 try:
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
+                    rename(self, dataPath, batchName, find, replace, prefix,
+                           suffix, trimStart, trimEnd)
                 except:
                     pass
     else:
         pass
-  # Object Modifiers
-    if batch_modifiers:
+  # Modifiers
+    if batchModifiers:
         for object in context.selected_objects:
             for modifier in object.modifiers[:]:
-                if modifier_type in 'ALL':
-                    data_path = modifier
+                if modifierType in 'ALL':
+                    dataPath = modifier
                 else:
-                    if modifier_type in modifier.type:
-                        data_path = modifier
+                    if modifierType in modifier.type:
+                        dataPath = modifier
                     else:
                         pass
                 try:
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
+                    rename(self, dataPath, batchName, find, replace, prefix,
+                           suffix, trimStart, trimEnd)
                 except:
                     pass
     else:
         pass
   # Objects Data
-    if batch_objects_data:
+    if batchObjectData:
         for object in context.selected_objects:
-            if object_type in 'ALL':
-                data_path = object.data
+            if objectType in 'ALL':
+                dataPath = object.data
             else:
-                if object_type in object.type:
-                    data_path = object.data
+                if objectType in object.type:
+                    dataPath = object.data
                 else:
                     pass
             try:
-                rename(self, data_path, batch_name, find, replace, prefix,
-                       suffix, trim_start, trim_end)
+                rename(self, dataPath, batchName, find, replace, prefix,
+                       suffix, trimStart, trimEnd)
             except:
                 pass
     else:
         pass
   # Bones
-    if batch_bones:
-        if context.selected_editable_bones:
-            selected_bones = context.selected_editable_bones
+    if batchBones:
+        if context.selected_pose_bones or context.selected_editable_bones:
+            if context.selected_editable_bones:
+                selected_bones = context.selected_editable_bones
+            else:
+                selected_bones = context.selected_pose_bones
+            for bone in selected_bones:
+                dataPath = bone
+                try:
+                    rename(self, dataPath, batchName, find, replace, prefix,
+                           suffix, trimStart, trimEnd)
+                except:
+                    pass
         else:
-            selected_bones = context.selected_pose_bones
-        for bone in selected_bones:
-            data_path = bone
-            try:
-                rename(self, data_path, batch_name, find, replace, prefix,
-                       suffix, trim_start, trim_end)
-            except:
-                pass
+            pass
     else:
         pass
   # Bone Constraints
-    if batch_bone_constraints:
+    if batchBoneConstraints:
         for bone in context.selected_pose_bones:
             for constraint in bone.constraints[:]:
-                if constraint_type in 'ALL':
-                    data_path = constraint
+                if constraintType in 'ALL':
+                    dataPath = constraint
                 else:
-                    if constraint_type in contraint.type:
-                        data_path = constraint
+                    if constraintType in contraint.type:
+                        dataPath = constraint
                     else:
                         pass
                 try:
-                    rename(self, data_path, batch_name, find, replace, prefix,
-                           suffix, trim_start, trim_end)
+                    rename(self, dataPath, batchName, find, replace, prefix,
+                           suffix, trimStart, trimEnd)
                 except:
                     pass
     else:
@@ -275,475 +194,242 @@ from bpy.types import Operator
 
   # View 3D Batch Naming (OT)
 class VIEW3D_OT_batch_naming(Operator):
-    """Invoke the batch naming operator."""
+    """ Invoke the batch naming operator. """
     bl_idname = 'view3d.batch_naming'
     bl_label = 'Batch Naming'
     bl_options = {'REGISTER', 'UNDO'}
 
-    batch_name = StringProperty(name='Name', description="Designate a new name"
-                                ", if blank, the current names are effected by"
-                                " any changes to the parameters below.")
+    batchName = StringProperty(name='Name', description="Designate a new name, "
+                               "if blank, the current names are effected by an"
+                               "y changes to the parameters below.")
 
-    find = StringProperty(name='Find', description="Find this text and remove "
-                          "it from the names.")
+    find = StringProperty(name='Find', description="Find this text and remove i"
+                          "t from the names.")
 
-    replace = StringProperty(name='Replace', description="Replace found text w"
-                             "ithin the names with the text entered here.")
+    replace = StringProperty(name='Replace', description="Replace found text wi"
+                             "thin the names with the text entered here.")
 
-    prefix = StringProperty(name='Prefix', description="Designate a prefix to "
-                            "use for the names.")
+    prefix = StringProperty(name='Prefix', description="Designate a prefix to u"
+                            "se for the names.")
 
-    suffix = StringProperty(name='Suffix', description="Designate a suffix to "
-                            "use for the names")
+    suffix = StringProperty(name='Suffix', description="Designate a suffix to u"
+                            "se for the names")
 
-    trim_start = IntProperty(name='Trim Start', description="Trim the beginnin"
-                             "g of the names by this amount.", min=0, max=50,
-                             default=0)
+    trimStart = IntProperty(name='Trim Start', description="Trim the beginning "
+                            "of the names by this amount.", min=0, max=50,
+                            default=0)
 
-    trim_end = IntProperty(name='Trim End', description="Trim the ending of th"
-                           "e names by this amount.", min=0, max=50, default=0)
+    trimEnd = IntProperty(name='Trim End', description="Trim the ending of the "
+                          "names by this amount.", min=0, max=50, default=0)
 
-    batch_objects = BoolProperty(name='Objects', description="Apply batch nami"
-                                 "ng to the selected objects.", default=False)
+    batchObjects = BoolProperty(name='Objects', description="Apply batch naming"
+                                " to the selected objects.", default=False)
 
-    batch_object_constraints = BoolProperty(name='Object Constraints',
-                                            description="Apply batch naming to"
-                                            " the constraints of the selected "
-                                            "objects.", default=False)
-
-    batch_modifiers = BoolProperty(name='Modifiers', description="Apply batch "
-                                   "naming to the modifiers of the selected ob"
-                                   "jects.", default=False)
-
-    batch_objects_data = BoolProperty(name='Object Data', description="Apply b"
-                                      "atch naming to the object data of the s"
-                                      "elected objects.", default=False)
-
-    batch_bones = BoolProperty(name='Bones', description="Apply batch naming t"
-                               "o the selected bones.", default=False)
-
-    batch_bone_constraints = BoolProperty(name='Bone Constraints',
-                                          description="Apply batch naming to t"
-                                          "he constraints of the selected bone"
+    batchObjectConstraints = BoolProperty(name='Object Constraints',
+                                          description="Apply batch naming to th"
+                                          "e constraints of the selected object"
                                           "s.", default=False)
 
-    object_type = EnumProperty(name='Type', description="The type of object th"
-                               "at the batch naming operations will be perform"
-                               "ed on.",
-                               items=[('LAMP',
-                                       'Lamp',
-                                       "",
-                                       '', 11),
-                                      ('CAMERA',
-                                        'Camera',
-                                        "",
-                                       '', 10),
-                                      ('SPEAKER',
-                                        'Speaker',
-                                        "",
-                                       '', 9),
-                                      ('EMPTY',
-                                        'Empty',
-                                        "",
-                                       '', 8),
-                                      ('LATTICE',
-                                        'Lattice',
-                                        "",
-                                       '', 7),
-                                      ('ARMATURE',
-                                        'Armature',
-                                        "",
-                                       '', 6),
-                                      ('FONT',
-                                        'Font',
-                                        "",
-                                       '', 5),
-                                      ('META',
-                                        'Meta',
-                                        "",
-                                       '', 4),
-                                      ('SURFACE',
-                                        'Surface',
-                                        "",
-                                       '', 3),
-                                      ('CURVE',
-                                        'Curve',
-                                        "",
-                                       '', 2),
-                                      ('MESH',
-                                        'Mesh',
-                                        "",
-                                       '', 1),
-                                      ('ALL',
-                                        'All Objects',
-                                        "",
-                                       '', 0)], default='ALL')
+    batchModifiers = BoolProperty(name='Modifiers', description="Apply batch na"
+                                  "aming to the modifiers of the selected obje"
+                                  "cts.", default=False)
 
-    constraint_type = EnumProperty(name='Type', description="The type of const"
-                                   "raint that the batch naming operations wil"
-                                   "l be performed on.",
-                                   items=[('SHRINKWRAP',
-                                            'Shrinkwrap',
-                                            "",
-                                           '', 28),
-                                          ('SCRIPT',
-                                            'Script',
-                                            "",
-                                           '', 27),
-                                          ('RIGID_BODY_JOINT',
-                                            'Rigid Body Joint',
-                                            "",
-                                           '', 26),
-                                          ('PIVOT',
-                                            'Pivot',
-                                            "",
-                                           '', 25),
-                                          ('FOLLOW_PATH',
-                                            'Follow Path',
-                                            "",
-                                           '', 24),
-                                          ('FLOOR',
-                                            'Floor',
-                                            "",
-                                           '', 23),
-                                          ('CHILD_OF',
-                                            'ChildOf',
-                                            "",
-                                           '', 22),
-                                          ('ACTION',
-                                            'Action',
-                                            "",
-                                           '', 21),
-                                          ('TRACK_TO',
-                                            'TrackTo',
-                                            "",
-                                           '', 20),
-                                          ('STRETCH_TO',
-                                            'Stretch To',
-                                            "",
-                                           '', 19),
-                                          ('SPLINE_IK',
-                                            'Spline IK',
-                                            "",
-                                           '', 18),
-                                          ('LOCKED_TRACK',
-                                            'Locked Track',
-                                            "",
-                                           '', 17),
-                                          ('IK',
-                                            'IK',
-                                            "",
-                                           '', 16),
-                                          ('DAMPED_TRACK',
-                                            'Damped Track',
-                                            "",
-                                           '', 15),
-                                          ('CLAMP_TO',
-                                            'Clamp To',
-                                            "",
-                                           '', 14),
-                                          ('TRANSFORM',
-                                            'Transformation',
-                                            "",
-                                           '', 13),
-                                          ('MAINTAIN_VOLUME',
-                                            'Maintain Volume',
-                                            "",
-                                           '', 12),
-                                          ('LIMIT_SCALE',
-                                            'Limit Scale',
-                                            "",
-                                           '', 11),
-                                          ('LIMIT_ROTATION',
-                                            'Limit Rotation',
-                                            "",
-                                           '', 10),
-                                          ('LIMIT_LOCATION',
-                                            'Limit Location',
-                                            "",
-                                           '', 9),
-                                          ('LIMIT_DISTANCE',
-                                            'Limit Distance',
-                                            "",
-                                           '', 8),
-                                          ('COPY_TRANSFORMS',
-                                            'Copy Transforms',
-                                            "",
-                                           '', 7),
-                                          ('COPY_SCALE',
-                                            'Copy Scale',
-                                            "",
-                                           '', 6),
-                                          ('COPY_ROTATION',
-                                            'Copy Rotation',
-                                            "", 
-                                           '', 5),
-                                          ('COPY_LOCATION',
-                                            'Copy Location',
-                                            "",
-                                           '', 4),
-                                          ('FOLLOW_TRACK',
-                                            'Follow Track',
-                                            "",
-                                           '', 3),
-                                          ('OBJECT_SOLVER',
-                                            'Object Solver',
-                                            "",
-                                           '', 2),
-                                          ('CAMERA_SOLVER',
-                                            'Camera Solver',
-                                            "",
-                                           '', 1),
-                                          ('ALL',
-                                            'All Constraints',
-                                            "",
-                                           '', 0)], default='ALL')
+    batchObjectsData = BoolProperty(name='Object Data', description="Apply batc"
+                                    "h naming to the object data of the selecte"
+                                    "d objects.", default=False)
 
-    modifier_type = EnumProperty(name='Type', description="The type of modifie"
-                                 "r that the batch naming operations will be p"
-                                 "erformed on.",
-                                 items=[('SOFT_BODY', 
-                                          'Soft Body', 
-                                          "", 
-                                         '', 43),
-                                        ('SMOKE',
-                                          'Smoke',
-                                          "",
-                                         '', 42),
-                                        ('PARTICLE_SYSTEM', 
-                                          'Particle System', 
-                                          "", 
-                                         '', 41),
-                                        ('PARTICLE_INSTANCE', 
-                                          'Particle Instance', 
-                                          "", 
-                                         '', 40),
-                                        ('OCEAN', 
-                                          'Ocean', 
-                                          "", 
-                                         '', 39),
-                                        ('FLUID_SIMULATION', 
-                                          'Fluid Simulation', 
-                                          "", 
-                                         '', 38),
-                                        ('EXPLODE', 
-                                          'Explode', 
-                                          "", 
-                                         '', 37),
-                                        ('DYNAMIC_PAINT', 
-                                          'Dynamic Paint', 
-                                          "", 
-                                         '', 36),
-                                        ('COLLISION', 
-                                          'Collision', 
-                                          "", 
-                                         '', 35),
-                                        ('CLOTH', 
-                                          'Cloth', 
-                                          "", 
-                                         '', 34),
-                                        ('WAVE', 
-                                          'Wave', 
-                                          "", 
-                                         '', 33),
-                                        ('WARP', 
-                                          'Warp', 
-                                          "", 
-                                         '', 32),
-                                        ('SMOOTH', 
-                                          'Smooth', 
-                                          "", 
-                                         '', 31),
-                                        ('SIMPLE_DEFORM', 
-                                          'Simple Deform', 
-                                          "", 
-                                         '', 30),
-                                        ('SHRINKWRAP', 
-                                          'Shrinkwrap', 
-                                          "", 
-                                         '', 29),
-                                        ('MESH_DEFORM', 
-                                          'Mesh Deform', 
-                                          "", 
-                                         '', 28),
-                                        ('LATTICE', 
-                                          'Lattice', 
-                                          "", 
-                                         '', 27),
-                                        ('LAPLACIANSMOOTH', 
-                                          'Laplacian Smooth', 
-                                          "", 
-                                         '', 26),
-                                        ('HOOK', 
-                                          'Hook', 
-                                          "", 
-                                         '', 25),
-                                        ('DISPLACE', 
-                                          'Displace', 
-                                          "", 
-                                         '', 24),
-                                        ('CURVE', 
-                                        'Curve', 
-                                        "", 
-                                        '', 23),
-                                        ('CAST', 
-                                          'Cast', 
-                                          "", 
-                                         '', 22),
-                                        ('ARMATURE', 
-                                          'Armature', 
-                                          "", 
-                                         '', 21),
-                                        ('TRIANGULATE', 
-                                          'Triangulate', 
-                                          "", 
-                                         '', 20),
-                                        ('SUBSURF', 
-                                          'Subdivision Surface', 
-                                          "", 
-                                         '', 19),
-                                        ('SOLIDIFY', 
-                                          'Solidify', 
-                                          "", 
-                                         '', 18),
-                                        ('SKIN', 
-                                          'Skin', 
-                                          "", 
-                                         '', 17),
-                                        ('SCREW', 
-                                          'Screw', 
-                                          "", 
-                                         '', 16),
-                                        ('REMESH', 
-                                          'Remesh', 
-                                          "", 
-                                         '', 15),
-                                        ('MULTIRES', 
-                                          'Multiresolution', 
-                                          "", 
-                                         '', 14),
-                                        ('MIRROR', 
-                                          'Mirror', 
-                                          "", 
-                                         '', 13),
-                                        ('MASK', 
-                                          'Mask', 
-                                          "", 
-                                         '', 12),
-                                        ('EDGE_SPLIT', 
-                                          'Edge Split', 
-                                          "", 
-                                         '', 11),
-                                        ('DECIMATE', 
-                                          'Decimate', 
-                                          "", 
-                                         '', 10),
-                                        ('BUILD', 
-                                          'Build', 
-                                          "", 
-                                         '', 9),
-                                        ('BOOLEAN', 
-                                          'Boolean', 
-                                          "", 
-                                         '', 8),
-                                        ('BEVEL', 
-                                          'Bevel', 
-                                          "", 
-                                         '', 7),
-                                        ('ARRAY', 
-                                          'Array', 
-                                          "", 
-                                         '', 6),
-                                        ('VERTEX_WEIGHT_PROXIMITY', 
-                                          'Vertex Weight Proximity', 
-                                          "", 
-                                         '', 5),
-                                        ('VERTEX_WEIGHT_EDIT', 
-                                          'Vertex Weight Edit', 
-                                          "", 
-                                         '', 4),
-                                        ('UV_WARP', 
-                                          'UV Warp', 
-                                          "", 
-                                         '', 3),
-                                        ('UV_PROJECT', 
-                                          'UV Project', 
-                                          "", 
-                                         '', 2),
-                                        ('MESH_CACHE', 
-                                          'Mesh Cache', 
-                                          "", 
-                                         '', 1),
-                                        ('ALL', 
-                                          'All Modifiers', 
-                                          "", 
-                                         '', 0)], default='ALL')
+    batchBones = BoolProperty(name='Bones', description="Apply batch naming to "
+                              "the selected bones.", default=False)
+
+    batchBoneConstraints = BoolProperty(name='Bone Constraints',
+                                        description="Apply batch naming to the "
+                                        "constraints of the selected bones.",
+                                        default=False)
+
+    objectType = EnumProperty(name='Type', description="The type of object that"
+                              " the batch naming operations will be performed o"
+                              "n.", items=[('LAMP', 'Lamp', ""),
+                                           ('CAMERA', 'Camera', ""),
+                                           ('SPEAKER', 'Speaker', ""),
+                                           ('EMPTY', 'Empty', ""),
+                                           ('LATTICE', 'Lattice', ""),
+                                           ('ARMATURE', 'Armature', ""),
+                                           ('FONT', 'Font', ""),
+                                           ('META', 'Meta', ""),
+                                           ('SURFACE', 'Surface', ""),
+                                           ('CURVE', 'Curve', ""),
+                                           ('MESH', 'Mesh', ""),
+                                           ('ALL', 'All Objects', "")],
+                                           default='ALL')
+
+    constraintType = EnumProperty(name='Type', description="The type of constra"
+                                  "int that the batch naming operations will be"
+                                  " performed on.",
+                                  items=[('SHRINKWRAP', 'Shrinkwrap', ""),
+                                         ('SCRIPT', 'Script', ""),
+                                         ('RIGID_BODY_JOINT',
+                                          'Rigid Body Joint', ""),
+                                         ('PIVOT', 'Pivot', ""),
+                                         ('FOLLOW_PATH', 'Follow Path', ""),
+                                         ('FLOOR', 'Floor', ""),
+                                         ('CHILD_OF', 'ChildOf', ""),
+                                         ('ACTION', 'Action', ""),
+                                         ('TRACK_TO', 'TrackTo', ""),
+                                         ('STRETCH_TO', 'Stretch To', ""),
+                                         ('SPLINE_IK', 'Spline IK', ""),
+                                         ('LOCKED_TRACK', 'Locked Track', ""),
+                                         ('IK', 'IK', ""),
+                                         ('DAMPED_TRACK', 'Damped Track',
+                                          ""),
+                                         ('CLAMP_TO', 'Clamp To', ""),
+                                         ('TRANSFORM', 'Transformation', ""),
+                                         ('MAINTAIN_VOLUME', 'Maintain Volume',
+                                          ""),
+                                         ('LIMIT_SCALE', 'Limit Scale', ""),
+                                         ('LIMIT_ROTATION', 'Limit Rotation',
+                                          ""),
+                                         ('LIMIT_LOCATION', 'Limit Location',
+                                          ""),
+                                         ('LIMIT_DISTANCE', 'Limit Distance',
+                                          ""),
+                                         ('COPY_TRANSFORMS', 'Copy Transforms',
+                                          ""),
+                                         ('COPY_SCALE', 'Copy Scale', ""),
+                                         ('COPY_ROTATION', 'Copy Rotation',
+                                          ""),
+                                         ('COPY_LOCATION', 'Copy Location',
+                                          ""),
+                                         ('FOLLOW_TRACK', 'Follow Track', ""),
+                                         ('OBJECT_SOLVER', 'Object Solver',
+                                          ""),
+                                         ('CAMERA_SOLVER', 'Camera Solver',
+                                          ""),
+                                         ('ALL', 'All Constraints', "")],
+                                         default='ALL')
+
+    modifierType = EnumProperty(name='Type', description="The type of modifier "
+                                "that the batch naming operations will be perfo"
+                                "rmed on.",
+                                items=[('SOFT_BODY', 'Soft Body', ""),
+                                       ('SMOKE', 'Smoke', ""),
+                                       ('PARTICLE_SYSTEM', 'Particle System',
+                                        ""),
+                                       ('PARTICLE_INSTANCE',
+                                        'Particle Instance', ""),
+                                       ('OCEAN', 'Ocean', ""),
+                                       ('FLUID_SIMULATION', 'Fluid Simulation',
+                                        ""),
+                                       ('EXPLODE', 'Explode', ""),
+                                       ('DYNAMIC_PAINT', 'Dynamic Paint', ""),
+                                       ('COLLISION', 'Collision', ""),
+                                       ('CLOTH', 'Cloth', ""),
+                                       ('WAVE', 'Wave', ""),
+                                       ('WARP', 'Warp', ""),
+                                       ('SMOOTH', 'Smooth', ""),
+                                       ('SIMPLE_DEFORM', 'Simple Deform', ""),
+                                       ('SHRINKWRAP', 'Shrinkwrap', ""),
+                                       ('MESH_DEFORM', 'Mesh Deform', ""),
+                                       ('LATTICE', 'Lattice', ""),
+                                       ('LAPLACIANSMOOTH', 'Laplacian Smooth',
+                                        ""),
+                                       ('HOOK', 'Hook', ""),
+                                       ('DISPLACE', 'Displace',
+                                        ""),
+                                       ('CURVE', 'Curve', ""),
+                                       ('CAST', 'Cast', ""),
+                                       ('ARMATURE', 'Armature', ""),
+                                       ('TRIANGULATE', 'Triangulate', ""),
+                                       ('SUBSURF', 'Subdivision Surface', ""),
+                                       ('SOLIDIFY', 'Solidify', ""),
+                                       ('SKIN', 'Skin', ""),
+                                       ('SCREW', 'Screw', ""),
+                                       ('REMESH', 'Remesh', ""),
+                                       ('MULTIRES', 'Multiresolution', ""),
+                                       ('MIRROR', 'Mirror', ""),
+                                       ('MASK', 'Mask', ""),
+                                       ('EDGE_SPLIT', 'Edge Split', ""),
+                                       ('DECIMATE', 'Decimate', ""),
+                                       ('BUILD', 'Build', ""),
+                                       ('BOOLEAN', 'Boolean', ""),
+                                       ('BEVEL', 'Bevel', ""),
+                                       ('ARRAY', 'Array', ""),
+                                       ('VERTEX_WEIGHT_PROXIMITY',
+                                        'Vertex Weight Proximity', ""),
+                                       ('VERTEX_WEIGHT_MIX',
+                                        'Vertex Weight Mix', ""),
+                                       ('VERTEX_WEIGHT_EDIT',
+                                        'Vertex Weight Edit', ""),
+                                       ('UV_WARP', 'UV Warp', ""),
+                                       ('UV_PROJECT', 'UV Project', ""),
+                                       ('MESH_CACHE', 'Mesh Cache', ""),
+                                       ('ALL', 'All Modifiers', "")],
+                                       default='ALL')
 
     @classmethod
     def poll(cls, context):
-        """Space data type must be in 3D view."""
+        """ Space data type must be in 3D view. """
         return context.space_data.type in 'VIEW_3D'
 
     def draw(self, context):
-        """Draw the operator panel/menu."""
+        """ Draw the operator panel/menu. """
         layout = self.layout
-        col = layout.column()
-        props = self.properties
-        row = col.row(align=True)
+        column = layout.column()
+        row = column.row(align=True)
   # Target Row
-        split = col.split(align=True)
-        split.prop(props, 'batch_objects', text="", icon='OBJECT_DATA')
-        split.prop(props, 'batch_object_constraints', text="",
+        split = column.split(align=True)
+        split.prop(self.properties, 'batchObjects', text="", icon='OBJECT_DATA')
+        split.prop(self.properties, 'batchObjectConstraints', text="",
                    icon='CONSTRAINT')
-        split.prop(props, 'batch_modifiers', text="", icon='MODIFIER')
-        split.prop(props, 'batch_objects_data', text="", icon='MESH_DATA')
-        if context.object.mode in 'POSE' or 'EDIT_ARMATURE':
-            split.prop(props, 'batch_bones', text="", icon='BONE_DATA')
+        split.prop(self.properties, 'batchModifiers', text="", icon='MODIFIER')
+        split.prop(self.properties, 'batchObjectsData', text="",
+                   icon='MESH_DATA')
+        if context.selected_pose_bones or context.selected_editable_bones:
+            split.prop(self.properties, 'batchBones', text="", icon='BONE_DATA')
             if context.selected_pose_bones:
-                split.prop(props, 'batch_bone_constraints', text="",
+                split.prop(self.properties, 'batchBoneConstraints', text="",
                            icon='CONSTRAINT_BONE')
             else:
                 pass
         else:
             pass
   # Target Types
-        col.prop(props, 'object_type', text="", icon='OBJECT_DATA')
-        col.prop(props, 'constraint_type', text="", icon='CONSTRAINT')
-        col.prop(props, 'modifier_type', text="", icon='MODIFIER')
+        column.prop(self.properties, 'objectType', text="", icon='OBJECT_DATA')
+        column.prop(self.properties, 'constraintType', text="",
+                    icon='CONSTRAINT')
+        column.prop(self.properties, 'modifierType', text="", icon='MODIFIER')
   # Input Fields
-        col.separator()
-        col.prop(props, 'batch_name')
-        col.separator()
-        col.prop(props, 'find', icon='VIEWZOOM')
-        col.separator()
-        col.prop(props, 'replace', icon='FILE_REFRESH')
-        col.separator()
-        col.prop(props, 'prefix', icon='LOOP_BACK')
-        col.separator()
-        col.prop(props, 'suffix', icon='LOOP_FORWARDS')
-        col.separator()
-        row = col.row()
+        column.separator()
+        column.prop(self.properties, 'batchName')
+        column.separator()
+        column.prop(self.properties, 'find', icon='VIEWZOOM')
+        column.separator()
+        column.prop(self.properties, 'replace', icon='FILE_REFRESH')
+        column.separator()
+        column.prop(self.properties, 'prefix', icon='LOOP_BACK')
+        column.separator()
+        column.prop(self.properties, 'suffix', icon='LOOP_FORWARDS')
+        column.separator()
+        row = column.row()
         row.label(text="Trim Start:")
-        row.prop(props, 'trim_start', text="")
-        row = col.row()
+        row.prop(self.properties, 'trimStart', text="")
+        row = column.row()
         row.label(text="Trim End:")
-        row.prop(props, 'trim_end', text="")
+        row.prop(self.properties, 'trimEnd', text="")
 
     def execute(self, context):
         """Execute the operator."""
-        batch_rename(self, context, self.batch_name, self.find, self.replace,
-                     self.prefix, self.suffix, self.trim_start, self.trim_end,
-                     self.batch_objects, self.batch_object_constraints,
-                     self.batch_modifiers, self.batch_objects_data,
-                     self.batch_bones, self.batch_bone_constraints,
-                     self.object_type, self.constraint_type,
-                     self.modifier_type)
+        batchRename(self, context, self.batchName, self.find, self.replace,
+                    self.prefix, self.suffix, self.trimStart, self.trimEnd,
+                    self.batchObjects, self.batchObjectConstraints,
+                    self.batchModifiers, self.batchObjectsData,
+                    self.batchBones, self.batchBoneConstraints,
+                    self.objectType, self.constraintType,
+                    self.modifierType)
         return {'FINISHED'}
 
     def invoke(self, context, event):
         """Invoke the operator panel/menu, control its width."""
-        wm = context.window_manager
-        wm.invoke_props_dialog(self, width=225)
+        context.window_manager.invoke_props_dialog(self, width=225)
 
         return {'RUNNING_MODAL'}
 
@@ -755,123 +441,472 @@ from bpy.types import Panel, PropertyGroup
 
 
   # Item Panel Property Group
-class Item(PropertyGroup):
-    """Property group for item panel."""
-    view_options = BoolProperty(name='Show/hide view options',
-                                description="Toggle view options for this pane"
-                                "l, the state that they are in is uneffected b"
-                                "y this action.", default=False)
-    view_constraints = BoolProperty(name='View object constraints',
-                                    description="Display the object constraint"
-                                    "s of the active object.", default=False)
-    view_modifiers = BoolProperty(name='View object modifiers', description="D"
-                                  "isplay the object modifiers of the active o"
-                                  "bject.", default=False)
-    view_bone_constraints = BoolProperty(name='View bone constraints',
-                                         description="Display the bone constra"
-                                         "ints of the active pose bone.",
-                                         default=False)
+class itemUIPropertyGroup(PropertyGroup):
+    """
+    UI property group for the add-on "Item Panel & Batch Naming"
+    (space_view3d_item.py)
+
+    Bool Properties that effect how the panel displays the item(s) within the
+    users current selection
+
+    bpy > types > WindowManager > itemUI
+    bpy > context > window_manager > itemUI
+    """
+    viewOptions = BoolProperty(name='Show/hide view options',
+                               description="Toggle view options for this panel,"
+                               " the state that they are in is uneffected by th"
+                               "is action.", default=False)
+    viewConstraints = BoolProperty(name='View object constraints',
+                                   description="Display the object constraints "
+                                   "of the active object.", default=True)
+    viewModifiers = BoolProperty(name='View object modifiers', description="Dis"
+                                  "play the object modifiers of the active obje"
+                                  "ct.", default=True)
+    viewBoneConstraints = BoolProperty(name='View bone constraints',
+                                       description="Display the bone constraint"
+                                       "s of the active pose bone.",
+                                       default=True)
+    objectDataUsers = BoolProperty(name='Users', description="Number of times t"
+                                   "his datablock is referenced.",
+                                   default=False)  # Hack, but it works great.
+    viewHierarchy = BoolProperty(name='View all selected', description="Display"
+                                 " everything within your current selection ins"
+                                 "ide the item panel.", default=False)
 
 
   # View 3D Item (PT)
 class VIEW3D_PT_item(Panel):
-    """Item panel, props created in Item property group, stored in wm.item."""
+    """
+    Item panel, properties created in Item property group, stored in:
+    bpy > context > window_manager > itemUI
+    """
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_label = 'Item'
 
     @classmethod
     def poll(cls, context):
-        """There must be an active object."""
+        """ Hide panel if there is not an active object. """
         return bpy.context.active_object
 
     def draw_header(self, context):
-        """Item panel header."""
+        """ Item panel header. """
         layout = self.layout
-        wm_props = context.window_manager.item
+        itemUI = context.window_manager.itemUI
 
-        layout.prop(wm_props, 'view_options', text="")
+        layout.prop(itemUI, 'viewOptions', text="")
 
     def draw(self, context):
-        """Item panel body."""
+        """ Item panel body. """
         layout = self.layout
-        col = layout.column()
-        wm_props = context.window_manager.item
+        column = layout.column()
+        itemUI = context.window_manager.itemUI
   # View options row
-        split = col.split(align=True)
-        if wm_props.view_options:
-            split.prop(wm_props, 'view_constraints', text="",
+        split = column.split(align=True)
+        if itemUI.viewOptions:
+            split.prop(itemUI, 'viewConstraints', text="",
                        icon='CONSTRAINT')
-            split.prop(wm_props, 'view_modifiers', text="", icon='MODIFIER')
+            split.prop(itemUI, 'viewModifiers', text="", icon='MODIFIER')
             if context.object.mode in 'POSE':
-                split.prop(wm_props, 'view_bone_constraints', text="",
+                split.prop(itemUI, 'viewBoneConstraints', text="",
                            icon='CONSTRAINT_BONE')
             else:
                 pass
+            split.prop(itemUI, 'viewHierarchy', text="", icon='OOPS')
         else:
             pass
   # Data block list
-        row = col.row(align=True)
+        row = column.row(align=True)
         row.template_ID(context.scene.objects, 'active')
         row.operator('view3d.batch_naming', text="", icon='AUTO')
-        if wm_props.view_constraints:
+        if itemUI.viewConstraints:
             for constraint in context.active_object.constraints:
-                row = col.row(align=True)
+                row = column.row(align=True)
                 sub = row.row()
                 sub.scale_x = 1.6
-                sub.label(text="", icon='DOT')
+                sub.label(text="", icon='CONSTRAINT')
                 if constraint.mute:
-                    ico = 'RESTRICT_VIEW_ON'
+                    iconView = 'RESTRICT_VIEW_ON'
                 else:
-                    ico = 'RESTRICT_VIEW_OFF'
-                row.prop(constraint, 'mute', text="", icon=ico)
+                    iconView = 'RESTRICT_VIEW_OFF'
+                row.prop(constraint, 'mute', text="", icon=iconView)
                 row.prop(constraint, 'name', text="")
         else:
             pass
-        if wm_props.view_modifiers:
+        if itemUI.viewModifiers:
             for modifier in context.active_object.modifiers:
-                row = col.row(align=True)
+                row = column.row(align=True)
                 sub = row.row()
                 sub.scale_x = 1.6
-                sub.label(text="", icon='DOT')
+                if modifier.type in 'MESH_CACHE':
+                    iconMod = 'MOD_MESHDEFORM'
+                elif modifier.type in 'UV_PROJECT':
+                    iconMod = 'MOD_UVPROJECT'
+                elif modifier.type in 'UV_WARP':
+                    iconMod = 'MOD_UVPROJECT'
+                elif modifier.type in 'VERTEX_WEIGHT_EDIT':
+                    iconMod = 'MOD_VERTEX_WEIGHT'
+                elif modifier.type in 'VERTEX_WEIGHT_MIX':
+                    iconMod = 'MOD_VERTEX_WEIGHT'
+                elif modifier.type in 'VERTEX_WEIGHT_PROXIMITY':
+                    iconMod = 'MOD_VERTEX_WEIGHT'
+                elif modifier.type in 'ARRAY':
+                    iconMod = 'MOD_ARRAY'
+                elif modifier.type in 'BEVEL':
+                    iconMod = 'MOD_BEVEL'
+                elif modifier.type in 'BOOLEAN':
+                    iconMod = 'MOD_BOOLEAN'
+                elif modifier.type in 'BUILD':
+                    iconMod = 'MOD_BUILD'
+                elif modifier.type in 'DECIMATE':
+                    iconMod = 'MOD_DECIM'
+                elif modifier.type in 'EDGE_SPLIT':
+                    iconMod = 'MOD_EDGESPLIT'
+                elif modifier.type in 'MASK':
+                    iconMod = 'MOD_MASK'
+                elif modifier.type in 'MIRROR':
+                    iconMod = 'MOD_MIRROR'
+                elif modifier.type in 'MULTIRES':
+                    iconMod = 'MOD_MULTIRES'
+                elif modifier.type in 'REMESH':
+                    iconMod = 'MOD_REMESH'
+                elif modifier.type in 'SCREW':
+                    iconMod = 'MOD_SCREW'
+                elif modifier.type in 'SKIN':
+                    iconMod = 'MOD_SKIN'
+                elif modifier.type in 'SOLIDIFY':
+                    iconMod = 'MOD_SOLIDIFY'
+                elif modifier.type in 'SUBSURF':
+                    iconMod = 'MOD_SUBSURF'
+                elif modifier.type in 'TRIANGULATE':
+                    iconMod = 'MOD_TRIANGULATE'
+                elif modifier.type in 'ARMATURE':
+                    iconMod = 'MOD_ARMATURE'
+                elif modifier.type in 'CAST':
+                    iconMod = 'MOD_CAST'
+                elif modifier.type in 'CURVE':
+                    iconMod = 'MOD_CURVE'
+                elif modifier.type in 'DISPLACE':
+                    iconMod = 'MOD_DISPLACE'
+                elif modifier.type in 'HOOK':
+                    iconMod = 'HOOK'
+                elif modifier.type in 'LAPLACIANSMOOTH':
+                    iconMod = 'MOD_SMOOTH'
+                elif modifier.type in 'LATTICE':
+                    iconMod = 'MOD_LATTICE'
+                elif modifier.type in 'MESH_DEFORM':
+                    iconMod = 'MOD_MESHDEFORM'
+                elif modifier.type in 'SHRINKWRAP':
+                    iconMod = 'MOD_SHRINKWRAP'
+                elif modifier.type in 'SIMPLE_DEFORM':
+                    iconMod = 'MOD_SIMPLEDEFORM'
+                elif modifier.type in 'SMOOTH':
+                    iconMod = 'MOD_SMOOTH'
+                elif modifier.type in 'WARP':
+                    iconMod = 'MOD_WARP'
+                elif modifier.type in 'WAVE':
+                    iconMod = 'MOD_WAVE'
+                elif modifier.type in 'CLOTH':
+                    iconMod = 'MOD_CLOTH'
+                elif modifier.type in 'COLLISION':
+                    iconMod = 'MOD_PHYSICS'
+                elif modifier.type in 'DYNAMIC_PAINT':
+                    iconMod = 'MOD_DYNAMICPAINT'
+                elif modifier.type in 'EXPLODE':
+                    iconMod = 'MOD_EXPLODE'
+                elif modifier.type in 'FLUID_SIMULATION':
+                    iconMod = 'MOD_FLUIDSIM'
+                elif modifier.type in 'OCEAN':
+                    iconMod = 'MOD_OCEAN'
+                elif modifier.type in 'PARTICLE_INSTANCE':
+                    iconMod = 'MOD_PARTICLES'
+                elif modifier.type in 'PARTICLE_SYSTEM':
+                    iconMod = 'MOD_PARTICLES'
+                elif modifier.type in 'SMOKE':
+                    iconMod = 'MOD_SMOKE'
+                else: # if modifier.type in 'SOFT_BODY':
+                    iconMod = 'MOD_SOFT'
+                sub.label(text="", icon=iconMod)
                 if modifier.show_viewport:
-                    ico = 'RESTRICT_VIEW_OFF'
+                    iconView = 'RESTRICT_VIEW_OFF'
                 else:
-                    ico = 'RESTRICT_VIEW_ON'
-                row.prop(modifier, 'show_viewport', text="", icon=ico)
+                    iconView = 'RESTRICT_VIEW_ON'
+                row.prop(modifier, 'show_viewport', text="", icon=iconView)
                 row.prop(modifier, 'name', text="")
+        else:
+            pass
+        if itemUI.viewHierarchy:
+            for object in context.selected_objects:
+                if object != context.active_object:
+                    row = column.row(align=True)
+                    sub = row.row()
+                    sub.scale_x = 1.6
+                    if object.type in 'MESH':
+                        iconObject = 'OUTLINER_OB_MESH'
+                    elif object.type in 'CURVE':
+                        iconObject = 'OUTLINER_OB_CURVE'
+                    elif object.type in 'SURFACE':
+                        iconObject = 'OUTLINER_OB_SURFACE'
+                    elif object.type in 'META':
+                        iconObject = 'OUTLINER_OB_META'
+                    elif object.type in 'FONT':
+                        iconObject = 'OUTLINER_OB_FONT'
+                    elif object.type in 'ARMATURE':
+                        iconObject = 'OUTLINER_OB_ARMATURE'
+                    elif object.type in 'LATTICE':
+                        iconObject = 'OUTLINER_OB_LATTICE'
+                    elif object.type in 'EMPTY':
+                        iconObject = 'OUTLINER_OB_EMPTY'
+                    elif object.type in 'SPEAKER':
+                        iconObject = 'OUTLINER_OB_SPEAKER'
+                    elif object.type in 'CAMERA':
+                        iconObject = 'OUTLINER_OB_CAMERA'
+                    else:
+                        iconObject = 'OUTLINER_OB_LAMP'
+                    sub.label(text="", icon=iconObject)
+                    row.prop(object, 'name', text="")
+                    if itemUI.viewConstraints:
+                        for constraint in object.constraints[:]:
+                            row = column.row(align=True)
+                            sub = row.row()
+                            sub.scale_x = 1.6
+                            sub.label(text="", icon='CONSTRAINT')
+                            if constraint.mute:
+                                iconView = 'RESTRICT_VIEW_ON'
+                            else:
+                                iconView = 'RESTRICT_VIEW_OFF'
+                            row.prop(constraint, 'mute', text="", icon=iconView)
+                            row.prop(constraint, 'name', text="")
+                    else:
+                        pass
+                    if itemUI.viewModifiers:
+                        for modifier in object.modifiers[:]:
+                            row = column.row(align=True)
+                            sub = row.row()
+                            sub.scale_x = 1.6
+                            if modifier.type in 'MESH_CACHE':
+                                iconMod = 'MOD_MESHDEFORM'
+                            elif modifier.type in 'UV_PROJECT':
+                                iconMod = 'MOD_UVPROJECT'
+                            elif modifier.type in 'UV_WARP':
+                                iconMod = 'MOD_UVPROJECT'
+                            elif modifier.type in 'VERTEX_WEIGHT_EDIT':
+                                iconMod = 'MOD_VERTEX_WEIGHT'
+                            elif modifier.type in 'VERTEX_WEIGHT_MIX':
+                                iconMod = 'MOD_VERTEX_WEIGHT'
+                            elif modifier.type in 'VERTEX_WEIGHT_PROXIMITY':
+                                iconMod = 'MOD_VERTEX_WEIGHT'
+                            elif modifier.type in 'ARRAY':
+                                iconMod = 'MOD_ARRAY'
+                            elif modifier.type in 'BEVEL':
+                                iconMod = 'MOD_BEVEL'
+                            elif modifier.type in 'BOOLEAN':
+                                iconMod = 'MOD_BOOLEAN'
+                            elif modifier.type in 'BUILD':
+                                iconMod = 'MOD_BUILD'
+                            elif modifier.type in 'DECIMATE':
+                                iconMod = 'MOD_DECIM'
+                            elif modifier.type in 'EDGE_SPLIT':
+                                iconMod = 'MOD_EDGESPLIT'
+                            elif modifier.type in 'MASK':
+                                iconMod = 'MOD_MASK'
+                            elif modifier.type in 'MIRROR':
+                                iconMod = 'MOD_MIRROR'
+                            elif modifier.type in 'MULTIRES':
+                                iconMod = 'MOD_MULTIRES'
+                            elif modifier.type in 'REMESH':
+                                iconMod = 'MOD_REMESH'
+                            elif modifier.type in 'SCREW':
+                                iconMod = 'MOD_SCREW'
+                            elif modifier.type in 'SKIN':
+                                iconMod = 'MOD_SKIN'
+                            elif modifier.type in 'SOLIDIFY':
+                                iconMod = 'MOD_SOLIDIFY'
+                            elif modifier.type in 'SUBSURF':
+                                iconMod = 'MOD_SUBSURF'
+                            elif modifier.type in 'TRIANGULATE':
+                                iconMod = 'MOD_TRIANGULATE'
+                            elif modifier.type in 'ARMATURE':
+                                iconMod = 'MOD_ARMATURE'
+                            elif modifier.type in 'CAST':
+                                iconMod = 'MOD_CAST'
+                            elif modifier.type in 'CURVE':
+                                iconMod = 'MOD_CURVE'
+                            elif modifier.type in 'DISPLACE':
+                                iconMod = 'MOD_DISPLACE'
+                            elif modifier.type in 'HOOK':
+                                iconMod = 'HOOK'
+                            elif modifier.type in 'LAPLACIANSMOOTH':
+                                iconMod = 'MOD_SMOOTH'
+                            elif modifier.type in 'LATTICE':
+                                iconMod = 'MOD_LATTICE'
+                            elif modifier.type in 'MESH_DEFORM':
+                                iconMod = 'MOD_MESHDEFORM'
+                            elif modifier.type in 'SHRINKWRAP':
+                                iconMod = 'MOD_SHRINKWRAP'
+                            elif modifier.type in 'SIMPLE_DEFORM':
+                                iconMod = 'MOD_SIMPLEDEFORM'
+                            elif modifier.type in 'SMOOTH':
+                                iconMod = 'MOD_SMOOTH'
+                            elif modifier.type in 'WARP':
+                                iconMod = 'MOD_WARP'
+                            elif modifier.type in 'WAVE':
+                                iconMod = 'MOD_WAVE'
+                            elif modifier.type in 'CLOTH':
+                                iconMod = 'MOD_CLOTH'
+                            elif modifier.type in 'COLLISION':
+                                iconMod = 'MOD_PHYSICS'
+                            elif modifier.type in 'DYNAMIC_PAINT':
+                                iconMod = 'MOD_DYNAMICPAINT'
+                            elif modifier.type in 'EXPLODE':
+                                iconMod = 'MOD_EXPLODE'
+                            elif modifier.type in 'FLUID_SIMULATION':
+                                iconMod = 'MOD_FLUIDSIM'
+                            elif modifier.type in 'OCEAN':
+                                iconMod = 'MOD_OCEAN'
+                            elif modifier.type in 'PARTICLE_INSTANCE':
+                                iconMod = 'MOD_PARTICLES'
+                            elif modifier.type in 'PARTICLE_SYSTEM':
+                                iconMod = 'MOD_PARTICLES'
+                            elif modifier.type in 'SMOKE':
+                                iconMod = 'MOD_SMOKE'
+                            else: # if modifier.type in 'SOFT_BODY':
+                                iconMod = 'MOD_SOFT'
+                            sub.label(text="", icon=iconMod)
+                            if modifier.show_viewport:
+                                iconView = 'RESTRICT_VIEW_OFF'
+                            else:
+                                iconView = 'RESTRICT_VIEW_ON'
+                            row.prop(modifier, 'show_viewport', text="",
+                                     icon=iconView)
+                            row.prop(modifier, 'name', text="")
+                    else:
+                        pass
+                else:
+                    pass
         else:
             pass
         if context.object.type in 'EMPTY':
             if context.object.empty_draw_type in 'IMAGE':
-                row = col.row(align=True)
+                row = column.row(align=True)
                 row.template_ID(context.active_object, 'data',
                                 open='image.open', unlink='image.unlink')
             else:
                 pass
         else:
-            row = col.row(align=True)
+            row = column.row(align=True)
             row.template_ID(context.active_object, 'data')
-        if context.active_bone:
-            row = col.row(align=True)
+        if itemUI.viewHierarchy:
+            for object in context.selected_objects:
+                if object != context.active_object:
+                    if object.type != 'EMPTY':
+                        row = column.row(align=True)
+                        sub = row.row()
+                        sub.scale_x = 1.6
+                        if object.type in 'MESH':
+                            iconData = 'MESH_DATA'
+                        elif object.type in 'CURVE':
+                            iconData = 'CURVE_DATA'
+                        elif object.type in 'SURFACE':
+                            iconData = 'SURFACE_DATA'
+                        elif object.type in 'META':
+                            iconData = 'META_DATA'
+                        elif object.type in 'FONT':
+                            iconData = 'FONT_DATA'
+                        elif object.type in 'ARMATURE':
+                            iconData = 'ARMATURE_DATA'
+                        elif object.type in 'LATTICE':
+                            iconData = 'LATTICE_DATA'
+                        elif object.type in 'SPEAKER':
+                            iconData = 'SPEAKER'
+                        elif object.type in 'CAMERA':
+                            iconData = 'CAMERA_DATA'
+                        else:
+                            iconData = 'LAMP_DATA'
+                        sub.label(text="", icon=iconData)
+                        row.prop(object.data, 'name', text="")
+                        if object.data.users > 1:
+                            subrow = row.row()
+                            subrow.enabled = False
+                            subrow.scale_x = 0.1
+                            users = str(object.data.users)
+                            subrow.prop(itemUI, 'objectDataUsers', text=users,
+                                        toggle=True)
+                            sub = row.row()
+                            sub.scale_x = 0.1
+                            sub.prop(object.data, 'use_fake_user', text="F",
+                                     toggle=True)
+                        else:
+                            sub = row.row()
+                            sub.scale_x = 0.1
+                            sub.prop(object.data, 'use_fake_user', text="F",
+                                     toggle=True)
+                    else:
+                        pass
+                else:
+                    pass
+        else:
+            pass
+        if (context.object.type in 'ARMATURE' and
+            context.object.mode in {'POSE', 'EDIT'}):
+            row = column.row(align=True)
             sub = row.row()
             sub.scale_x = 1.6
             sub.label(text="", icon='BONE_DATA')
             row.prop(context.active_bone, 'name', text="")
             if context.object.mode in 'POSE':
-                if wm_props.view_bone_constraints:
+                if itemUI.viewBoneConstraints:
                     for constraint in context.active_pose_bone.constraints:
-                        row = col.row(align=True)
+                        row = column.row(align=True)
                         sub = row.row()
                         sub.scale_x = 1.6
-                        sub.label(text="", icon='DOT')
+                        sub.label(text="", icon='CONSTRAINT_BONE')
                         if constraint.mute:
-                            ico = 'RESTRICT_VIEW_ON'
+                            iconView = 'RESTRICT_VIEW_ON'
                         else:
-                            ico = 'RESTRICT_VIEW_OFF'
-                        row.prop(constraint, 'mute', text="", icon=ico)
+                            iconView = 'RESTRICT_VIEW_OFF'
+                        row.prop(constraint, 'mute', text="", icon=iconView)
                         row.prop(constraint, 'name', text="")
                 else:
+                    pass
+            else:
+                pass
+            if itemUI.viewHierarchy:
+                if context.selected_editable_bones:
+                    selected_bones = context.selected_editable_bones
+                else:
+                    selected_bones = context.selected_pose_bones
+                try:
+                    for bone in selected_bones:
+                        if bone != (context.active_pose_bone or
+                                    context.active_bone):
+                            row = column.row(align=True)
+                            sub = row.row()
+                            sub.scale_x = 1.6
+                            sub.label(text="", icon='BONE_DATA')
+                            row.prop(bone, 'name', text="")
+                            if context.object.mode in 'POSE':
+                                if itemUI.viewBoneConstraints:
+                                    for constraint in bone.constraints[:]:
+                                        row = column.row(align=True)
+                                        sub = row.row()
+                                        sub.scale_x = 1.6
+                                        sub.label(text="",
+                                                  icon='CONSTRAINT_BONE')
+                                        if constraint.mute:
+                                            iconView = 'RESTRICT_VIEW_ON'
+                                        else:
+                                            iconView = 'RESTRICT_VIEW_OFF'
+                                        row.prop(constraint, 'mute', text="",
+                                                 icon=iconView)
+                                        row.prop(constraint, 'name', text="")
+                                else:
+                                    pass
+                            else:
+                                pass
+                        else:
+                            pass
+                except TypeError:
                     pass
             else:
                 pass
@@ -884,19 +919,19 @@ class VIEW3D_PT_item(Panel):
 
 
 def register():
-    """Register"""
-    wm = bpy.types.WindowManager
+    """ Register """
+    windowManager = bpy.types.WindowManager
+
     bpy.utils.register_module(__name__)
-    wm.item = bpy.props.PointerProperty(type=Item)
-    bpy.context.window_manager.item.name = 'Item Panel Properties'
+    windowManager.itemUI = bpy.props.PointerProperty(type=itemUIPropertyGroup)
+    bpy.context.window_manager.itemUI.name = 'Item Panel Properties'
 
 
 def unregister():
-    """Unregister"""
-    wm = bpy.types.WindowManager
+    """ Unregister """
     bpy.utils.unregister_module(__name__)
     try:
-        del wm.item
+        del bpy.types.WindowManager.itemUI
     except:
         pass
 

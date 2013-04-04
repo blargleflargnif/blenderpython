@@ -1,4 +1,6 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
+
+<!-- saved from url=(0049)https://raw.github.com/gist/4364512/ies2cycles.py -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css"></style></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;"># ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -16,14 +18,14 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# <pep8 compliant>
+# &lt;pep8 compliant&gt;
 
 bl_info = {
     "name": "IES to Cycles",
     "author": "Lockal S.",
-    "version": (0, 3),
-    "blender": (2, 6, 5),
-    "location": "File > Import > IES Lamp Data (.ies)",
+    "version": (0, 5),
+    "blender": (2, 6, 6),
+    "location": "File &gt; Import &gt; IES Lamp Data (.ies)",
     "description": "Import IES lamp data to cycles",
     "warning": "",
     "wiki_url": "",
@@ -37,15 +39,20 @@ import os
 from math import log, pow, pi
 from operator import add, truediv
 
+
 def clamp(x, min, max):
-    if x < min:
+    if x &lt; min:
         return min
-    elif x > max:
+    elif x &gt; max:
         return max
     return x
 
+
+# Temperature to RGB
+# OSL version:
+# http://blenderartists.org/forum/showthread.php?270332&amp;p=2268693#post2268693
 def t2rgb(t):
-    if t <= 6500:
+    if t &lt;= 6500:
         a = [0, -2902.1955373783176, -8257.7997278925690]
         b = [0, 1669.5803561666639, 2575.2827530017594]
         c = [1, 1.3302673723350029, 1.8993753891711275]
@@ -63,7 +70,7 @@ def simple_interp(k, x, y):
     for i in range(len(x)):
         if k == x[i]:
             return y[i]
-        elif k < x[i]:
+        elif k &lt; x[i]:
             return y[i] + (k - x[i]) * (y[i - 1] - y[i]) / (x[i - 1] - x[i])
 
 
@@ -113,13 +120,13 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
 
     lumens_per_lamp = float(file_data[1])
     candela_mult = float(file_data[2])
-    
+
     v_angles_num = int(file_data[3])
     h_angles_num = int(file_data[4])
     if not v_angles_num or not h_angles_num:
         log({'ERROR'}, 'TILT keyword not found, check your IES file')
         return {'CANCELED'}
-    
+
     photometric_type = int(file_data[5])
 
     units_type = int(file_data[6])
@@ -165,15 +172,16 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
         y_data = [sum(x) / len(x) for x in zip(*candela_2d)]
         y_data_max = max(y_data)
         intensity = max(500, min(y_data_max * multiplier, 5000))
-        lamp_data = list(zip(x_data, [0.5 + 0.5 * y / y_data_max for y in y_data]))
-        
+        lamp_data = list(zip(
+            x_data, [0.5 + 0.5 * y / y_data_max for y in y_data]))
+
         return add_img(name=name,
                        intensity=intensity,
-                       lamp_cone_type=lamp_cone_type, 
-                       image_format=image_format, 
-                       color_temperature=color_temperature, 
+                       lamp_cone_type=lamp_cone_type,
+                       image_format=image_format,
+                       color_temperature=color_temperature,
                        lamp_data=lamp_data)
-                       
+
     # reshape 1d array to 2d array
     candela_2d = list(zip(*[iter(candela_values)] * len(v_angs)))
 
@@ -181,8 +189,8 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
     v_d = [v_angs[i] - v_angs[i - 1] for i in range(1, len(v_angs))]
     h_d = [h_angs[i] - h_angs[i - 1] for i in range(1, len(h_angs))]
 
-    v_same = all(abs(v_d[i] - v_d[i - 1]) < 0.001 for i in range(1, len(v_d)))
-    h_same = all(abs(h_d[i] - h_d[i - 1]) < 0.001 for i in range(1, len(h_d)))
+    v_same = all(abs(v_d[i] - v_d[i - 1]) &lt; 0.001 for i in range(1, len(v_d)))
+    h_same = all(abs(h_d[i] - h_d[i - 1]) &lt; 0.001 for i in range(1, len(h_d)))
 
     if not v_same:
         vmin, vmax = v_angs[0], v_angs[-1]
@@ -210,12 +218,12 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
     intensity = max(500, min(maxval * multiplier, 5000))
 
     if image_format == 'PNG':
-        float_buffer=False
-        filepath='//' + name + '.png'
+        float_buffer = False
+        filepath = '//' + name + '.png'
     else:
-        float_buffer=True
-        filepath='//' + name + '.exr'
-        
+        float_buffer = True
+        filepath = '//' + name + '.exr'
+
     img = bpy.data.images.new(name, len(v_angs) + 2, len(h_angs),
                               float_buffer=float_buffer)
 
@@ -223,7 +231,7 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
         val = candela_mult * candela_values[i] / maxval
         img.pixels[4 * i] = img.pixels[4 * i + 1] = img.pixels[4 * i + 2] = val
 
-    bpy.ops.import_lamp.gen_exr('INVOKE_DEFAULT', 
+    bpy.ops.import_lamp.gen_exr('INVOKE_DEFAULT',
                                 image_name=img.name,
                                 intensity=intensity,
                                 lamp_cone_type=lamp_cone_type,
@@ -235,81 +243,92 @@ def read_lamp_data(log, filename, multiplier, image_format, color_temperature):
 
 
 def scale_coords(nt, sock_in, sock_out, size):
-    add = nt.nodes.new('MATH')
+    add = nt.nodes.new('ShaderNodeMath')
     add.operation = 'ADD'
     nt.links.new(add.inputs[0], sock_in)
     add.inputs[1].default_value = 1.0 / (size - 2)
 
-    mul = nt.nodes.new('MATH')
+    mul = nt.nodes.new('ShaderNodeMath')
     mul.operation = 'MULTIPLY'
     nt.links.new(mul.inputs[0], add.outputs[0])
     mul.inputs[1].default_value = (size - 2.0) / size
 
     nt.links.new(sock_out, mul.outputs[0])
 
+
 def add_h_angles(nt, x, y, out):
-    na = nt.nodes.new('MATH')
+    na = nt.nodes.new('ShaderNodeMath')
     na.operation = 'MULTIPLY'
     nt.links.new(na.inputs[0], x)
     nt.links.new(na.inputs[1], x)
 
-    nb = nt.nodes.new('MATH')
+    nb = nt.nodes.new('ShaderNodeMath')
     nb.operation = 'MULTIPLY'
     nt.links.new(nb.inputs[0], y)
     nt.links.new(nb.inputs[1], y)
 
-    nc = nt.nodes.new('MATH')
+    nc = nt.nodes.new('ShaderNodeMath')
     nc.operation = 'ADD'
     nt.links.new(nc.inputs[0], na.outputs[0])
     nt.links.new(nc.inputs[1], nb.outputs[0])
 
-    nd = nt.nodes.new('MATH')
+    nd = nt.nodes.new('ShaderNodeMath')
     nd.operation = 'POWER'
     nt.links.new(nd.inputs[0], nc.outputs[0])
     nd.inputs[1].default_value = 0.5
-    
-    nf = nt.nodes.new('MATH')
+
+    nf = nt.nodes.new('ShaderNodeMath')
     nf.operation = 'ADD'
     nt.links.new(nf.inputs[0], x)
     nt.links.new(nf.inputs[1], nd.outputs[0])
 
-    ng = nt.nodes.new('MATH')
+    ng = nt.nodes.new('ShaderNodeMath')
     ng.operation = 'DIVIDE'
     nt.links.new(ng.inputs[0], y)
     nt.links.new(ng.inputs[1], nf.outputs[0])
 
-    nh = nt.nodes.new('MATH')
+    nh = nt.nodes.new('ShaderNodeMath')
     nh.operation = 'ARCTANGENT'
     nt.links.new(nh.inputs[0], ng.outputs[0])
-    
-    nj = nt.nodes.new('MATH')
+
+    nj = nt.nodes.new('ShaderNodeMath')
     nj.operation = 'DIVIDE'
     nt.links.new(nj.inputs[0], nh.outputs[0])
     nj.inputs[1].default_value = pi
 
-    nk = nt.nodes.new('MATH')
+    nk = nt.nodes.new('ShaderNodeMath')
     nk.operation = 'ADD'
     nt.links.new(nk.inputs[0], nj.outputs[0])
     nk.inputs[1].default_value = 0.5
-    
+
     nt.links.new(out, nk.outputs[0])
 
 
-def add_img(name, intensity, lamp_cone_type, image_format, color_temperature, filepath=None, lamp_data=None):
+def add_img(name, intensity, lamp_cone_type, image_format, color_temperature,
+            filepath=None, lamp_data=None):
     if image_format != 'VCURVES':
         img = bpy.data.images[name]
         img.filepath_raw = filepath
         img.file_format = image_format
         img.save()
 
-    nt = bpy.data.node_groups.new('Lamp ' + name, 'SHADER')
-    n0 = nt.nodes.new('SEPRGB')
+    nt = bpy.data.node_groups.new("Lamp " + name, 'ShaderNodeTree')
+    
+    nt.inputs.new('NodeSocketVector', "Vector")
+    nt.inputs.new('NodeSocketFloat', "Strength")
+    
+    nt.outputs.new('NodeSocketFloat', "Intensity")
+    
+    nt_input = nt.nodes.new('NodeGroupInput')
+    nt_output = nt.nodes.new('NodeGroupOutput')
+    
+    n0 = nt.nodes.new('ShaderNodeSeparateRGB')
 
-    ne = nt.nodes.new('MATH')
+    ne = nt.nodes.new('ShaderNodeMath')
     ne.operation = 'ARCCOSINE'
     nt.links.new(ne.inputs[0], n0.outputs[2])
 
-    ni = nt.nodes.new('MATH')
+    ni = nt.nodes.new('ShaderNodeMath')
     ni.operation = 'DIVIDE'
     nt.links.new(ni.inputs[0], ne.outputs[0])
 
@@ -317,57 +336,55 @@ def add_img(name, intensity, lamp_cone_type, image_format, color_temperature, fi
         ni.inputs[1].default_value = pi
     else:  # TYPE90:
         ni.inputs[1].default_value = pi / 2
-    
+
     if image_format == 'VCURVES':
-        nt_data = nt.nodes.new('CURVE_VEC')
+        nt_data = nt.nodes.new('ShaderNodeVectorCurve')
         nt.links.new(nt_data.inputs[1], ni.outputs[0])
         for x, y in lamp_data[:-1]:
             pt = nt_data.mapping.curves[0].points.new(x, y)
             pt.handle_type = 'VECTOR'
-            
+
         if lamp_cone_type == 'TYPE180':
             nt_data.mapping.curves[0].points[-1].location[1] = lamp_data[-1][1]
             nt_data.mapping.curves[0].points[-1].handle_type = 'VECTOR'
         else:
             pt = nt_data.mapping.curves[0].points.new(0.9999, lamp_data[-1][1])
             pt.handle_type = 'VECTOR'
-            nt_data.mapping.curves[0].points[-1].location[1] = 0.5 # no light
+            nt_data.mapping.curves[0].points[-1].location[1] = 0.5  # no light
             nt_data.mapping.curves[0].points[-1].handle_type = 'VECTOR'
-        
-        nt_data_sep = nt.nodes.new('SEPRGB')
+
+        nt_data_sep = nt.nodes.new('ShaderNodeSeparateRGB')
         nt.links.new(nt_data_sep.inputs[0], nt_data.outputs[0])
         nt_data_out = nt_data_sep.outputs[0]
     else:
-        n2 = nt.nodes.new('COMBRGB')
+        n2 = nt.nodes.new('ShaderNodeCombineRGB')
         scale_coords(nt, ni.outputs[0], n2.inputs[0], img.size[0])
-        if img.size[1] > 1:
+        if img.size[1] &gt; 1:
             add_h_angles(nt, n0.outputs[0], n0.outputs[1], n2.inputs[1])
-        nt_data = nt.nodes.new('TEX_IMAGE')
+        nt_data = nt.nodes.new('ShaderNodeTexImage')
         nt_data.image = img
         nt_data.color_space = 'NONE'
         nt.links.new(nt_data.inputs[0], n2.outputs[0])
         nt_data_out = nt_data.outputs[0]
-    
-    i1 = nt.inputs.new('Vector', 'VECTOR')
-    i2 = nt.inputs.new('Strength', 'VALUE')
-    nt.links.new(n0.inputs[0], i1)
 
-    nmult = nt.nodes.new('MATH')
+
+    nt.links.new(n0.inputs[0], nt_input.outputs[0])
+
+    nmult = nt.nodes.new('ShaderNodeMath')
     nmult.operation = 'MULTIPLY'
-    nt.links.new(nmult.inputs[0], i2)
+    nt.links.new(nmult.inputs[0], nt_input.outputs[1])
 
-    o1 = nt.outputs.new('Intensity', 'VALUE')
-    nt.links.new(o1, nmult.outputs[0])
+    nt.links.new(nt_output.inputs[0], nmult.outputs[0])
 
     if lamp_cone_type == 'TYPE180' or image_format == 'VCURVES':
         nt.links.new(nmult.inputs[1], nt_data_out)
     else:  # TYPE90
-        nlt = nt.nodes.new('MATH')
+        nlt = nt.nodes.new('ShaderNodeMath')
         nlt.operation = 'LESS_THAN'
         nt.links.new(nlt.inputs[0], ni.outputs[0])
         nlt.inputs[1].default_value = 1.0
 
-        nif = nt.nodes.new('MATH')
+        nif = nt.nodes.new('ShaderNodeMath')
         nif.operation = 'MULTIPLY'
         nt.links.new(nif.inputs[0], nt_data_out)
         nt.links.new(nif.inputs[1], nlt.outputs[0])
@@ -378,22 +395,27 @@ def add_img(name, intensity, lamp_cone_type, image_format, color_temperature, fi
     lampdata.use_nodes = True
     lnt = lampdata.node_tree
 
-    #for node in lnt.nodes:
-    #    print(node)
-
-    lnt_grp = lnt.nodes.new('GROUP', group=nt)
-    lnt.nodes['Emission'].inputs[0].default_value = t2rgb(color_temperature)
-    lnt.links.new(lnt.nodes['Emission'].inputs[1], lnt_grp.outputs[0])
+    lnt_grp = lnt.nodes.new('ShaderNodeGroup')
+    lnt_grp.node_tree = nt
+    
+    
+    for node in lnt.nodes:
+        if node.bl_idname == 'ShaderNodeEmission':
+            emission_node = node
+            break
+    
+    emission_node.inputs[0].default_value = t2rgb(color_temperature)
+    lnt.links.new(emission_node.inputs[1], lnt_grp.outputs[0])
     lnt_grp.inputs[1].default_value = intensity
 
-    lnt_map = lnt.nodes.new('MAPPING')
+    lnt_map = lnt.nodes.new('ShaderNodeMapping')
     lnt_map.rotation[0] = pi
     lnt.links.new(lnt_grp.inputs[0], lnt_map.outputs[0])
 
-    lnt_geo = lnt.nodes.new('NEW_GEOMETRY')
+    lnt_geo = lnt.nodes.new('ShaderNodeNewGeometry')
     lnt.links.new(lnt_map.inputs[0], lnt_geo.outputs[1])
 
-    lamp = bpy.data.objects.new('Lamp ' + name, lampdata)
+    lamp = bpy.data.objects.new("Lamp " + name, lampdata)
     lamp.location = bpy.context.scene.cursor_location
     bpy.context.scene.objects.link(lamp)
 
@@ -411,14 +433,12 @@ from bpy.props import StringProperty, FloatProperty, EnumProperty, IntProperty
 from bpy.types import Operator
 
 format_prop_items = (
+    ('VCURVES', "Vector Curves", "Save lamp data in Vector Curves node"),
     ('OPEN_EXR', "EXR", "Save images to EXR format (up to 5 textures)"),
     ('PNG', "PNG", "Save images to PNG format")
 )
-format_prop_default = 'PNG'
 
-if bpy.app.build_revision >= b'52886':
-    format_prop_items += (('VCURVES', "Vector Curves", "Save lamp data in Vector Curves node"), )
-    format_prop_default = 'VCURVES'
+format_prop_default = 'VCURVES'
 
 
 class ImportIES(Operator, ImportHelper):
@@ -433,22 +453,23 @@ class ImportIES(Operator, ImportHelper):
         description="Multiplier for lamp strength",
         default=1.0,
     )
-    
+
     image_format = EnumProperty(
         name='Convert to',
-        items=format_prop_items, 
+        items=format_prop_items,
         default=format_prop_default,
     )
-    
+
     color_temperature = IntProperty(
         name="Color Temperature",
-        description="Color temperature of lamp, 3000=soft white, 5000=cool white, 6500=daylight",
+        description="Color temperature of lamp, 3000=soft white, "
+                    "5000=cool white, 6500=daylight",
         default=6500,
     )
-    
+
     def execute(self, context):
-        return read_lamp_data(self.report, self.filepath, self.lamp_strength, 
-            self.image_format, self.color_temperature)
+        return read_lamp_data(self.report, self.filepath, self.lamp_strength,
+                              self.image_format, self.color_temperature)
 
 
 class ExportLampEXR(Operator, ExportHelper):
@@ -468,10 +489,10 @@ class ExportLampEXR(Operator, ExportHelper):
     use_filter_image = True
 
     def execute(self, context):
-        return add_img(name=self.image_name, 
+        return add_img(name=self.image_name,
                        intensity=self.intensity,
-                       lamp_cone_type=self.lamp_cone_type, 
-                       image_format=self.image_format, 
+                       lamp_cone_type=self.lamp_cone_type,
+                       image_format=self.image_format,
                        color_temperature=self.color_temperature,
                        filepath=self.filepath)
 
@@ -501,6 +522,6 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-    
+
     # test call
-    # bpy.ops.import_lamp.ies('INVOKE_DEFAULT')
+    # bpy.ops.import_lamp.ies('INVOKE_DEFAULT')</pre></body></html>

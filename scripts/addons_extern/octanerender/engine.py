@@ -361,7 +361,7 @@ class OctaneRenderEngine(bpy.types.RenderEngine):
                         result.layers[0].load_from_file(o_pngFile)
                     except:
                         log ('Unable to load image from file: %s' % o_pngFile)
-                    self.end_result(result)
+                    self.end_result(result, False)
                     self.update_stats('', 'Octane: last frame/export took %s, now rendering frame# %d (see console for progress), please wait...' % (elapsed_short(frame_time),frameRunning + scene.frame_step))
                     renderRunning = False
                     # That was last frame to render

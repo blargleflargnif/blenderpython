@@ -742,12 +742,42 @@ def addProperties():
     bpy.types.Material.OCT_power = FloatProperty(
         name="Power",
         description="Emitter Power",
-        min=0.0, max=100.0, step = 1.0, default=1.0)
+        min=0.0, max=100000.0, step = 1.0, default=1.0)
 
     bpy.types.Material.OCT_normalize = BoolProperty(
         name="Normalize",
         description="Emitter Normalize",
         default=False)
+
+    bpy.types.Material.OCT_distribution = FloatProperty(
+        name="Distribution",
+        description="Emitter Distribution",
+        min=0.0, max=1.0, step = 0.01, default=1.0)
+
+    bpy.types.Material.OCT_efficiencyortexture = FloatProperty(
+        name="Efficiency",
+        description="Emitter Efficiency",
+        min=0.0, max=1.0, step = 0.01, default=0.025)
+
+    bpy.types.Material.OCT_orientationpitch = FloatProperty(
+        name="Orientation pitch",
+        description="Emitter Orientation pitch",
+        min=-180.0, max=180.0, step = 1.00, default=0.0)
+
+    bpy.types.Material.OCT_orientationyaw = FloatProperty(
+        name="Orientation yaw",
+        description="Emitter Orientation yaw",
+        min=-180.0, max=180.0, step = 1.00, default=0.0)
+
+    bpy.types.Material.OCT_orientationroll = FloatProperty(
+        name="Orientation roll",
+        description="Emitter Orientation roll",
+        min=-180.0, max=180.0, step = 1.00, default=0.0)
+
+    bpy.types.Material.OCT_samplingrate = FloatProperty(
+        name="Sampling rate",
+        description="Emitter Sampling rate",
+        min=0.0001, max=10000.0, step = 1.00, default=1.0)
 
 
 

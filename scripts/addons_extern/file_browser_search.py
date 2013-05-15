@@ -1,4 +1,6 @@
-# file_brower_search.py Copyright (C) 2012, Jakub Zolcik
+
+<!-- saved from url=(0040)http://allblue.pl/file_browser_search.py -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><style type="text/css"></style></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;"># file_brower_search.py Copyright (C) 2012, Jakub Zolcik
 #
 # Relaxes selected vertices while retaining the shape as much as possible
 #
@@ -31,7 +33,7 @@ bl_info = {
     "description": "Allows You to find files in File Browser by name.",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/User:Sftd/Extensions:2.6/Py/Scripts/Import-Export/File_Browser_Search",
-    "tracker_url": "http://projects.blender.org/tracker/?func=detail&aid=30386&group_id=153&atid=467",
+    "tracker_url": "http://projects.blender.org/tracker/?func=detail&amp;aid=30386&amp;group_id=153&amp;atid=467",
     "category": "Import-Export"}
 
 """
@@ -66,7 +68,7 @@ def fileSearch(self, context):
         return None
     
     pattern = ""
-    if(len(filter) < 3):
+    if(len(filter) &lt; 3):
         pattern = (filter.lower() + r".*\..*")
     else:
         pattern = (r".*" + filter.lower() + r".*\..*")
@@ -83,7 +85,7 @@ def fileSearch(self, context):
     if context.window_manager.file_searchtree:
         for path, dirs, files in os.walk(directory):
             cd += 1
-            if cd > maxd:
+            if cd &gt; maxd:
                 break
             for filename in files:
                 filename = (os.path.join(path, filename))[dlen:]
@@ -94,13 +96,13 @@ def fileSearch(self, context):
                     p.name = filename
                     if context.blend_data.scenes[0].file_hideextensions:
                         ind = filename.rfind(".")
-                        if ind > -1:
+                        if ind &gt; -1:
                             filename = filename[0:ind]
                     p.dname = filename
                     cf+=1
-                if(cf>=maxf):
+                if(cf&gt;=maxf):
                     break
-            if(cf>=maxf):
+            if(cf&gt;=maxf):
                 break;
             
     else:
@@ -111,7 +113,7 @@ def fileSearch(self, context):
                 p.name = filename
                 if context.blend_data.scenes[0].file_hideextensions:
                     ind = filename.rfind(".")
-                    if ind > -1:
+                    if ind &gt; -1:
                         filename = filename[0:ind]
                 p.dname = filename
     
@@ -119,22 +121,52 @@ def fileSearch(self, context):
 
 def blendDataFromFile(file, part):
     with bpy.data.libraries.load(file) as (data_from, data_to):
-        if part == "Brush":
+        if (part == "Action"):
+            return data_from.actions
+        elif part == "Armature":
+            return data_from.brushes        
+        elif part == "Brush":
             return data_from.brushes
         elif part == "Camera":
             return data_from.cameras
+        elif part == "Curve":
+            return data_from.curves
+        elif part == "Font":
+            return data_from.fonts
+        elif part == "Group":
+            return data_from.groups
+        elif part == "Image":
+            return data_from.images
         elif part == "Lamp":        
             return data_from.lamps
+        elif part == "Lattice":
+            return data_from.lattices
+        elif part == "Library":
+            return data_from.libraries
+        elif part == "FreestyleLineStyle":
+            return data_from.linestyles
+        elif part == "Mask":
+            return data_from.masks
         elif part == "Material":
             return data_from.materials
         elif part == "Mesh":
             return data_from.meshes
-        elif part == "MovieClip":
-            return data_from.movieclips
+        elif part == "NodeTree":
+            return data_from.node_groups
         elif part == "Object":
             return data_from.objects
+        elif part == "Particle":
+            return data_from.particles
         elif part == "Scene":
             return data_from.scenes
+        elif part == "Screen":
+            return data_from.screens
+        elif part == "Script":
+            return data_from.scripts
+        elif part == "Sound":
+            return data_from.sounds
+        elif part == "Speaker":
+            return data_from.speakers
         elif part == "Text":
             return data_from.texts
         elif part == "Texture":
@@ -179,7 +211,7 @@ def notFileSearch(self, context):
     data = blendDataFromFile(file, part)
     
     pattern = ""
-    if(len(filter) < 3):
+    if(len(filter) &lt; 3):
         pattern = (filter.lower() + r".*")
     else:
         pattern = (r".*" + filter.lower() + r".*")
@@ -260,14 +292,14 @@ class FilteredSearchPanel(bpy.types.Panel):
             op.fname = f.name
             op.fexec = context.blend_data.scenes[0].file_autoexecute
             it+=1
-            if tr < r:
+            if tr &lt; r:
                 if it % (incolumn + 1) == 0:
                     tr+=1
-                    if(it<length):
+                    if(it&lt;length):
                         col = row.column()
             else:
                 if (it - tr) % incolumn == 0:
-                    if(it<length):
+                    if(it&lt;length):
                         col = row.column()
 
         layout.prop(context.blend_data.scenes[0], "file_autoexecute")
@@ -305,3 +337,4 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+</pre></body></html>

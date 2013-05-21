@@ -228,3 +228,6 @@ Copy Particles to Rigid Bodies (copy_particles_to_sim.py) -- by liero
 	
 Amaranth Toolset (scene_amaranth_toolset.py) -- by Pablo Vazquez (venomgfx)
 	https://github.com/venomgfx/amaranth
+	
+Constellation (oscurart_constellation.py) -- by Oscurart
+	http://oscurart.blogspot.com/2013/05/blender-addon-constellation.html

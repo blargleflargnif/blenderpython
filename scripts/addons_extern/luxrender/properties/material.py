@@ -490,8 +490,7 @@ class luxrender_material(declarative_property_group):
 			return self.exportNodetree(scene, lux_context, material, mode)
 		
 		with MaterialCounter(material.name):
-			#if not (mode=='indirect' and material.name in ExportedMaterials.exported_material_names):
-			if not (material.name in ExportedMaterials.exported_material_names):
+			if not (mode=='indirect' and material.name in ExportedMaterials.exported_material_names):
 				if self.type == 'mix':
 					# First export the other mix mats
 					m1_name = self.luxrender_mat_mix.namedmaterial1_material

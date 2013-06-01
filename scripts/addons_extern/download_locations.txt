@@ -232,3 +232,7 @@ Amaranth Toolset (scene_amaranth_toolset.py) -- by Pablo Vazquez (venomgfx)
 Constellation (oscurart_constellation.py) -- by Oscurart
 	http://oscurart.blogspot.com/2013/05/blender-addon-constellation.html
 	http://www.blenderartists.org/forum/showthread.php?291103
+
+Bullet Viewport Constraints Tool (Bullet_Viewport_Constraints_Tool-0374-Deactivation.py) -- by Bashi
+	http://blenderartists.org/forum/showthread.php?275823-WIP-Bullet-Constraints-Tools-0-3-7
+	https://www.dropbox.com/s/5wcu1howiyv4msg/Bullet_Viewport_Constraints_Tool-0374-Deactivation.py.zip

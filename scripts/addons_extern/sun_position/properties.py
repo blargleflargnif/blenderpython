@@ -42,11 +42,20 @@ class SunClass:
         azimuth = 0.0
         elevation = 0.0
 
+    class CLAMP:
+        tex_location = None
+        elevation = 0.0
+        azimuth = 0.0
+        azStart = 0.0
+        azDiff = 0.0
+
     Sunrise = TazEl()
     Sunset = TazEl()
     SolarNoon = TazEl()
     RiseSetOK = False
 
+    Bind = CLAMP()
+    BindToSun = False
     PlaceLabel = "Time & Place"
     PanelLabel = "Panel Location"
     MapName = "WorldMapLR.jpg"
@@ -59,6 +68,9 @@ class SunClass:
     AzNorth = 0.0
     Phi = 0.0
     Theta = 0.0
+    LX = 0.0
+    LY = 0.0
+    LZ = 0.0
 
     Month = 0
     Day = 0
@@ -80,6 +92,7 @@ class SunClass:
 
     UseSkyTexture = False
     SkyTexture = "Sky Texture"
+    HDR_texture = "Environment Texture"
 
     UseObjectGroup = False
     ObjectGroup = 'ECLIPTIC'
@@ -228,6 +241,35 @@ class SunPosSettings(bpy.types.PropertyGroup):
         name="sunSky",
         description="Name of sky texture to be used")
 
+    ShowHdr = bpy.props.BoolProperty(
+        description="Click to set sun location on environment texture",
+        default=False)
+
+    HDR_texture = StringProperty(
+        default="Environment Texture",
+        name="envSky",
+        description="Name of texture to use. World nodes must be enabled "
+                    "and color set to Environment Texture")
+
+    HDR_azimuth = FloatProperty(
+        attr="",
+        name="Rotation",
+        description="Rotation angle of sun and environment texture "
+                    "in degrees or radians from scene's units settings",
+        unit="ROTATION",
+        step=1.00, default=0.00, precision=3)
+
+    HDR_elevation = FloatProperty(
+        attr="",
+        name="Elevation",
+        description="Elevation angle of sun",
+        step=3.001,
+        default=0.000, precision=3)
+
+    BindToSun = bpy.props.BoolProperty(
+        description="If true, Environment texture moves with sun.",
+        default=False)
+
     UseObjectGroup = bpy.props.BoolProperty(
         description="Allow a group of objects to be positioned.",
         default=False)
@@ -261,6 +303,15 @@ class SunPosSettings(bpy.types.PropertyGroup):
 
 class SunPosPreferences(bpy.types.PropertyGroup):
     from bpy.props import StringProperty, EnumProperty
+
+    UsageMode = EnumProperty(
+        name="Usage mode",
+        description="operate in normal mode or environment texture mode",
+        items=(
+            ('NORMAL', "Normal", ""),
+            ('HDR', "Sun + HDR texture", ""),
+            ),
+        default='NORMAL')
 
     MapLocation = EnumProperty(
         name="Map location",

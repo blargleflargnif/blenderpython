@@ -3,7 +3,7 @@ import datetime
 
 from . properties import *
 from . operators import *
-from . sun_calc import Degrees, format_lat_long, \
+from . sun_calc import Degrees, format_lat_long, degToRad, \
                        format_time, format_hms, Move_sun
 
 #---------------------------------------------------------------------------
@@ -44,6 +44,8 @@ class SunPos_Panel(bpy.types.Panel):
         if Map.init_zoom_preference:
             Map.zoom_preferences(bpy.context.user_preferences.inputs.invert_zoom_wheel,
                              bpy.context.user_preferences.inputs.invert_mouse_zoom)
+            Hdr.zoom_preferences(bpy.context.user_preferences.inputs.invert_zoom_wheel,
+                             bpy.context.user_preferences.inputs.invert_mouse_zoom)
         row = self.layout.row()
         if p.UseOneColumn:
             col1 = row.column()
@@ -67,30 +69,36 @@ class SunPos_Panel(bpy.types.Panel):
         row.alignment = 'CENTER'
         row.label(text="Preferences")
         col = box.column(align=True)
-        cb = col.box()
-        tr = cb.row()
-        rr = tr.row(align=True)
-        cs = rr.split()
-        cl = cs.column()
-        cr = cs.column()
-        cl.label(text="World map options:")
-        cl.operator_menu_enum('world.wmp_operator',
-                      'mapPresets', text=Sun.MapName)
-        cr.label(text="Display map in:")
-        cr.props_enum(p, "MapLocation")
+        col.label(text="Usage mode:")
+        col.props_enum(p, "UsageMode")
         col.separator()
-        col.label(text="Show or use:")
-        col.alignment = 'LEFT'
-        col.prop(p, "UseOneColumn", text="Single column mode")
-        col.prop(p, "UseTimePlace", text="Time/place presets")
-        col.prop(p, "UseObjectGroup", text="Object group")
-        col.prop(p, "ShowDMS", text="D\xb0 M' S\"")
-        col.prop(p, "ShowNorth", text="North offset")
-        col.prop(p, "ShowRefraction", text="Refraction")
-        col.prop(p, "ShowAzEl", text="Azimuth, elevation")
-        col.prop(p, "ShowDST", text="Daylight savings time")
-        col.prop(p, "ShowRiseSet", text="Sunrise, sunset")
-        col.separator()
+
+        if p.UsageMode == "NORMAL":
+            cb = col.box()
+            tr = cb.row()
+            rr = tr.row(align=True)
+            cs = rr.split()
+            cl = cs.column()
+            cr = cs.column()
+                
+            cl.label(text="World map options:")
+            cl.operator_menu_enum('world.wmp_operator',
+                          'mapPresets', text=Sun.MapName)
+            cr.label(text="Display map in:")
+            cr.props_enum(p, "MapLocation")
+            col.separator()
+            col.label(text="Show or use:")
+            col.alignment = 'LEFT'
+            col.prop(p, "UseOneColumn", text="Single column mode")
+            col.prop(p, "UseTimePlace", text="Time/place presets")
+            col.prop(p, "UseObjectGroup", text="Object group")
+            col.prop(p, "ShowDMS", text="D\xb0 M' S\"")
+            col.prop(p, "ShowNorth", text="North offset")
+            col.prop(p, "ShowRefraction", text="Refraction")
+            col.prop(p, "ShowAzEl", text="Azimuth, elevation")
+            col.prop(p, "ShowDST", text="Daylight savings time")
+            col.prop(p, "ShowRiseSet", text="Sunrise, sunset")
+            col.separator()
         col.operator('world.sunpos_pref_done', 'Done', icon='QUIT')
         Sun.ShowRiseSet = p.ShowRiseSet
 
@@ -115,10 +123,83 @@ class SunPos_Panel(bpy.types.Panel):
                 Display.setAction('ENABLE')
 
     def draw_panel(self, context, sp, p, layout):
-        if p.UseOneColumn:
+        if p.UsageMode == "HDR":
+            self.draw_environ_panel(context, sp, p, layout)
+        elif p.UseOneColumn:
             self.draw_one_column(context, sp, p, layout)
         else:
             self.draw_two_columns(context, sp, p, layout)
+
+    def draw_environ_panel(self, context, sp, p, layout):
+        box = self.layout.box()
+        toprow = box.row()
+        row = toprow.row(align=False)
+        row.alignment = 'CENTER'
+        col = row.column(align=True)
+        have_texture = False
+
+        try:
+            col.separator()
+            col.label(text="Use environment texture:")
+            col.prop_search(sp, "HDR_texture",
+                context.scene.world.node_tree, "nodes", text="")
+            col.separator()
+            try:
+                nt = bpy.context.scene.world.node_tree.nodes
+                envTex = nt.get(sp.HDR_texture)
+                if envTex:
+                    if envTex.type == "TEX_ENVIRONMENT":
+                        if envTex.image != None:
+                            have_texture = True
+                    if Sun.Bind.azDiff == 0:
+                        if envTex.texture_mapping.rotation.z == 0.0:
+                            Sun.Bind.azDiff = degToRad(90.0)
+            except:
+                pass
+        except:
+            pass
+        try:
+            col.label(text="Use sun object:")
+            col.prop_search(sp, "SunObject",
+                context.scene, "objects", text="")
+            Sun.SunObject = sp.SunObject
+        except:
+            pass
+
+        
+        col.separator()
+        col.prop(sp, "SunDistance")
+        if not sp.BindToSun:
+            col.prop(sp, "HDR_elevation")
+        col.prop(sp, "HDR_azimuth")
+        col.separator()
+        toprow1 = box.row()
+        row1 = toprow1.row(align=False)
+        row1.alignment = 'CENTER'
+        if not sp.BindToSun:
+            row1.prop(sp, "BindToSun", toggle=True, icon="CONSTRAINT",
+                text="Bind Texture to Sun ")
+        else:
+            row1.prop(sp, "BindToSun", toggle=True, icon="CONSTRAINT",
+                text="Release binding")
+
+        toprow2 = box.row()
+        row2 = toprow2.row(align=False)
+        row2.alignment = 'CENTER'
+        row2.prop(sp, "ShowHdr", text="Sync Sun to Texture", toggle=True, icon='LAMP_SUN')
+        if have_texture == False:
+            row2.enabled = False
+        elif sp.BindToSun:
+            row2.enabled = False
+        else:
+            row2.enabled = True
+        if have_texture == False:
+            row1.enabled = False
+        elif sp.ShowHdr:
+            row1.enabled = False
+        else:
+            row1.enabled = True
+        
 
     def draw_one_column(self, context, sp, p, layout):
         box = self.layout.box()
@@ -434,6 +515,7 @@ class SunPos_OT_PreferencesDone(bpy.types.Operator):
     def execute(self, context):
         Display.setAction('ENABLE')
         p = context.scene.SunPos_pref_property
+        Sun.UsageMode = p.UsageMode
         Sun.MapLocation = p.MapLocation
         if not p.UseObjectGroup:
             sp = context.scene.SunPos_property
@@ -567,9 +649,7 @@ class SunPos_OT_MapChoice(bpy.types.Operator):
     bl_idname = "world.wmp_operator"
     bl_label = "World map files"
 
-    wmp = [["4096 x 2048", "WorldMapHR.jpg"],
-         ["1024 x 512", "WorldMap.png"],
-         ["1536 x 768", "WorldMap.jpg"],
+    wmp = [["1536 x 768", "WorldMap.jpg"],
          ["768 x 384", "WorldMapLR.jpg"],
          ["512 x 256", "WorldMapLLR.jpg"],
          ["Textureless", "None"]]
@@ -580,8 +660,6 @@ class SunPos_OT_MapChoice(bpy.types.Operator):
         name="World map presets",
         description="world map files",
         items=(
-            ("5", wmp[5][0], ""),
-            ("4", wmp[4][0], ""),
             ("3", wmp[3][0], ""),
             ("2", wmp[2][0], ""),
             ("1", wmp[1][0], ""),

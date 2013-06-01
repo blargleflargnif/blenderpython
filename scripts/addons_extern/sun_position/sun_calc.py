@@ -1,4 +1,3 @@
-
 from mathutils import *
 import math
 import datetime
@@ -67,6 +66,43 @@ def format_lat_long(latLong, isLatitude):
 
 
 def Move_sun():
+    if Sun.PP.UsageMode == "HDR":
+        Sun.Theta = math.pi / 2 - degToRad(Sun.Elevation)
+        Sun.Phi = -Sun.Azimuth
+
+        locX = math.sin(Sun.Phi) * math.sin(-Sun.Theta) * Sun.SunDistance
+        locY = math.sin(Sun.Theta) * math.cos(Sun.Phi) * Sun.SunDistance
+        locZ = math.cos(Sun.Theta) * Sun.SunDistance
+
+        try:
+            nt = bpy.context.scene.world.node_tree.nodes
+            envTex = nt.get(Sun.HDR_texture)
+            if Sun.Bind.azDiff and envTex.texture_mapping.rotation.z == 0.0:
+                envTex.texture_mapping.rotation.z = Sun.Bind.azDiff
+
+            if envTex and Sun.BindToSun:
+                az = Sun.Azimuth
+                if Sun.Bind.azStart < az:
+                    taz = az - Sun.Bind.azStart
+                else:
+                    taz = -(Sun.Bind.azStart - az)
+                envTex.texture_mapping.rotation.z += taz
+                Sun.Bind.azStart = az
+
+            obj = bpy.context.scene.objects.get(Sun.SunObject)
+
+            try:
+                obj.location = locX, locY, locZ
+            except:
+                pass
+
+            if obj.type == 'LAMP':
+                obj.rotation_euler = (
+                    (math.radians(Sun.Elevation - 90), 0, -Sun.Azimuth))
+        except:
+            pass
+        return True
+
     totalObjects = len(Sun.Selected_objects)
 
     localTime = Sun.Time
@@ -95,7 +131,9 @@ def Move_sun():
                 locX = math.sin(Sun.Phi) * math.sin(-Sun.Theta)
                 locY = math.sin(Sun.Theta) * math.cos(Sun.Phi)
                 locZ = math.cos(Sun.Theta)
+                sunTex.texture_mapping.rotation.z = 0.0
                 sunTex.sun_direction = locX, locY, locZ
+
         except:
             pass
 

@@ -24,7 +24,7 @@
 # freely by the public as outlined in their policies at
 #               www.nws.noaa.gov/disclaimer.php
 # --------------------------------------------------------------------------
-# The world map images have been composited from two NASA images. 
+# The world map images have been composited from two NASA images.
 # NASA's image use policy can be found at:
 # http://www.nasa.gov/audience/formedia/features/MP_Photo_Guidelines.html
 # --------------------------------------------------------------------------
@@ -34,7 +34,7 @@
 bl_info = {
     "name": "Sun Position",
     "author": "Michael Martin",
-    "version": (2, 0, 4),
+    "version": (3, 0, 1),
     "blender": (2, 6, 5),
     "api": 53207,
     "location": "World > Sun Position",
@@ -46,15 +46,16 @@ bl_info = {
         "index.php?func=detail&aid=29714",
     "category": "3D View"}
 
+import bpy
 from . properties import *
 from . ui_sun import *
 from . map import SunPos_Help
+from . hdr import SunPos_HdrHelp
 
 ############################################################################
 
 
 def register():
-    import bpy
     bpy.utils.register_class(SunPosSettings)
     bpy.types.Scene.SunPos_property = (
         bpy.props.PointerProperty(type=SunPosSettings,
@@ -74,16 +75,19 @@ def register():
     bpy.utils.register_class(SunPos_OT_ClearObjectGroup)
     bpy.utils.register_class(SunPos_OT_TimePlace)
     bpy.utils.register_class(SunPos_OT_Map)
+    bpy.utils.register_class(SunPos_OT_Hdr)
     bpy.utils.register_class(SunPos_Panel)
     bpy.utils.register_class(SunPos_OT_MapChoice)
     bpy.utils.register_class(SunPos_Help)
+    bpy.utils.register_class(SunPos_HdrHelp)
 
 
 def unregister():
-    import bpy
+    bpy.utils.unregister_class(SunPos_HdrHelp)
     bpy.utils.unregister_class(SunPos_Help)
     bpy.utils.unregister_class(SunPos_OT_MapChoice)
     bpy.utils.unregister_class(SunPos_Panel)
+    bpy.utils.unregister_class(SunPos_OT_Hdr)
     bpy.utils.unregister_class(SunPos_OT_Map)
     bpy.utils.unregister_class(SunPos_OT_TimePlace)
     bpy.utils.unregister_class(SunPos_OT_ClearObjectGroup)

@@ -5,6 +5,7 @@ from . properties import *
 from . sun_calc import Move_sun
 from . north import *
 from . map import Map
+from . hdr import Hdr
 
 # ---------------------------------------------------------------------------
 
@@ -33,20 +34,18 @@ class ControlClass:
                 Display.setAction('ENABLE')
                 Sun.SP.IsActive = False
                 Map.deactivate()
+                Hdr.deactivate()
                 return {'FINISHED'}
         else:
             self.report({'WARNING'}, "Context not available")
             return {'CANCELLED'}
 
     def add_handler(self, context):
-        #self.handler = self.region.callback_add(self.callback,
-        #                      (self, context))
         self.handler = bpy.types.SpaceView3D.draw_handler_add(self.callback,
                               (self, context), 'WINDOW', 'POST_PIXEL')
 
     def remove_handler(self):
         if self.handler:
-            #self.region.callback_remove(self.handler)
             bpy.types.SpaceView3D.draw_handler_remove(self.handler, 'WINDOW')
         self.handler = None
 
@@ -75,6 +74,35 @@ class ControlClass:
             except:
                 pass
 
+        if Sun.PP.UsageMode == "HDR":
+            if sp.BindToSun != Sun.BindToSun:
+                Sun.BindToSun = sp.BindToSun
+                if Sun.BindToSun:
+                    nt = bpy.context.scene.world.node_tree.nodes
+                    envTex = nt.get(sp.HDR_texture)
+                    if envTex:
+                        if envTex.type == "TEX_ENVIRONMENT":
+                            Sun.Bind.tex_location = envTex.texture_mapping.rotation
+                            Sun.Bind.azStart = sp.HDR_azimuth
+                            obj = bpy.context.scene.objects.get(Sun.SunObject)
+                Sun.HDR_texture = sp.HDR_texture
+                Sun.Elevation = sp.HDR_elevation
+                Sun.Azimuth = sp.HDR_azimuth
+                Sun.Bind.elevation = sp.HDR_elevation
+                Sun.Bind.azimuth = sp.HDR_azimuth
+                Sun.SunDistance = sp.SunDistance
+                return True
+            if (sp.HDR_elevation != Sun.Bind.elevation or
+                sp.HDR_azimuth != Sun.Bind.azimuth or
+                sp.SunDistance != Sun.SunDistance):
+                Sun.Elevation = sp.HDR_elevation
+                Sun.Azimuth = sp.HDR_azimuth
+                Sun.Bind.elevation = sp.HDR_elevation
+                Sun.Bind.azimuth = sp.HDR_azimuth
+                Sun.SunDistance = sp.SunDistance
+                return True
+            return False
+
         if (rv or sp.Time != Sun.Time or
             sp.TimeSpread != Sun.TimeSpread or
             sp.SunDistance != Sun.SunDistance or
@@ -84,6 +112,7 @@ class ControlClass:
             sp.Year != Sun.Year or
             sp.UseSkyTexture != Sun.UseSkyTexture or
             sp.SkyTexture != Sun.SkyTexture or
+            sp.HDR_texture != Sun.HDR_texture or
             sp.UseSunObject != Sun.UseSunObject or
             sp.SunObject != Sun.SunObject or
             sp.UseObjectGroup != Sun.UseObjectGroup or
@@ -102,6 +131,7 @@ class ControlClass:
             Sun.Year = sp.Year
             Sun.UseSkyTexture = sp.UseSkyTexture
             Sun.SkyTexture = sp.SkyTexture
+            Sun.HDR_texture = sp.HDR_texture
             Sun.UseSunObject = sp.UseSunObject
             Sun.SunObject = sp.SunObject
             Sun.UseObjectGroup = sp.UseObjectGroup
@@ -141,6 +171,14 @@ class SunPos_OT_Controller(bpy.types.Operator):
             elif Map.isActive:
                 Map.deactivate()
 
+            if Sun.SP.ShowHdr:
+                if not Hdr.isActive:
+                    Sun.SP.BindToSun = False
+                    if not Hdr.activate(context):
+                        Sun.SP.ShowHdr = False
+            elif Hdr.isActive:
+                Hdr.deactivate()
+
             if Sun.SP.ShowNorth:
                 if not North.isActive:
                     North.activate(context)
@@ -156,6 +194,7 @@ class SunPos_OT_Controller(bpy.types.Operator):
 
         Sun.verify_ObjectGroup()
         Map.init(Sun.PP.MapLocation)
+        Hdr.init()
         retval = Controller.activate(context)
         if retval != {'RUNNING_MODAL'}:
             return retval
@@ -196,6 +235,28 @@ class SunPos_OT_Map(bpy.types.Operator):
 ############################################################################
 
 
+class SunPos_OT_Hdr(bpy.types.Operator):
+    bl_idname = "sunpos.hdr"
+    bl_label = "HDR map"
+
+    def modal(self, context, event):
+        if Hdr.view3d_area != context.area or not Sun.SP.ShowHdr:
+            Hdr.deactivate()
+            Display.refresh()
+            return {'FINISHED'}
+        elif not Display.PANEL:
+            Stop_all_handlers()
+            return {'FINISHED'}
+        return  Hdr.event_controller(context, event)
+
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+        Display.refresh()
+        return {'RUNNING_MODAL'}
+
+############################################################################
+
+
 def SunPos_new_blendfile(context):
     Stop_all_handlers()
     Cleanup_objects()
@@ -221,6 +282,7 @@ def Cleanup_objects():
 def Stop_all_handlers():
     North.deactivate()
     Map.deactivate()
+    Hdr.deactivate()
 
     if Sun.Frame_handler is not None:
         try:
@@ -238,10 +300,10 @@ def Stop_all_handlers():
 
 ############################################################################
 # The Frame_handler is called while rendering when the scene changes
-# to make sure objects are updated according to any keyframes. Touching
-# the scene cursor is enough to force the update done in Display.refresh()
+# to make sure objects are updated according to any keyframes.
 ############################################################################
 
 
 def Frame_handler(context):
-    Display.refresh()
+    Controller.panel_changed()
+    Move_sun()

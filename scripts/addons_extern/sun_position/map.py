@@ -116,17 +116,17 @@ class MapClass:
     def zoom_preferences(self, invert_zoom_wheel, invert_mouse_zoom):
         self.init_zoom_preference = False
         if invert_zoom_wheel:
-           self.zoom.wheel_up = 'OUT'
-           self.zoom.wheel_down = 'IN'
+            self.zoom.wheel_up = 'OUT'
+            self.zoom.wheel_down = 'IN'
         else:
-           self.zoom.wheel_up = 'IN'
-           self.zoom.wheel_down = 'OUT'
+            self.zoom.wheel_up = 'IN'
+            self.zoom.wheel_down = 'OUT'
         if invert_mouse_zoom:
-           self.zoom.mouse_up = 'IN'
-           self.zoom.mouse_down = 'OUT'
+            self.zoom.mouse_up = 'IN'
+            self.zoom.mouse_down = 'OUT'
         else:
-           self.zoom.mouse_up = 'OUT'
-           self.zoom.mouse_down = 'IN'
+            self.zoom.mouse_up = 'OUT'
+            self.zoom.mouse_down = 'IN'
 
     def reset(self, location):
         self.init(location)
@@ -157,17 +157,15 @@ class MapClass:
         self.image.free_it = False
 
     def clear_callbacks(self):
+        if self.mapLocation == 'PANEL':
+            pl = bpy.types.SpaceProperties
+        else:
+            pl = bpy.types.SpaceView3D
         if self.handler2 is not None:
-            if self.mapLocation == 'PANEL':
-                bpy.types.SpaceProperties.draw_handler_remove(self.handler2, 'WINDOW')
-            else:
-                bpy.types.SpaceView3D.draw_handler_remove(self.handler2, 'WINDOW')
+            pl.draw_handler_remove(self.handler2, 'WINDOW')
             self.handler2 = None
         if self.handler1 is not None:
-            if self.mapLocation == 'PANEL':
-                bpy.types.SpaceProperties.draw_handler_remove(self.handler1, 'WINDOW')
-            else:
-                bpy.types.SpaceView3D.draw_handler_remove(self.handler1, 'WINDOW')
+            pl.draw_handler_remove(self.handler1, 'WINDOW')
             self.handler1 = None
 
     def set_view3d_area(self, area):
@@ -214,10 +212,12 @@ class MapClass:
     def activateBGLcallback(self, context):
         if self.mapLocation == 'PANEL':
             self.handler2 = bpy.types.SpaceProperties.draw_handler_add(
-                                Draw_map_callback, (self, context), 'WINDOW', 'POST_PIXEL')
+                                Draw_map_callback,
+                                (self, context), 'WINDOW', 'POST_PIXEL')
         else:
-            self.handler2 =  bpy.types.SpaceView3D.draw_handler_add(
-                                Draw_map_callback, (self, context), 'WINDOW', 'POST_PIXEL')
+            self.handler2 = bpy.types.SpaceView3D.draw_handler_add(
+                                Draw_map_callback,
+                                (self, context), 'WINDOW', 'POST_PIXEL')
         self.view3d_area = context.area
         self.set_view3d_area(self.view3d_area)
         bpy.ops.sunpos.map('INVOKE_DEFAULT')
@@ -306,16 +306,19 @@ class MapClass:
         if Sun.ShowRiseSet:
             fy -= 10
             fy = text_line(fx, fy, True, tColor, "Solar Noon:")
-            fy = text_line(fx + 14, fy, True,  vColor, format_hms(Sun.SolarNoon.time))
+            fy = text_line(fx + 14, fy, True,  vColor,
+                           format_hms(Sun.SolarNoon.time))
             fy -= 10
             fy = text_line(fx, fy, False, tColor, "Rise: ")
             if Sun.RiseSetOK:
-                fy = text_line(fx + 40, fy, True, vColor, format_hms(Sun.Sunrise.time))
+                fy = text_line(fx + 40, fy, True, vColor,
+                               format_hms(Sun.Sunrise.time))
             else:
                 fy = text_line(fx + 40, fy, True, vColor, "--------")
             fy = text_line(fx, fy, False, tColor, " Set: ")
             if Sun.RiseSetOK:
-                fy = text_line(fx + 40, fy, True, vColor, format_hms(Sun.Sunset.time))
+                fy = text_line(fx + 40, fy, True, vColor,
+                               format_hms(Sun.Sunset.time))
             else:
                 fy = text_line(fx + 40, fy, True, vColor, "--------")
 
@@ -896,8 +899,10 @@ def Map_load_callback(self, context):
     if Map.start:
         def set_region_data():
             Map.activateBGLcallback(context)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
+            bgl.glTexParameteri(bgl.GL_TEXTURE_2D,
+                                bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
+            bgl.glTexParameteri(bgl.GL_TEXTURE_2D,
+                                bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
             Map.object[0].set_dimensions(0)
             Map.toolProps = None
             Map.toolPropsWidth = 0
@@ -909,7 +914,8 @@ def Map_load_callback(self, context):
                     Map.region = reg
                     Map.saved_region_width = reg.width
                     Map.object[0].set_dimensions(int(reg.width * .8))
-                    Map.object[0].origin.x = int((Map.region.width - Map.object[0].width) / 2)
+                    Map.object[0].origin.x = \
+                        int((Map.region.width - Map.object[0].width) / 2)
                     Map.object[0].origin.y = 2
             return
 
@@ -1176,7 +1182,8 @@ def Draw_map_callback(self, context):
     if Sun.SolarNoon.elevation < 0.0:
         color = night
     elif Sun.Elevation >= Sun.Sunrise.elevation:
-        if Sun.Time >= Sun.Sunset.time and Sun.Elevation <= Sun.Sunset.elevation:
+        if Sun.Time >= Sun.Sunset.time and \
+            Sun.Elevation <= Sun.Sunset.elevation:
             color = night
         else:
             color = day
@@ -1231,7 +1238,7 @@ class SunPos_Help(bpy.types.Operator):
         self.layout.label("Available map commands:")
 
         row = self.layout.row()
-        split = row.split(percentage=.26)
+        split = row.split(percentage=.27)
         colL = split.column()
         colR = split.column()
         colL.label("Esc or Right Mouse ")

@@ -51,7 +51,7 @@ def DrawNorth_callback(self, context):
     # 12 O'clock instead of 3 O'clock position.
     # ------------------------------------------------------------------
     color = (0.2, 0.6, 1.0, 0.7)
-    radius = 800
+    radius = 100
     angle = -(Sun.NorthOffset - math.pi / 2)
     x = math.cos(angle) * radius
     y = math.sin(angle) * radius

@@ -7,6 +7,7 @@ add_mesh_edge_profiles -- by Meta-Androcto
 	
 sun position -- by Xaire
 	http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/3D_interaction/Sun_Position
+	http://blenderartists.org/forum/showthread.php?245406
 
 meshlint -- by rking
 	https://raw.github.com/ryanjosephking/meshlint/master/meshlint.py

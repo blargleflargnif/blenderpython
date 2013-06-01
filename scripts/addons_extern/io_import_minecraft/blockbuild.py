@@ -60,7 +60,7 @@ def getMCTex():
     print("creating fresh new minecraft terrain texture")
     texNew = bpy.data.textures.new(tname, 'IMAGE')
     texNew.image = getMCImg()
-    texNew.image.use_premultiply = True
+    texNew.image.alpha_mode = 'PREMUL'
     texNew.use_alpha = True
     texNew.use_preview_alpha = True
     texNew.use_interpolation = False
@@ -84,11 +84,13 @@ def getMCImg():
         zf.close()  #needed?
             #
         temppath = os.path.sep.join([os.getcwd(), 'terrain.png'])
-        try:
+        
+        if os.path.exists(temppath):
             img = bpy.data.images.load(temppath)
-        except:
-            os.chdir(osdir)
-            raise NameError("Cannot load image %s" % temppath)
+        else:
+            # generate a placeholder image for the texture if terrain.png doesn't exist (rather than failing)
+            img = bpy.data.images.new('terrain.png', 1024, 1024, True, False)
+            img.source = 'FILE'
         os.chdir(osdir)
         return img
 
@@ -864,7 +866,7 @@ Units are in Minecraft texels - so from 1 to 15. Inset 16 is an error."""
 
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.transform.rotate(value=(-1.5708,), axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL')
+    bpy.ops.transform.rotate(value=(-1.5708), axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL')
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -928,7 +930,7 @@ def createMCBlock(mcname, colourtriple, mcfaceindices, cyclesParams=None):
     #bpy.ops.objects.editmode_toggle()
     bpy.ops.mesh.select_all(action='SELECT')
     #don't want toggle! Want "ON"!
-    bpy.ops.transform.rotate(value=(-1.5708,), axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL')
+    bpy.ops.transform.rotate(value=(-1.5708), axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL')
     #bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
 

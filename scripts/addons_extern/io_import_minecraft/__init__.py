@@ -24,7 +24,7 @@ bl_info = {
     "name": "Import: Minecraft b1.7+",
     "description": "Importer for viewing Minecraft worlds",
     "author": "Adam Crossan (acro)",
-    "version": (1,6,5),
+    "version": (1,5,1),
     "blender": (2, 6, 0),
     "api": 41226,
     "location": "File > Import > Minecraft",
@@ -39,6 +39,7 @@ if "bpy" in locals():
 
 import bpy
 from bpy.props import StringProperty, FloatProperty, IntProperty, BoolProperty, EnumProperty
+from . import mineregion
 
 #def setSceneProps(scn):
 #    #Set up scene-level properties
@@ -140,7 +141,6 @@ WARNING! Above 10, this gets slow and eats LOTS of memory!""", min=1, max=50, st
             "highlimit": self.mcHighLimit, "lowlimit": self.mcLowLimit, "loadnether": self.mcLoadNether,    #scn['MCLoadNether']
             "loadend": self.mcLoadEnd, "usecycles": self.mcUseCyclesMats}
         #get selected world name instead via bpy.ops.mcraft.worldselected -- the enumeration as a property/operator...?
-        from . import mineregion
         mineregion.readMinecraftWorld(str(self.mcWorldSelectList), self.mcLoadRadius, opts)
         for s in bpy.context.area.spaces: # iterate all space in the active area
             if s.type == "VIEW_3D": # check if space is a 3d-view
@@ -232,7 +232,7 @@ bpy.utils.register_class(MinecraftWorldSelector)
 bpy.utils.register_class(MineMenuItemOperator)
 #bpy.utils.register_class(MCraft_PT_worldlist)
 
-#Forumsearch tip! FINDME:
+#Forumsearch tip!! FINDME:
 #Another way would be to update a property that is displayed in your panel via layout.prop(). AFAIK these are watched and cause a redraw on update.
 
 def mcraft_filemenu_func(self, context):

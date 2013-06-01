@@ -554,7 +554,12 @@ def getWorldSelectList():
                 except IOError:
                     print("Unknown problem with level.dat format for %s" % sf)
                     continue
-                wname = wData.value['Data'].value['LevelName'].value
+					
+                if 'LevelName' in wData.value['Data'].value:
+                    wname = wData.value['Data'].value['LevelName'].value
+                else:
+                    wname = "<no name>"
+					
                 wsize = wData.value['Data'].value['SizeOnDisk'].value
                 readableSize = "(%0.1f)" % (wsize / (1024*1024))
                 worldList.append((sf, sf, wname + " " + readableSize))

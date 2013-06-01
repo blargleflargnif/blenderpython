@@ -48,22 +48,30 @@ class mitsuba_testing(declarative_property_group):
 @MitsubaAddon.addon_register_class
 class mitsuba_engine(declarative_property_group):
 	ef_attach_to = ['Scene']
-
+	
 	controls = [
+		'binary_path',
 		'export_mode',
 		'render_mode',
-		'binary_path',
 		'mesh_type',
 		'partial_export',
 		'refresh_interval'
 	]
-
+	
 	visibility = {
 		'render_mode':		{ 'export_mode': 'render' },
 		'refresh_interval':	{ 'export_mode': 'render', 'render_mode' : 'cli' }
 	}
-
+	
 	properties = [
+		{
+			'type': 'string',
+			'subtype': 'DIR_PATH',
+			'attr': 'binary_path',
+			'name': 'Executable path',
+			'description': 'Path to the Mitsuba install',
+			'default': efutil.find_config_value('mitsuba', 'defaults', 'binary_path', '')
+		},
 		{
 			'type': 'enum',
 			'attr': 'export_mode',
@@ -87,14 +95,6 @@ class mitsuba_engine(declarative_property_group):
 				('gui', 'Mitsuba GUI', 'gui')
 			],
 			'save_in_preset': True
-		},
-		{
-			'type': 'string',
-			'subtype': 'DIR_PATH',
-			'attr': 'binary_path',
-			'name': 'Executable path',
-			'description': 'Path to the Mitsuba install',
-			'default': efutil.find_config_value('mitsuba', 'defaults', 'binary_path', '')
 		},
 		{
 			'type': 'enum',
@@ -147,65 +147,3 @@ class mitsuba_engine(declarative_property_group):
 			'save_in_preset': True
 		},
 	]
-
-@MitsubaAddon.addon_register_class
-class mitsuba_film(declarative_property_group):
-	ef_attach_to = ['Scene']
-
-	controls = [
-		'film',
-		'pixelFormat',
-		'exposure',
-		'banner',
-	]
-
-	visibility = {
-		'exposure': { 'film': 'ldrfilm'},
-	}
-	properties = [
-		{
-			'type': 'enum',
-			'attr': 'film',
-			'name': 'Output format',
-			'description': 'Select output file format to override Scene global setting',
-			'items': [
-				('hdrfilm', 'EXR', 'hdrfilm'),
-				('ldrfilm', 'PNG', 'ldrfilm')
-			],
-			'default': 'ldrfilm',
-			'save_in_preset': True
-		},
-		{
-			'type': 'enum',
-			'attr': 'pixelFormat',
-			'name': 'Pixel Format',
-			'description': 'Select Pixel Format to override Scene global setting',
-			'items': [
-				('rgb', 'RGB', 'rgb'),
-				('rgba', 'RGBA', 'rgba'),
-				('luminance', 'Luminance', 'luminance'),
-				('luminanceAlpha', 'Luminance Alpha', 'luminanceAlpha')
-			],
-			'default': 'rgb',
-			'save_in_preset': True
-		},
-		{
-			'type': 'bool',
-			'attr': 'banner',
-			'name': 'Mitsuba logo',
-			'description': 'Render will containg small Mitsuba logo',
-			'default': True,
-			'save_in_preset': True
-		},
-		{
-			'attr': 'exposure',
-			'type': 'float',
-			'description' : 'Reinhard tonemapping exposure',
-			'name' : 'Film exposure',
-			'default' : 1.0,
-			'min': -10.0,
-			'max': 10.0,
-			'save_in_preset': True
-		},
-	]
-

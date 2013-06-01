@@ -29,9 +29,9 @@ class mitsuba_integrator(declarative_property_group):
 	This class will be instantiated within a Blender scene
 	object.
 	'''
-
+	
 	ef_attach_to = ['Scene']
-
+	
 	controls = [
 		'type',
 		'shadingSamples',
@@ -71,53 +71,50 @@ class mitsuba_integrator(declarative_property_group):
 		'granularityPT',
 		'shadowMapResolution',
 		'clamping',
-		#['motionblur',
-		#'shuttertime'],
 	]
 	
 	visibility = {
-		'shadingSamples':          { 'type': 'ao' },
-		'rayLength':               { 'type': 'ao' },
-		'emitterSamples':          { 'type': 'direct' },
-		'bsdfSamples':             { 'type': 'direct' },
-		'maxDepth':                { 'type': O(['path', 'volpath_simple', 'volpath', 'bdpt', 'photonmapper',
-												'ppm', 'sppm', 'pssmlt', 'mlt', 'erpt', 'ptracer', 'vpl']) },
-		'rrDepth':                 { 'type': O(['path', 'volpath_simple', 'volpath', 'bdpt', 'photonmapper',
-												'ppm', 'sppm', 'pssmlt', 'erpt', 'ptracer']) },
-		'strictNormals':           { 'type': O(['direct', 'path', 'volpath_simple', 'volpath']) },
-		'lightImage':              { 'type': 'bdpt'},
-		'sampleDirect':            { 'type': 'bdpt'},
-		'directSamples':           { 'type': O(['photonmapper', 'pssmlt', 'mlt', 'erpt']) },
-		'glossySamples':           { 'type': 'photonmapper'},
-		'globalPhotons':           { 'type': 'photonmapper'},
-		'causticPhotons':          { 'type': 'photonmapper'},
-		'volumePhotons':           { 'type': 'photonmapper'},
-		'globalLookupRadius':      { 'type': 'photonmapper'},
-		'causticLookupRadius':     { 'type': 'photonmapper'},
-		'causticLookupSize':       { 'type': 'photonmapper'},
-		'granularityPM':           { 'type': O(['photonmapper', 'ppm', 'sppm']) },
-		'photonCount':             { 'type': O(['ppm', 'sppm']) },
-		'initialRadius':           { 'type': O(['ppm', 'sppm']) },
-		'alphaR':                  { 'type': O(['ppm', 'sppm']) },
-		'luminanceSamples':        { 'type': O(['pssmlt','mlt','erpt'])},
-		'pLarge':                  { 'type': 'pssmlt'},
-		'lambdaMP':                { 'type': O(['mlt','erpt'])},
-		'bidirectional':           { 'type': 'pssmlt'},
-		'twoStage':                { 'type': O(['pssmlt','mlt'])},
-		'bidirectionalMutation':   { 'type': O(['mlt','erpt'])},
-		'lensPerturbation':        { 'type': O(['mlt','erpt'])},
-		'causticPerturbation':     { 'type': O(['mlt','erpt'])},
-		'multiChainPerturbation':  { 'type': O(['mlt','erpt'])},
-		'manifoldPerturbation':    { 'type': O(['mlt','erpt'])},
-		'numChains':               { 'type': 'erpt'},
-		'maxChains':               { 'type': 'erpt'},
-		'chainLength':             { 'type': 'erpt'},
-		'granularityPT':           { 'type': 'ptracer' },
-		'shadowMapResolution':     { 'type': 'vpl' },
-		'clamping':                { 'type': 'vpl' },
-		#'shuttertime':		{ 'motionblur': True },
+		'shadingSamples':			{'type': 'ao'},
+		'rayLength':				{'type': 'ao'},
+		'emitterSamples':			{'type': 'direct'},
+		'bsdfSamples':				{'type': 'direct'},
+		'maxDepth':					{'type': O(['path', 'volpath_simple', 'volpath', 'bdpt', 'photonmapper',
+										'ppm', 'sppm', 'pssmlt', 'mlt', 'erpt', 'ptracer', 'vpl'])},
+		'rrDepth':					{'type': O(['path', 'volpath_simple', 'volpath', 'bdpt', 'photonmapper',
+										'ppm', 'sppm', 'pssmlt', 'erpt', 'ptracer'])},
+		'strictNormals':			{'type': O(['direct', 'path', 'volpath_simple', 'volpath'])},
+		'lightImage':				{'type': 'bdpt'},
+		'sampleDirect':				{'type': 'bdpt'},
+		'directSamples':			{'type': O(['photonmapper', 'pssmlt', 'mlt', 'erpt'])},
+		'glossySamples':			{'type': 'photonmapper'},
+		'globalPhotons':			{'type': 'photonmapper'},
+		'causticPhotons':			{'type': 'photonmapper'},
+		'volumePhotons':			{'type': 'photonmapper'},
+		'globalLookupRadius':		{'type': 'photonmapper'},
+		'causticLookupRadius':		{'type': 'photonmapper'},
+		'causticLookupSize':		{'type': 'photonmapper'},
+		'granularityPM':			{'type': O(['photonmapper', 'ppm', 'sppm'])},
+		'photonCount':				{'type': O(['ppm', 'sppm'])},
+		'initialRadius':			{'type': O(['ppm', 'sppm'])},
+		'alphaR':					{'type': O(['ppm', 'sppm'])},
+		'luminanceSamples':			{'type': O(['pssmlt','mlt','erpt'])},
+		'pLarge':					{'type': 'pssmlt'},
+		'lambdaMP':					{'type': O(['mlt','erpt'])},
+		'bidirectional':			{'type': 'pssmlt'},
+		'twoStage':					{'type': O(['pssmlt','mlt'])},
+		'bidirectionalMutation':	{'type': O(['mlt','erpt'])},
+		'lensPerturbation':			{'type': O(['mlt','erpt'])},
+		'causticPerturbation':		{'type': O(['mlt','erpt'])},
+		'multiChainPerturbation':	{'type': O(['mlt','erpt'])},
+		'manifoldPerturbation':		{'type': O(['mlt','erpt'])},
+		'numChains':				{'type': 'erpt'},
+		'maxChains':				{'type': 'erpt'},
+		'chainLength':				{'type': 'erpt'},
+		'granularityPT':			{'type': 'ptracer'},
+		'shadowMapResolution':		{'type': 'vpl'},
+		'clamping':					{'type': 'vpl'},
 	}
-
+	
 	properties = [
 		{
 			'type': 'enum',
@@ -143,24 +140,6 @@ class mitsuba_integrator(declarative_property_group):
 			],
 			'save_in_preset': True
 		},
-		#{
-		#	'type': 'bool',
-		#	'attr': 'motionblur',
-		#	'name': 'Motion Blur',
-		#	'description': 'Should motion blur be enabled?',
-		#	'default' : False,
-		#	'save_in_preset': True
-		#},
-		#{
-		#	'type': 'float',
-		#	'attr': 'shuttertime',
-		#	'name': 'Shutter time',
-		#	'description': 'Amount of time, for which the shutter remains open (measured in frames)',
-		#	'save_in_preset': True,
-		#	'min': 0,
-		#	'max': 100,
-		#	'default': 1
-		#},
 		{
 			'type': 'int',
 			'attr': 'shadingSamples',
@@ -351,7 +330,7 @@ class mitsuba_integrator(declarative_property_group):
 			'type': 'int',
 			'attr': 'luminanceSamples',
 			'name': 'Luminance samples',
-			'description': 'Number of samples used to estimate the total luminance  received by the camera\'s sensor.',
+			'description': 'Number of samples used to estimate the total luminance received by the camera\'s sensor.',
 			'save_in_preset': True,
 			'min': 10000,
 			'max': 500000,
@@ -511,9 +490,8 @@ class mitsuba_integrator(declarative_property_group):
 			'max': 1,
 			'default': 0.1
 		},
-
-		
 	]
+	
 	def get_params(self):
 		params = ParamSet()
 		if self.type == 'ao':
@@ -592,7 +570,7 @@ class mitsuba_integrator(declarative_property_group):
 			params.add_integer('maxDepth', self.maxDepth)
 			params.add_integer('shadowMapResolution', self.shadowMapResolution)
 			params.add_float('clamping', self.clamping)
-
+		
 		return params
 
 @MitsubaAddon.addon_register_class
@@ -644,13 +622,13 @@ class mitsuba_adaptive(declarative_property_group):
 			'default': 32
 		}
 	]
-
+	
 	def get_params(self):
 		params = ParamSet()
 		params.add_float('maxError', self.maxError)
 		params.add_float('pValue', self.pValue)
 		params.add_integer('maxSampleFactor', self.maxSampleFactor)
-
+		
 		return params
 
 @MitsubaAddon.addon_register_class
@@ -681,7 +659,7 @@ class mitsuba_irrcache(declarative_property_group):
 			'type': 'bool',
 			'attr': 'clampNeighbor',
 			'name': 'Neighbor clamping',
-			'description': '		   Should neighbor clamping [Krivanek et al.] be used? This propagates geometry information amongst close-by samples and generally leads to better sample placement. ',
+			'description': 'Should neighbor clamping [Krivanek et al.] be used? This propagates geometry information amongst close-by samples and generally leads to better sample placement. ',
 			'default' : True,
 			'save_in_preset': True
 		},
@@ -756,7 +734,7 @@ class mitsuba_irrcache(declarative_property_group):
 			'default': 14
 		}
 	]
-
+	
 	def get_params(self):
 		params = ParamSet()
 		params.add_bool('clampNeighbor', self.clampNeighbor)
@@ -768,5 +746,5 @@ class mitsuba_irrcache(declarative_property_group):
 		params.add_float('quality', self.quality)
 		params.add_float('qualityAdjustment', self.qualityAdjustment)
 		params.add_integer('resolution', self.resolution)
-
+		
 		return params

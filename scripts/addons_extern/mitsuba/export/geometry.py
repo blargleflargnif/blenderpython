@@ -1,36 +1,21 @@
-# -*- coding: utf8 -*-
+# ##### BEGIN GPL LICENSE BLOCK #####
 #
-# ***** BEGIN GPL LICENSE BLOCK *****
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
 #
-# --------------------------------------------------------------------------
-# Blender 2.5 Mitsuba Add-On
-# --------------------------------------------------------------------------
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-# Authors:
-# Wenzel Jakob, Bartosz Styperek, Francesc Juhe
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
-# --------------------------------------------------------------------------
-# Adapted from Blender 2.5 Luxrender Add-On
-# --------------------------------------------------------------------------
-#
-# Authors:
-# Doug Hammond, Daniel Genrich
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
-#
-# ***** END GPL LICENCE BLOCK *****
-#
+# ##### END GPL LICENSE BLOCK #####
+
 import os, struct
 import array, zlib
 
@@ -41,6 +26,7 @@ from extensions_framework import util as efutil
 
 from ..outputs import MtsLog
 from ..export import ParamSet, ExportProgressThread, ExportCache
+from ..export import is_obj_visible
 
 class InvalidGeometryException(Exception):
 	pass
@@ -52,7 +38,7 @@ class MeshExportProgressThread(ExportProgressThread):
 	message = 'Exporting meshes: %i%%'
 
 class DupliExportProgressThread(ExportProgressThread):
-	message = '...  %i%% ...'
+	message = '... %i%% ...'
 
 class GeometryExporter(object):
 	
@@ -72,7 +58,6 @@ class GeometryExporter(object):
 		self.ExportedPLYs = ExportCache('ExportedPLYs')
 		self.AnimationDataCache = ExportCache('AnimationData')
 		self.ExportedObjectsDuplis = ExportCache('ExportedObjectsDuplis')
-		self.shape_index = 0
 		# start fresh
 		GeometryExporter.NewExportedObjects = set()
 		
@@ -142,7 +127,7 @@ class GeometryExporter(object):
 			
 			# collate faces by mat index
 			ffaces_mats = {}
-			mesh_faces = mesh.tessfaces if bpy.app.version > (2, 62, 1 ) else mesh.faces # bmesh
+			mesh_faces = mesh.tessfaces
 			for f in mesh_faces:
 				mi = f.material_index
 				if mi not in ffaces_mats.keys(): ffaces_mats[mi] = []
@@ -192,7 +177,7 @@ class GeometryExporter(object):
 						
 						GeometryExporter.NewExportedObjects.add(obj)
 						
-						uv_textures = mesh.tessface_uv_textures if bpy.app.version > (2, 62, 0 ) else mesh.uv_textures # bmesh
+						uv_textures = mesh.tessface_uv_textures
 						if len(uv_textures) > 0:
 							if uv_textures.active and uv_textures.active.data:
 								uv_layer = uv_textures.active.data
@@ -265,7 +250,6 @@ class GeometryExporter(object):
 								face_vert_indices.append(( fvi[0], fvi[2], fvi[3] ))
 								ntris += 3
 						
-						
 						del vert_vno_indices
 						del vert_use_vno
 						
@@ -322,7 +306,7 @@ class GeometryExporter(object):
 					)
 					if obj.data.mitsuba_mesh.normals == 'facenormals':
 						shape_params.add_boolean('faceNormals', {'value' : 'true'})
-										
+					
 					mesh_definition = (
 						mesh_name,
 						i,
@@ -373,7 +357,7 @@ class GeometryExporter(object):
 			
 			# collate faces by mat index
 			ffaces_mats = {}
-			mesh_faces = mesh.tessfaces if bpy.app.version > (2, 62, 1 ) else mesh.faces # bmesh
+			mesh_faces = mesh.tessfaces
 			for f in mesh_faces:
 				mi = f.material_index
 				if mi not in ffaces_mats.keys(): ffaces_mats[mi] = []
@@ -422,8 +406,8 @@ class GeometryExporter(object):
 					if not os.path.exists(ser_path) or not (self.visibility_scene.mitsuba_engine.partial_export and skip_exporting):
 						
 						GeometryExporter.NewExportedObjects.add(obj)
-					
-						uv_textures = mesh.tessface_uv_textures if bpy.app.version > (2, 62, 0 ) else mesh.uv_textures # bmesh
+						
+						uv_textures = mesh.tessface_uv_textures
 						if len(uv_textures) > 0:
 							if uv_textures.active and uv_textures.active.data:
 								uv_layer = uv_textures.active.data
@@ -435,7 +419,7 @@ class GeometryExporter(object):
 						normals = array.array('d',[])
 						uvs = array.array('d',[])
 						ntris = 0
-						face_vert_indices = array.array('I',[])      # list of face vert indices
+						face_vert_indices = array.array('I',[])		# list of face vert indices
 						
 						# Caches
 						vert_vno_indices = {}		# mapping of vert index to exported vert index for verts with vert normals
@@ -518,7 +502,7 @@ class GeometryExporter(object):
 								ser.write(encoder.compress(uvs.tostring()))
 							ser.write(encoder.compress(face_vert_indices.tostring()))
 							ser.write(encoder.flush())
-						
+							
 							ser.write(struct.pack('<Q', 0))
 							ser.write(struct.pack('<I', 1))
 							ser.close()
@@ -605,14 +589,10 @@ class GeometryExporter(object):
 		try:
 			ob_mat = obj.material_slots[me_mat_index].material
 			# create material xml
-			if ob_mat != None and ob_mat.mitsuba_material.surface == 'bsdf':
+			if ob_mat != None and self.mts_context.isMaterialSafe(ob_mat):
 				self.mts_context.exportMaterial(ob_mat)
 			else:
 				return False
-			#mmat = ob_mat.mitsuba_material
-			#if mmat.is_medium_transition:
-			#	self.exportMediumReference(scene, obj, 'interior', mmat.interior_medium)
-			#	self.exportMediumReference(scene, obj, 'exterior', mmat.exterior_medium)
 		except IndexError:
 			ob_mat = None
 			MtsLog('WARNING: material slot %d on object "%s" is unassigned!' %(me_mat_index+1, obj.name))
@@ -623,14 +603,14 @@ class GeometryExporter(object):
 		
 		if ob_mat != None:
 			self.mts_context.element('ref', {'name' : 'bsdf', 'id' : '%s-material' % ob_mat.name})
-
+		
 		self.mts_context.closeElement()
 		self.mts_context.closeElement()
 		
 		MtsLog('Mesh definition exported: %s' % me_name)
 		return True
-			
-	def exportShapeInstances(self, obj, mesh_definitions, matrix=None, parent=None):
+	
+	def exportShapeInstances(self, obj, mesh_definitions, matrix=None, parent=None, index=None):
 		
 		# Don't export empty definitions
 		if len(mesh_definitions) < 1: return
@@ -645,31 +625,30 @@ class GeometryExporter(object):
 		except ValueError:
 			MtsLog('WARNING: skipping export of singular matrix in object "%s" - "%s"!' %(obj.name,mesh_definitions[0][0]))
 			return
-			
+		
+		if index != None:
+			shape_index = '_%08d' % (index)
+		else:
+			shape_index = ''
+		
 		for me_name, me_mat_index, me_shape_type, me_shape_params in mesh_definitions:
 			
-			if parent != None:
-				mat_object = parent
-			else:
-				mat_object = obj
+			if me_shape_type != 'instance':
+				if parent != None:
+					mat_object = parent
+				else:
+					mat_object = obj
+				
+				try:
+					ob_mat = mat_object.material_slots[me_mat_index].material
+					# create material xml
+					if ob_mat != None:
+						self.mts_context.exportMaterial(ob_mat)
+				except IndexError:
+					ob_mat = None
+					MtsLog('WARNING: material slot %d on object "%s" is unassigned!' %(me_mat_index+1, mat_object.name))
 			
-			try:
-				ob_mat = mat_object.material_slots[me_mat_index].material
-				# create material xml
-				if ob_mat != None and ob_mat.mitsuba_material.surface != 'emitter':
-					self.mts_context.exportMaterial(ob_mat)
-				#mmat = ob_mat.mitsuba_material
-				#if mmat.is_medium_transition:
-				#	self.exportMediumReference(scene, obj, 'interior', mmat.interior_medium)
-				#	self.exportMediumReference(scene, obj, 'exterior', mmat.exterior_medium)
-			except IndexError:
-				ob_mat = None
-				MtsLog('WARNING: material slot %d on object "%s" is unassigned!' %(me_mat_index+1, mat_object.name))
-			
-						
-			self.shape_index += 1
-			
-			self.mts_context.openElement('shape', { 'id' : obj.name + '-shape_%i_%i' % (me_mat_index, self.shape_index), 'type' : me_shape_type})
+			self.mts_context.openElement('shape', { 'id' : '%s_%s-shape%s_%i' % (obj.name, me_name, shape_index, me_mat_index), 'type' : me_shape_type})
 			me_shape_params.export(self.mts_context)
 			
 			if matrix is not None:
@@ -677,15 +656,22 @@ class GeometryExporter(object):
 			else:
 				self.mts_context.exportWorldTrafo(obj.matrix_world)
 			
-			if ob_mat != None and me_shape_type != 'instance':
-				if ob_mat.mitsuba_material.surface == 'emitter':
-					self.mts_context.exportEmission(ob_mat)
-				else:
-					if ob_mat.mitsuba_material.surface == 'subsurface':
-						self.mts_context.element('ref', {'name' : 'subsurface', 'id' : '%s-subsurface' % ob_mat.name})
-					self.mts_context.element('ref', {'name' : 'bsdf', 'id' : '%s-material' % ob_mat.name})
-			self.mts_context.closeElement()
+			if me_shape_type != 'instance':
+				if ob_mat != None:
+					if ob_mat.mitsuba_mat_bsdf.use_bsdf:
+						self.mts_context.element('ref', {'name' : 'bsdf', 'id' : '%s-material' % ob_mat.name})
+					if ob_mat.mitsuba_mat_subsurface.use_subsurface:
+						if ob_mat.mitsuba_mat_subsurface.type == 'dipole':
+							self.mts_context.element('ref', {'name' : 'subsurface', 'id' : '%s-subsurface' % ob_mat.name})
+						elif ob_mat.mitsuba_mat_subsurface.type == 'homogeneous':
+							self.mts_context.element('ref', {'name' : 'interior', 'id' : '%s-interior' % ob_mat.name})
+					if ob_mat.mitsuba_mat_extmedium.use_extmedium:
+						self.mts_context.element('ref', {'name' : 'exterior', 'id' : '%s-exterior' % ob_mat.name})
+					if ob_mat.mitsuba_mat_emitter.use_emitter:
+						self.mts_context.exportMaterialEmitter(ob_mat)
 			
+			self.mts_context.closeElement()
+	
 	def BSpline(self, points, dimension, degree, u):
 		controlpoints = []
 		def Basispolynom(controlpoints, i, u, degree):
@@ -717,7 +703,7 @@ class GeometryExporter(object):
 				controlpoints.append(i - degree)
 		
 		if dimension == 2: temp = mathutils.Vector((0.0,0.0))
-		elif dimension == 3:temp = mathutils.Vector((0.0,0.0,0.0))
+		elif dimension == 3: temp = mathutils.Vector((0.0,0.0,0.0))
 		
 		for i in range(len(points)):
 			temp = temp + Basispolynom(controlpoints, i, u, degree)*points[i]
@@ -734,43 +720,41 @@ class GeometryExporter(object):
 			MtsLog('ERROR: handler_Duplis_PATH can only handle Hair particle systems ("%s")' % psys.name)
 			return
 		
+		for mod in obj.modifiers:
+			if mod.type == 'PARTICLE_SYSTEM' and mod.show_render == False:
+				return
+				
 		MtsLog('Exporting Hair system "%s"...' % psys.name)
 		
-		hair_cache_key = (self.geometry_scene, obj.data)
-					
+		size = psys.settings.particle_size / 2.0 / 1000.0
+		psys.set_resolution(self.geometry_scene, obj, 'RENDER')
+		steps = 2**psys.settings.render_step
+		num_parents = len(psys.particles)
+		num_children = len(psys.child_particles)
+		
+		partsys_name = '%s_%s'%(obj.name, psys.name)
+		det = DupliExportProgressThread()
+		det.start(num_parents + num_children)
+		
 		# Put Hair files in frame-numbered subfolders to avoid
 		# clobbering when rendering animations
 		sc_fr = '%s/%s/%s/%05d' % (self.mts_context.meshes_dir, efutil.scene_filename(), bpy.path.clean_name(self.geometry_scene.name), self.visibility_scene.frame_current)
 		if not os.path.exists( sc_fr ):
 			os.makedirs(sc_fr)
-					
-		def make_hairfilename():
-			hair_serial = self.ExportedHAIRs.serial(hair_cache_key)
-			hair_name = '%s_%04d' % (obj.data.name, hair_serial)
-			hair_filename = '%s.hair' % bpy.path.clean_name(hair_name)
-			hair_path = '/'.join([sc_fr, hair_filename])
-			return hair_name, hair_path
-					
-		hair_name, hair_path = make_hairfilename()
-					
-		# Ensure that all Hair files have unique names
-		while self.ExportedHAIRs.have(hair_path):
-			hair_name, hair_path = hair_serfilename()
-					
-		self.ExportedHAIRs.add(hair_path, None)
 		
-		size = psys.settings.particle_size / 2.0 / 1000.0 # XXX divide by 2 twice ? Also throw in /1000.0 to scale down to millimeters
+		hair_filename = '%s.hair' % bpy.path.clean_name(partsys_name)
+		hair_file_path = '/'.join([sc_fr, hair_filename])
 		
 		shape_params = ParamSet().add_string(
 			'filename',
-			efutil.path_relative_to_export(hair_path)
+			efutil.path_relative_to_export(hair_file_path)
 		).add_float(
 			'radius',
 			size
 		)
 		mesh_definitions = []
 		mesh_definition = (
-			obj.name,
+			psys.name,
 			psys.settings.material - 1,
 			'hair',
 			shape_params
@@ -778,19 +762,18 @@ class GeometryExporter(object):
 		mesh_definitions.append( mesh_definition )
 		self.exportShapeInstances(obj, mesh_definitions)
 		
-		hair = open(hair_path, 'w')
+		hair_file = open(hair_file_path, 'w')
 		
-		det = DupliExportProgressThread()
-		det.start(len(psys.particles))
-		
-		for particle in psys.particles:
-			if not (particle.is_exist and particle.is_visible): continue
-			
+		transform = obj.matrix_world.inverted()
+		for pindex in range(num_parents + num_children):
 			det.exported_objects += 1
-			
 			points = []
-			for j in range(len(particle.hair_keys)):
-				points.append(particle.hair_keys[j].co)
+			
+			for step in range(0,steps+1):
+				co = psys.co_hair(obj, mod, pindex, step)
+				if not co.length_squared == 0:
+					points.append(transform*co)
+			
 			if psys.settings.use_hair_bspline:
 				temp = []
 				degree = 2
@@ -803,14 +786,14 @@ class GeometryExporter(object):
 					temp.append(self.BSpline(points, dimension, degree, u))
 				points = temp
 			
-			for j in range(len(points)-1):
-				p = points[j]
-				hair.write('%f %f %f\n' % (p[0], p[1], p[2]))
+			for p in points:
+				hair_file.write('%f %f %f\n' % (p[0], p[1], p[2]))
 			
-			hair.write('\n')
+			hair_file.write('\n')
 		
-		hair.close()
-
+		hair_file.close()
+		
+		psys.set_resolution(self.geometry_scene, obj, 'PREVIEW')
 		det.stop()
 		det.join()
 		
@@ -836,8 +819,7 @@ class GeometryExporter(object):
 			for dupli_ob in obj.dupli_list:
 				if dupli_ob.object.type not in ['MESH', 'SURFACE', 'FONT', 'CURVE']:
 					continue
-				#if not dupli_ob.object.is_visible(self.visibility_scene) or dupli_ob.object.hide_render:
-				if not self.is_visible(dupli_ob.object, is_dupli=True):
+				if not is_obj_visible(self.visibility_scene, dupli_ob.object, is_dupli=True):
 					continue
 				
 				self.objects_used_as_duplis.add(dupli_ob.object)
@@ -854,6 +836,7 @@ class GeometryExporter(object):
 			det.start(len(duplis))
 			
 			self.exporting_duplis = True
+			dupli_index = 0
 			
 			# dupli object, dupli matrix
 			for do, dm in duplis:
@@ -871,8 +854,10 @@ class GeometryExporter(object):
 					obj,
 					self.buildMesh(do),
 					matrix=[dm,None],
-					parent=do
+					parent=do,
+					index=dupli_index
 				)
+				dupli_index += 1
 			
 			del duplis
 			
@@ -901,12 +886,6 @@ class GeometryExporter(object):
 				self.buildMesh(obj)
 			)
 	
-	def is_visible(self, obj, is_dupli=False):
-		ov = False
-		for lv in [ol and sl for ol,sl in zip(obj.layers, self.visibility_scene.layers)]:
-			ov |= lv
-		return (ov or is_dupli) and not obj.hide_render
-	
 	def iterateScene(self, geometry_scene):
 		self.geometry_scene = geometry_scene
 		self.have_emitting_object = False
@@ -924,7 +903,7 @@ class GeometryExporter(object):
 			
 			try:
 				# Export only objects which are enabled for render (in the outliner) and visible on a render layer
-				if not self.is_visible(obj):
+				if not is_obj_visible(self.visibility_scene, obj):
 					raise UnexportableObjectException(' -> not visible')
 				
 				if obj.parent and obj.parent.is_duplicator:
@@ -957,7 +936,7 @@ class GeometryExporter(object):
 						if psys.settings.render_type in self.valid_particles_callbacks:
 							self.callbacks['particles'][psys.settings.render_type](obj, particle_system=psys)
 						elif self.visibility_scene.mitsuba_testing.object_analysis: print(' -> Unsupported Particle system type: %s' % psys.settings.render_type)
-			
+				
 			except UnexportableObjectException as err:
 				if self.visibility_scene.mitsuba_testing.object_analysis: print(' -> Unexportable object: %s : %s : %s' % (obj, obj.type, err))
 		
@@ -974,7 +953,7 @@ class GeometryExporter(object):
 					raise UnexportableObjectException('Unsupported object type')
 				
 				self.callbacks['objects'][obj.type](obj)
-			
+				
 			except UnexportableObjectException as err:
 				if self.visibility_scene.mitsuba_testing.object_analysis: print(' -> Unexportable object: %s : %s : %s' % (obj, obj.type, err))
 		
@@ -989,8 +968,6 @@ class GeometryExporter(object):
 		GeometryExporter.NewExportedObjects = set()
 		
 		return self.have_emitting_object
-
-
 
 # Update handlers
 

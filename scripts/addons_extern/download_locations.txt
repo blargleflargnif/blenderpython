@@ -24,7 +24,8 @@ Aaron Symons collection -- by Aaron Symons
 	render shots
 		http://blenderartists.org/forum/showthread.php?260905
 	
-online material library (online_mat_lib) -- by PeterCassetta
+online material library (online_mat_lib) -- by PeterCassetta *now in contrib*
+	http://peter.cassetta.info/material-library/
 	http://blenderartists.org/forum/showthread.php?256334
 		
 mitsuba exporter (mitsuba) -- by Francesc Juhe (fjuhec), Wenzel Jakob, Bartosz Styperek

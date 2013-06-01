@@ -1,3 +1,21 @@
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 import os
 import bpy
 from extensions_framework import log
@@ -15,9 +33,9 @@ class MtsFilmDisplay(TimerThread):
 	'''
 	Periodically update render result with Mituba's framebuffer
 	'''
-
+	
 	STARTUP_DELAY = 1
-
+	
 	def begin(self, renderer, output_file, resolution, preview = False):
 		(self.xres, self.yres) = (int(resolution[0]), int(resolution[1]))
 		self.renderer = renderer
@@ -27,11 +45,11 @@ class MtsFilmDisplay(TimerThread):
 		if not self.preview:
 			self.result = self.renderer.begin_result(0, 0, self.xres, self.yres)
 		self.start()
-
+	
 	def shutdown(self):
 		if not self.preview:
-			self.renderer.end_result(self.result, 0) if bpy.app.version > (2, 63, 17 ) else self.renderer.end_result(self.result)
-
+			self.renderer.end_result(self.result, 0)
+	
 	def kick(self, render_end=False):
 		if not bpy.app.background or render_end:
 			if os.path.exists(self.output_file):
@@ -43,7 +61,7 @@ class MtsFilmDisplay(TimerThread):
 					if self.preview:
 						self.result = self.renderer.begin_result(0, 0, self.xres, self.yres)
 						self.result.layers[0].load_from_file(self.output_file)
-						self.renderer.end_result(self.result, 0) if bpy.app.version > (2, 63, 17 ) else self.renderer.end_result(self.result)
+						self.renderer.end_result(self.result, 0)
 					else:
 						self.result.layers[0].load_from_file(self.output_file)
 						self.renderer.update_result(self.result)

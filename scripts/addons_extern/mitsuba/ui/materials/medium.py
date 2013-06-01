@@ -16,32 +16,33 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy, bl_ui
+import bpy
 from ... import MitsubaAddon
 from ...ui.materials import mitsuba_material_base
 
 @MitsubaAddon.addon_register_class
-class emission(mitsuba_material_base, bpy.types.Panel):
+class ui_mitsuba_material_extmedium(mitsuba_material_base, bpy.types.Panel):
 	'''
-	Material Emission Settings
+	Material Medium Settings
 	'''
 	
-	bl_label = 'Mitsuba Material Emission'
-
+	bl_label = 'Mitsuba Exterior Media'
+	bl_options = {'DEFAULT_CLOSED'}
+	
 	display_property_groups = [
-		( ('material',), 'mitsuba_emission' )
+		( ('material',), 'mitsuba_mat_extmedium' )
 	]
-
-	@classmethod
-	def poll(cls, context):
-		'''
-		Only show Mitsuba panel if mitsuba_material.material in MTS_COMPAT
-		'''
-		if not hasattr(context, 'material'):
-			return False
-
-		return super().poll(context) and context.material.mitsuba_material.surface == 'emitter'
-
-	def get_contents(self, mat):
-		return mat.mitsuba_emission
-
+	
+	def draw_header(self, context):
+		self.layout.prop(context.material.mitsuba_mat_extmedium, "use_extmedium", text="")
+	
+	def draw(self, context):
+		layout = self.layout
+		mat = context.material.mitsuba_mat_extmedium
+		layout.active = (mat.use_extmedium)
+		layout.prop(context.material.mitsuba_mat_extmedium, "type", text="")
+		media = getattr(mat, 'mitsuba_extmed_%s' % mat.type)
+		for p in media.controls:
+			self.draw_column(p, self.layout, mat, context,
+				property_group=media)
+		media.draw_callback(context)

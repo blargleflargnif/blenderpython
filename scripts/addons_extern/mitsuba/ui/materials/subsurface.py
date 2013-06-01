@@ -18,15 +18,31 @@
 
 import bpy
 from ... import MitsubaAddon
-from ...ui.materials import mitsuba_material_sub
+from ...ui.materials import mitsuba_material_base
 
 @MitsubaAddon.addon_register_class
-class ui_material_roughcoating(mitsuba_material_sub, bpy.types.Panel):
-	bl_label = 'Mitsuba roughcoating Layer'
-
-	MTS_COMPAT = {'roughcoating'}
+class ui_material_dipole(mitsuba_material_base, bpy.types.Panel):
+	'''
+	Material Subsurface Settings
+	'''
+	
+	bl_label = 'Mitsuba Subsurface - Int. Media'
+	bl_options = {'DEFAULT_CLOSED'}
 	
 	display_property_groups = [
-		( ('material', 'mitsuba_material'), 'mitsuba_mat_roughcoating' )
+		( ('material',), 'mitsuba_mat_subsurface' )
 	]
 	
+	def draw_header(self, context):
+		self.layout.prop(context.material.mitsuba_mat_subsurface, "use_subsurface", text="")
+	
+	def draw(self, context):
+		layout = self.layout
+		mat = context.material.mitsuba_mat_subsurface
+		layout.active = (mat.use_subsurface)
+		layout.prop(context.material.mitsuba_mat_subsurface, "type", text="")
+		sss = getattr(mat, 'mitsuba_sss_%s' % mat.type)
+		for p in sss.controls:
+			self.draw_column(p, self.layout, mat, context,
+				property_group=sss)
+		sss.draw_callback(context)

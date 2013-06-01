@@ -36,6 +36,6 @@ class meshes(world_panel):
 	display_property_groups = [
 		( ('mesh',), 'mitsuba_mesh' )
 	]
-
+	
 	def draw(self, context):
 		super().draw(context)

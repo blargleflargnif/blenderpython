@@ -22,18 +22,18 @@ bl_info = {
 	"name": "Mitsuba",
 	"author": "Wenzel Jakob",
 	"version": (0, 2, 1),
-	"blender": (2, 5, 6),
-	"api": 35669,
+	"blender": (2, 67, 0),
+	"api": 56533,
 	"category": "Render",
-	"location": "Render > Engine > Mitsuba",
-	"description": "Basic Mitsuba integration for Blender",
+	"location": "Info header, render engine menu",
+	"description": "Mitsuba Renderer integration for Blender",
 	"warning": "",
-	"wiki_url": "http://wiki.blender.org/index.php/Extensions:2.5/Py/"\
-		"Scripts/Render/Mitsuba",
-	"tracker_url": "https://www.mitsuba-renderer.org/bugtracker/projects/mitsuba"}
+	"wiki_url": "http://www.mitsuba-renderer.org/docs.html",
+	"tracker_url": "https://www.mitsuba-renderer.org/bugtracker/projects"}
 
 def plugin_path():
 	return os.path.dirname(os.path.realpath(__file__))
+
 if 'core' in locals():
 	import imp
 else:
@@ -42,7 +42,7 @@ else:
 	from extensions_framework import Addon
 	MitsubaAddon = Addon(bl_info)
 	register, unregister = MitsubaAddon.init_functions()
-
+	
 	# Importing the core package causes extensions_framework managed
 	# RNA class registration via @MitsubaAddon.addon_register_class
 	from . import core

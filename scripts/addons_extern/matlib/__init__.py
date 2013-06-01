@@ -19,9 +19,9 @@
 bl_info = {
 	"name": "Material Library",
 	"author": "Mackraken (mackraken2023@hotmail.com)",
-	"version": (0, 5, 4),
-	"blender": (2, 5, 8),
-	"api": 37702,
+	"version": (0, 5, 5),
+	"blender": (2, 6, 6),
+	"api": 54697,
 	"location": "Properties > Material",
 	"description": "Material Library VX",
 	"warning": "",
@@ -200,7 +200,7 @@ def sendmat(name):
 		#com = bin +' "'+matlibpath+'" -b -P "'+scriptpath+'" '
 
 #   os.system(com)
-		#subprocess.call([bin, "-b", matlibpath, "-P", scriptpath])
+		subprocess.call([bin, "-b", matlibpath, "-P", scriptpath])
 		
 	return add
 	
@@ -293,32 +293,6 @@ def reloadcats(context):
 		item = cats.add()
 		item.name = it
 		
-		
-# TXT VERSION
-#   print("cats file doesnt exists")
-#   file=open(catspath,"w")
-#   file.close()
-#   
-#   print("cats file si existe")
-#   file=open(catspath,"r")
-#   catstext = []
-#   
-#   for l in file:
-#   catstext.append(l[0:-1])
-#
-#   file.close()
-#   
-#   catstext.sort()
-#   catstext.insert(0, "All")
-#   scn = context.scene
-#   cats = scn.matlib_cats
-#   
-#   for it in cats:
-#   cats.remove(0)
-#   
-#   for it in catstext:
-#   item = cats.add()
-#   item.name = it
 def reloadlib(context):
 	print("reloading library")
 	
@@ -412,43 +386,6 @@ class matlibDialogOperator(bpy.types.Operator):
 		else:
 			print(name +" already exists")
 			
-#   file = open(catspath, "r")
-#   stream = file.read()
-#   nl="\n"
-#   
-#   if stream.find(name)==-1:
-#
-#
-#	  if stream[-1]==nl:
-#		  stream+=name+nl
-#	  else:
-#		  stream+=nl+name
-#	  file.close()
-#   
-#	  file=open(catspath, "w")
-#	  file.write(stream)
-#	  file.close()
-#	  
-#   elif name!="":
-#	  msg = name + " already exists"
-#	  msgtype="WARNING"  
-#   
-#   if msg!="":
-#	  self.report(msgtype, msg)
-#   
-#   reloadcats(context)
-#   if name!="":
-#	  scn = context.scene
-#	  cats = scn.matlib_cats
-#	  if len(cats)==0:
-#		  item = cats.add()
-#		  item.name= "All"
-#		  
-#	  item = cats.add()
-#	  item.name= name
-		#message = "Popup Values: %f, %d, '%s'" % \
-		  #  (self.my_float, self.my_bool, self.my_string)
-		#self.report({'INFO'}, message)
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
@@ -504,26 +441,6 @@ class matlibcatsAddRemoveOperator(bpy.types.Operator):
 					
 					
 					#print(elem)
-				
-				
-				
-				
-				#FILE VERSION
-#		  file = open(catspath, "r")
-#		  stream=file.read()
-#		  num=stream.find(name)
-#		  if num>-1:
-#			  print("encontre "+name, num)
-#			  stream=stream[0:num]+stream[num+len(name)+1::]
-#		  file.close()
-#		  
-#		  file=open(catspath, "w")
-#		  file.write(stream)
-#		  file.close()
-#		  
-#		  scn.matlib_cats_index-=1
-#	  
-#		  reloadcats(context)
 			
 			
 		elif add == "SET":
@@ -589,7 +506,7 @@ class matlibcatsAddRemoveOperator(bpy.types.Operator):
 			reloadlib(context)
 			
 			if index==0:
-				print("mostrar todo")
+				print("Show All")
 				
 				
 			elif index>0:
@@ -612,7 +529,7 @@ class matlibcatsAddRemoveOperator(bpy.types.Operator):
 					item.name = it[0]
 					item.category=it[1]
 						
-				print("mostrar  "+ catname)
+				print("Show "+ catname)
 				
 				
 		return {'FINISHED'}
@@ -831,7 +748,7 @@ class matlibvxOperator(bpy.types.Operator):
 				dopreview = True
 	
 				if unlinked:
-					print("no esta linkado")
+					print("not linked")
 					#check if it exists at lib
 					list = listmaterials(matlibpath)
 			
@@ -842,7 +759,7 @@ class matlibvxOperator(bpy.types.Operator):
 							break
 	
 					if exists:
-						print("existe en lib")  
+						print("exists in lib")  
 						#link the material
 						getmat(matl, True)
 						
@@ -964,7 +881,7 @@ class matlibvxPanel(bpy.types.Panel):
 		row.alignment="LEFT"
 		row.label(entry)
 		row = layout.row()
-		row.template_list(scn, "matlib", scn, "matlib_index")
+		row.template_list("UI_UL_list", "  ", scn, "matlib", scn, "matlib_index")
 		col = row.column(align=True)
 		
 		col.operator("matlib.add_remove_matlib", icon="ZOOMIN", text="").add = "ADD"

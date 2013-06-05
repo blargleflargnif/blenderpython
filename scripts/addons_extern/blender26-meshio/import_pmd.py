@@ -62,26 +62,16 @@ import os
 import sys
 import math
 
-if "bpy" in locals():
-    import imp
-    imp.reload(bl)
-    imp.reload(pmd)
-    imp.reload(reader)
-    imp.reload(englishmap)
-    print("reloaded modules: "+__name__)
-else:
-    from .pymeshio import pmd
-    from .pymeshio.pmd import reader
-    from .pymeshio import englishmap
+from .pymeshio import pmd
+from .pymeshio.pmd import reader
+from .pymeshio import englishmap
 
-    # for 2.5
-    import bpy
-    import mathutils
+# for 2.5
+import bpy
+import mathutils
 
-    # wrapper
-    from . import bl
-    print("imported modules: "+__name__)
-
+# wrapper
+from . import bl
 
 xrange=range
 
@@ -296,7 +286,7 @@ def __importArmature(l):
             name=b.name.decode('cp932')
 
         if not name in pose.bones:
-            print("%s is not found !!" % name)
+#            print("%s is not found !!" % name)
             continue
         p_bone=pose.bones[name]
 
@@ -374,9 +364,9 @@ def __importArmature(l):
         if not name:
             name=b.name.decode('cp932')
         boneNameMap[name]=b
-    for b in armature.bones.values():
-        if boneNameMap[b.name].type==pmd.Bone.UNVISIBLE:
-            b.hide=True
+#    for b in armature.bones.values():
+#        if boneNameMap[b.name].type==pmd.Bone.INVISIBLE:
+#            b.hide=True
  
     # create bone group
     for i, g in enumerate(l.bone_group_list):
@@ -402,18 +392,26 @@ def __importArmature(l):
     return armature_object
 
 
-def __importMaerialAndMesh(meshObject, l, face_map, tex_dir, toon_material):
-    mesh=bl.object.getData(meshObject)
+def __import16MaerialAndMesh(meshObject, l,
+        material_order, face_map, tex_dir, toon_material):
 
+    mesh=bl.object.getData(meshObject)
     ############################################################
     # material
     ############################################################
     bl.progress_print('create materials')
+    mesh_material_map={}
     textureMap={}
     imageMap={}
     index=0
 
-    for material_index, m in enumerate(l.materials):
+    for material_index in material_order:
+        try:
+            m=l.materials[material_index]
+            mesh_material_map[material_index]=index
+        except KeyError:
+            break
+
         material=createPmdMaterial(m, material_index)
 
         # main texture
@@ -466,8 +464,9 @@ def __importMaerialAndMesh(meshObject, l, face_map, tex_dir, toon_material):
     mesh_face_materials=[]
     used_vertices=set()
 
-    for material_index, m in enumerate(l.materials):
+    for material_index in material_order:
         face_offset=face_map[material_index]
+        m=l.materials[material_index]
         material_faces=l.indices[face_offset:face_offset+m.vertex_count]
 
         def degenerate(i0, i1, i2):
@@ -525,8 +524,13 @@ def __importMaerialAndMesh(meshObject, l, face_map, tex_dir, toon_material):
     ############################################################
     used_map={}
     bl.mesh.addUV(mesh)
-    for i, (face, index) in enumerate(
+    for i, (face, material_index) in enumerate(
             zip(mesh.tessfaces, mesh_face_materials)):
+        try:
+            index=mesh_material_map[material_index]
+        except KeyError as message:
+            print(message, mesh_material_map, m)
+            assert(False)
         bl.face.setMaterial(face, index)
         material=mesh.materials[index]
         used_map[index]=True
@@ -589,32 +593,57 @@ def __importMaterialAndMesh(io, tex_dir, toon_material):
             if io.indices[i] in shape_key_used_vertices:
                 return True
 
+    material_with_shape=set()
 
     # 各マテリアルの開始頂点インデックスを記録する
     face_map={}
     face_count=0
     for i, m in enumerate(io.materials):
         face_map[i]=face_count
+        if isMaterialUsedInShape(face_count, m):
+            material_with_shape.add(i)
         face_count+=m.vertex_count
 
-    # meshを作成する
-    mesh, meshObject=bl.mesh.create('mesh')
+    # shapeキーで使われる頂点のあるマテリアル
+    material_with_shape=list(material_with_shape)
+    material_with_shape.sort()
 
-    # activate object
-    bl.object.deselectAll()
-    bl.object.activate(meshObject)
+    # shapeキーに使われていないマテリアル
+    material_without_shape=[]
+    for i in range(len(io.materials)):
+        if not i in material_with_shape:
+            material_without_shape.append(i)
 
-    # shapeキーで使われる順に並べなおしたマテリアル16個分の
-    # メッシュを作成する
-    vertex_map=__importMaerialAndMesh(
-            meshObject, io, face_map, tex_dir, toon_material)
+    # メッシュの生成
+    def __splitList(l, length):
+        for i in range(0, len(l), length):
+            yield l[i:i+length]
 
-    # crete shape key
-    __importShape(meshObject, io, vertex_map)
+    def __importMeshAndShape(material16, name):
+        mesh, meshObject=bl.mesh.create(name)
 
-    mesh.update()
+        # activate object
+        bl.object.deselectAll()
+        bl.object.activate(meshObject)
 
-    return [meshObject]
+        # shapeキーで使われる順に並べなおしたマテリアル16個分の
+        # メッシュを作成する
+        vertex_map=__import16MaerialAndMesh(
+                meshObject, io, material16, face_map, tex_dir, toon_material)
+
+        # crete shape key
+        __importShape(meshObject, io, vertex_map)
+
+        mesh.update()
+        return meshObject
+
+    mesh_objects=[__importMeshAndShape(material16, 'with_shape')
+        for material16 in __splitList(material_with_shape, 16)]
+
+    mesh_objects+=[__importMeshAndShape(material16, 'mesh')
+        for material16 in __splitList(material_without_shape, 16)]
+
+    return mesh_objects
 
 
 def __importConstraints(io):

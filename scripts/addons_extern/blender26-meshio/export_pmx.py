@@ -13,7 +13,7 @@ def near(x, y, EPSILON=1e-5):
     return d>=-EPSILON and d<=EPSILON
 
 
-def create_pmx(ex, enable_bdef4=True):
+def create_pmx(ex):
     """
     PMX 出力
     """
@@ -24,46 +24,6 @@ def create_pmx(ex, enable_bdef4=True):
     model.english_name=o.get(bl.MMD_ENGLISH_NAME, 'blender export model')
     model.comment=o.get(bl.MMD_MB_COMMENT, 'Blnderエクスポート\n')
     model.english_comment=o.get(bl.MMD_ENGLISH_COMMENT, 'blender export commen\n')
-
-    class DeformBuilder:
-        def __init__(self, skeleton):
-            self.skeleton=skeleton
-            self.bone_names={ b.name for b in skeleton.bones }
-            self.count_bdef1=0
-            self.count_bdef2=0
-            self.count_bdef4=0
-            self.count_error=0
-        
-        def __filter(self, name, weight):
-            return name in self.bone_names
-        
-        def __call__(self, ext_weight):
-            weights=[ (self.skeleton.indexByName(w[0]), w[1]) \
-                for w in ext_weight.get_normalized(4, self.__filter) ]
-            if len(weights)==0:
-                self.count_error+=1
-                return pmx.Bdef1(0) # Recovery
-            elif len(weights)==1:
-                self.count_bdef1+=1
-                return pmx.Bdef1(weights[0][0])
-            elif len(weights)==2:
-                self.count_bdef2+=1
-                return pmx.Bdef2(
-                    weights[0][0], weights[1][0],
-                    weights[0][1])
-            else:
-                if len(weights)==3:
-                    weights.append( (0, 0.0) ) # Dummy Data
-                self.count_bdef4+=1
-                return pmx.Bdef4(
-                    weights[0][0], weights[1][0], weights[2][0], weights[3][0],
-                    weights[0][1], weights[1][1], weights[2][1], weights[3][1])
-        
-        def show(self):
-            print("BDEF Statistics >>>")
-            print("\tBDEF1: %d BDEF2: %d BDEF4: %d ERROR: %d" % \
-                (self.count_bdef1, self.count_bdef2, self.count_bdef4, self.count_error))
-    deform_builder=DeformBuilder(ex.skeleton)
 
     def get_deform(b0, b1, weight):
         if b0==-1:
@@ -80,15 +40,11 @@ def create_pmx(ex, enable_bdef4=True):
         common.Vector3(attribute.nx, attribute.nz, attribute.ny),
         # reverse vertical
         common.Vector2(attribute.u, 1.0-attribute.v),
-        deform_builder(ext_weight) if enable_bdef4 else \
         get_deform(ex.skeleton.indexByName(b0), ex.skeleton.indexByName(b1), weight),
         # edge flag, 0: enable edge, 1: not edge
         1.0 
         )
-        for pos, attribute, b0, b1, weight, ext_weight in ex.oneSkinMesh.vertexArray.zip2()]
-
-    if enable_bdef4:
-        deform_builder.show()
+        for pos, attribute, b0, b1, weight in ex.oneSkinMesh.vertexArray.zip()]
 
     boneMap=dict([(b.name, i) for i, b in enumerate(ex.skeleton.bones)])
 
@@ -167,13 +123,9 @@ def create_pmx(ex, enable_bdef4=True):
             return texture
         else:
             return texture[pos+1:]
-    try:
-        for m in ex.oneSkinMesh.vertexArray.indexArrays.keys():
-            for path in bl.material.eachEnalbeTexturePath(bl.material.get(m)):
-                textures.add(get_texture_name(path))
-    except KeyError as e:
-        # no material
-        pass
+    for m in ex.oneSkinMesh.vertexArray.indexArrays.keys():
+        for path in bl.material.eachEnalbeTexturePath(bl.material.get(m)):
+            textures.add(get_texture_name(path))
     model.textures=list(textures)
 
     # texture pathからtexture indexを逆引き
@@ -241,7 +193,7 @@ def create_pmx(ex, enable_bdef4=True):
         try:
             m=bl.material.get(material_name)
         except KeyError as e:
-            m=exporter.oneskinmesh.DefaultMaterial()
+            m=DefaultMatrial()
         (
                 texture_index, 
                 toon_texture_index, toon_sharing_flag, 
@@ -287,9 +239,6 @@ def create_pmx(ex, enable_bdef4=True):
             model.indices.append(indices[i+1])
             model.indices.append(indices[i])
 
-    def get_vertex_index(rel_index):
-        return ex.oneSkinMesh.morphList[0].offsets[rel_index][0]
-
     # 表情
     from .pymeshio import englishmap
     for i, m in enumerate(ex.oneSkinMesh.morphList[1:]):
@@ -309,7 +258,7 @@ def create_pmx(ex, enable_bdef4=True):
                 morph_type=1,
                 )
         morph.offsets=[pmx.VertexMorphOffset(
-            get_vertex_index(index),
+            index, 
             common.Vector3(offset[0], offset[2], offset[1])
             )
             for index, offset in m.offsets]

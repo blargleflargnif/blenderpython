@@ -159,17 +159,19 @@ def __createObjects(mqo, root, materials, imageMap, scale):
             materialMap[f.material_index]=True
         bl.mesh.addGeometry(mesh, vertices, faces)
 
-        # add materials
+        # blender limits 16 materials per mesh
         for i, material_index in enumerate(materialMap.keys()):
+            if i>=16:
+                # split a mesh ?
+                print("over 16 materials!")
+                break
             bl.mesh.addMaterial(mesh, materials[material_index])
             materialMap[material_index]=i
  
         # set face params
-        assert(len(o.faces)==len(mesh.tessfaces))
-
+        assert(len(o.faces)==len(mesh.faces))
         bl.mesh.addUV(mesh)
-
-        for i, (f, face) in enumerate(zip(o.faces, mesh.tessfaces)):
+        for i, (f, face) in enumerate(zip(o.faces, mesh.faces)):
             uv_array=[]
             # ToDo FIX
             # flip face
@@ -180,9 +182,6 @@ def __createObjects(mqo, root, materials, imageMap, scale):
             if f.material_index in materialMap:
                 bl.face.setMaterial(face, materialMap[f.material_index])
             bl.face.setSmooth(face, True)
-
-        # fix mesh
-        mesh.update()
 
         # mirror modifier
         if o.mirror:

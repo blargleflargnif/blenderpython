@@ -257,7 +257,7 @@ class object:
         pose=object.getPose(o)
         g=pose.bone_groups.active
         g.name=name
-        g.color_set=color_set
+#        g.color_set=color_set
         return g
 
     @staticmethod
@@ -316,7 +316,7 @@ class texture:
         try:
             image=bpy.data.images.load(path)
         except RuntimeError:
-            print('fail to create:', path)
+#            print('fail to create:', path)
             image=bpy.data.images.new('Image', width=16, height=16)
         texture.image=image
         return texture, image
@@ -617,8 +617,8 @@ class armature:
         armature.show_names=True
         #armature.draw_type='OCTAHEDRAL'
         armature.draw_type='STICK'
-        #armature.use_deform_envelopes=False
-        #armature.use_deform_vertex_groups=True
+#        armature.use_deform_envelopes=False
+#        armature.use_deform_vertex_groups=True
         #armature.use_mirror_x=True
 
         return armature, armature_object

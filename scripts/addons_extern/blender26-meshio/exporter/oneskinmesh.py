@@ -27,7 +27,7 @@ class SSS(object):
         self.use=1
 
 
-class DefaultMaterial(dict):
+class DefaultMatrial(object):
     def __init__(self):
         self.name='default'
         # diffuse
@@ -38,7 +38,7 @@ class DefaultMaterial(dict):
         self.specular_hardness=5
         self.specular_color=[1, 1, 1]
         # ambient
-        self.mirror_color=[0, 0, 0]
+        self.mirror_color=[1, 1, 1]
         # flag
         self.subsurface_scattering=SSS()
         # texture
@@ -82,6 +82,7 @@ class OneSkinMesh(object):
         if not bl.object.isVisible(obj):
             return
         self.__mesh(obj)
+        self.__skin(obj)
         self.__rigidbody(obj)
         self.__constraint(obj)
 
@@ -139,7 +140,7 @@ class OneSkinMesh(object):
         return weightMap, secondWeightMap
 
     def __processFaces(self, obj_name, mesh, weightMap, secondWeightMap):
-        default_material=DefaultMaterial()
+        default_material=DefaultMatrial()
         # 各面の処理
         for i, face in enumerate(mesh.tessfaces):
             faceVertexCount=bl.face.getVertexCount(face)
@@ -347,12 +348,6 @@ class OneSkinMesh(object):
         if len(copyMesh.vertices)>0:
             # apply transform
             copyMesh.transform(obj.matrix_world)
-            if bl.object.hasShapeKey(copyObj):
-                matrix=obj.matrix_world
-                for key in copyMesh.shape_keys.key_blocks:
-                    for point in key.data:
-                        point.co=matrix*point.co
-            copyMesh.calc_normals()
 
             # apply modifier
             for m in [m for m in copyObj.modifiers]:
@@ -367,14 +362,12 @@ class OneSkinMesh(object):
 
             weightMap, secondWeightMap=self.__getWeightMap(copyObj, copyMesh)
             self.__processFaces(obj.name, copyMesh, weightMap, secondWeightMap)
-            self.__weights(copyObj, copyMesh, obj.name)
-            self.__skin(copyObj, obj.name)
         bl.object.delete(copyObj)
 
     def createEmptyBasicSkin(self):
         self.__getOrCreateMorph('base', 0)
 
-    def __skin(self, obj, obj_name):
+    def __skin(self, obj):
         if not bl.object.hasShapeKey(obj):
             return
 
@@ -384,8 +377,6 @@ class OneSkinMesh(object):
 
         # shape keys
         vg=bl.object.getVertexGroup(obj, bl.MMD_SHAPE_GROUP_NAME)
-        if len(vg)==0:
-            vg=list(range(len(blenderMesh.vertices)))
 
         # base
         used=set()
@@ -394,12 +385,12 @@ class OneSkinMesh(object):
                 baseMorph=self.__getOrCreateMorph('base', 0)
                 basis=b
 
-                relativeIndex=len(baseMorph.offsets)
+                relativeIndex=0
                 for index in vg:
                     v=bl.shapekey.getByIndex(b, index)
                     pos=[v[0], v[1], v[2]]
 
-                    indices=self.vertexArray.getMappedIndex(obj_name, index)
+                    indices=self.vertexArray.getMappedIndex(obj.name, index)
                     for attribute, i in indices.items():
                         if i in used:
                             continue
@@ -431,13 +422,13 @@ class OneSkinMesh(object):
                 if offset[0]==0 and offset[1]==0 and offset[2]==0:
                     continue
                 if index in vg:
-                    indices=self.vertexArray.getMappedIndex(obj_name, index)
+                    indices=self.vertexArray.getMappedIndex(obj.name, index)
                     for attribute, i in indices.items():
                         if i in used:
                             continue
                         used.add(i) 
                         morph.add(indexRelativeMap[i], offset)
-            assert(len(morph.offsets)<=len(baseMorph.offsets))
+            assert(len(morph.offsets)<len(baseMorph.offsets))
 
         # sort skinmap
         original=self.morphList[:]
@@ -470,10 +461,5 @@ class OneSkinMesh(object):
     def getVertexCount(self):
         return len(self.vertexArray.positions)
 
-    def __weights(self, obj, mesh, obj_name):
-        for v in mesh.vertices:
-            for i in self.vertexArray.getMappedIndex2(obj_name, v.index):
-                ext_w=self.vertexArray.ext_weight[i]
-                ext_w.entries.extend( filter( lambda ent: not ent[0].startswith("_"), \
-                    ((obj.vertex_groups[vg.group].name, vg.weight) for vg in v.groups) ) )
+
 

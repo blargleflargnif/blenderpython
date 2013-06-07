@@ -7,6 +7,7 @@ import os
 import bpy
 from mathutils import Vector
 from time import clock
+import json
 
 #import threading
 #from xmlrpc.server import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
@@ -80,19 +81,15 @@ def isParent(context):
     return context.object.type == 'EMPTY' and (meshChild or backup != "")
 
         
-class DestructionBasePanel(types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "physics"
-    bl_label = "label"
-
+class DestructionBasePanel:
+    
     @classmethod
     def poll(cls, context):
         rd = context.scene.render
         return (context.object) and (context.object.destEnabled) and (not rd.use_game_engine)
     
-
-class DestructionFracturePanel(DestructionBasePanel):
+    
+class DestructionFracturePanel(DestructionBasePanel, bpy.types.Panel):
     bl_idname = "PHYSICS_PT_destructionFracture"
     bl_label = "Destruction Fracture"
     bl_context = "physics"
@@ -118,7 +115,7 @@ class DestructionFracturePanel(DestructionBasePanel):
             col = layout.column(align=True)
             col.label("Mode")
             row = col.row(align=True)
-            row.prop(context.object.destruction, "dynamic_mode", expand = True)
+           # row.prop(context.object.destruction, "dynamic_mode", expand = True) disable Dynamic for now, wont work in blenderplayer
             if context.object.destruction.dynamic_mode == "D_DYNAMIC":
                 col.prop(context.scene, "dummyPoolSize", text = "Dummy Object Pool Size")
             
@@ -268,7 +265,7 @@ class DestructionFracturePanel(DestructionBasePanel):
             layout.label("Save file before starting game engine")
                 
                 
-class DestructionPhysicsPanel(DestructionBasePanel):
+class DestructionPhysicsPanel(DestructionBasePanel, bpy.types.Panel):
 
     bl_idname = "PHYSICS_PT_destructionPhysics"
     bl_label = "Destruction Physics"
@@ -316,7 +313,7 @@ class DestructionPhysicsPanel(DestructionBasePanel):
                 row.active = context.object.destruction.groundConnectivity
         
                 row = col.row(align=True)       
-                row.template_list(context.object.destruction, "grounds", 
+                row.template_list("UI_UL_list", "grounds", context.object.destruction, "grounds", 
                           context.object.destruction, "active_ground", rows = 2)
                 row.operator("ground.remove", icon = 'ZOOMOUT', text = "")
                 row.active = context.object.destruction.groundConnectivity
@@ -339,7 +336,7 @@ class DestructionPhysicsPanel(DestructionBasePanel):
                     row.prop(context.scene, "collapse_delay", text = "Collapse Delay")
     
 
-class DestructionHierarchyPanel(DestructionBasePanel):
+class DestructionHierarchyPanel(DestructionBasePanel, bpy.types.Panel):
 
     bl_idname = "PHYSICS_PT_destructionHierarchy"
     bl_label = "Destruction Hierarchy"
@@ -374,7 +371,7 @@ class DestructionHierarchyPanel(DestructionBasePanel):
                 
     
 
-class DestructionRolePanel(DestructionBasePanel):
+class DestructionRolePanel(DestructionBasePanel, bpy.types.Panel):
 
     bl_idname = "PHYSICS_PT_destructionRole"
     bl_label = "Destruction Role "
@@ -484,7 +481,7 @@ class DestructionRolePanel(DestructionBasePanel):
             
                 row = col.row(align=True)
             
-                row.template_list(context.object.destruction, "destructorTargets", 
+                row.template_list("UI_UL_list", "destructorTargets", context.object.destruction, "destructorTargets", 
                               context.object.destruction, "active_target" , rows = 2) 
                             
                 row.operator("target.remove", icon = 'ZOOMOUT', text = "") 
@@ -501,7 +498,7 @@ class DestructionRolePanel(DestructionBasePanel):
                 row.prop_search(context.scene, "custom_ball", context.scene, 
                     "objects", icon = 'OBJECT_DATA', text = "Custom Ball:")
 
-class DestructionSetupPanel(DestructionBasePanel):
+class DestructionSetupPanel(DestructionBasePanel, bpy.types.Panel):
 
     bl_idname = "PHYSICS_PT_destructionSetup"
     bl_label = "Destruction Setup "
@@ -732,8 +729,10 @@ class SetupPlayer(types.Operator):
         context.scene.player = True
         
         #transfer settings to all selected objects if NOT precalculated(done via destroy if precalculated)
-        if context.object.destruction.dynamic_mode == "D_DYNAMIC":
-            dd.DataStore.proc.copySettings(context, None)
+        for o in context.scene.objects:
+            if o.destruction.dynamic_mode == "D_DYNAMIC":
+                dd.DataStore.proc.copySettings(context, None)
+                break
         
         #set cursor to 0,0,0 temporarily
         oldCur = context.scene.cursor_location.copy()
@@ -1524,6 +1523,7 @@ class DestroyObject(types.Operator):
         #s.join()
                       
         dd.DataStore.proc.processDestruction(context, Vector((self.impactLoc)))
+            
         print("Decomposition Time:" , clock() - start) 
         context.user_preferences.edit.use_global_undo = undo
         
@@ -1655,6 +1655,25 @@ class GameStart(types.Operator):
     bl_description = "Start game engine with recording enabled by default"
     bl_options = {'UNDO'}
     
+    def storeBGEProps(self, context):
+        #update BGE Prop Dict here as well
+        dd.DataStore.properties = {}
+        for o in bpy.data.objects:
+            print(o.name)
+            dd.DataStore.properties[o.name] = dp.bgeProps(o)
+        dd.DataStore.properties[context.scene.name] = dp.bgePropsScene(context.scene)
+        
+        if "jsondata.py" in bpy.data.texts:
+            bpy.data.texts.remove(bpy.data.texts["jsondata.py"])
+        t = bpy.data.texts.new("jsondata.py")
+        s = json.dumps(dd.DataStore.properties, cls = dd.BGEProps, indent=4)
+        #need a string to save, better would be external file though, but want to keep it in blend
+        #s = base64.encodebytes(b)
+        #s = str(s, encoding='utf-8')
+        t.write("data = '''\n")
+        t.write(s)
+        t.write("'''")
+    
     def execute(self, context):
         
         filepath = bpy.context.blend_data.filepath
@@ -1665,9 +1684,11 @@ class GameStart(types.Operator):
                
         names = []
         isDynamic = False
-        if context.object.destruction.dynamic_mode == "D_DYNAMIC":
-            isDynamic = True
-            
+        for o in context.scene.objects:
+            if o.destruction.dynamic_mode == "D_DYNAMIC":
+                isDynamic = True #hmm need dynamic mode in case atleast one object requests it
+        
+        if isDynamic:
             context.scene.layers = [True, True, False, False, False,
                                     False, False, False, False, False,
                                     False, False, False, False, False,
@@ -1705,14 +1726,17 @@ class GameStart(types.Operator):
         
         #setup visible player, will remain after reloading
         if context.scene.setup_basic_scene:
+            ops.player.clear() #ensure valid basic scene
             ops.player.setup()
           
         #maybe disable this in dynamic mode, because you want to reuse the shards.
-        if context.object.destruction.dynamic_mode == "D_PRECALCULATED":
+        #if context.object.destruction.dynamic_mode == "D_PRECALCULATED":
+        if not isDynamic:
             if filepath == "":
                 #ops.wm.save_as_mainfile('INVOKE_DEFAULT')
                 pass
             else:
+                self.storeBGEProps(context)
                 ops.wm.save_mainfile(filepath = filepath)
             
             #deselect all
@@ -1732,8 +1756,17 @@ class GameStart(types.Operator):
                 #cam = context.scene.use_player_cam
                 #context.scene.use_player_cam = False
                 ops.player.setup(hidden=True)
+            
             ops.parenting.convert()
-         
+            
+            #export for blenderplayer here
+            filename = bpy.path.basename(filepath)
+            f = filename.split(".")
+            filename = f[0] + "_game." + f[1]    
+            gamepath = os.path.dirname(filepath) + os.sep + filename
+            print(gamepath)
+            ops.wm.save_as_mainfile(filepath = gamepath, copy=True)
+                
         ops.view3d.game_start()
         
         if not isDynamic:

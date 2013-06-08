@@ -238,3 +238,6 @@ Constellation (oscurart_constellation.py) -- by Oscurart
 Bullet Viewport Constraints Tool (Bullet_Viewport_Constraints_Tool-0374-Deactivation.py) -- by Bashi
 	http://blenderartists.org/forum/showthread.php?275823-WIP-Bullet-Constraints-Tools-0-3-7
 	https://www.dropbox.com/s/5wcu1howiyv4msg/Bullet_Viewport_Constraints_Tool-0374-Deactivation.py.zip
+	
+xNormal importer/exporter -- by ohsnapitsjoel
+	http://www.blenderartists.org/forum/showthread.php?291665-AddOn-xNormal-3-18-1-import-export-Updated-6-7-13&p=2372563&viewfull=1#post2372563

@@ -19,7 +19,7 @@
 bl_info = {
     "name": "xNormal applink",
     "author": "Joel Daniels",
-    "version": (0, 4),
+    "version": (0, 2),
     "blender": (2, 67, 1),
     "location": "Properties > Scene",
     "description": "Export to and from xNormal 3.18.1",
@@ -618,7 +618,7 @@ from bpy_extras.io_utils import ImportHelper
 
 class PROPERTIES_OT_xN_GetExecPath(bpy.types.Operator, ImportHelper):
     bl_idname = 'xnormal.exec_browse'
-    bl_label = 'Set Path'
+    bl_label = 'Get Path'
     bl_description = 'Open file browser'
     
     filename_ext = ".exe"
@@ -637,7 +637,7 @@ class PROPERTIES_OT_xN_GetExecPath(bpy.types.Operator, ImportHelper):
 #----------------------------------------------------------    
 class PROPERTIES_OT_xN_GetOutputPath(bpy.types.Operator, ImportHelper):
     bl_idname = 'xnormal.output_browse'
-    bl_label = 'Set Path'
+    bl_label = 'Get Path'
     bl_description = 'Open file browser'
     
     def get_output_path(self, context, filepath):
@@ -678,7 +678,7 @@ class PROPERTIES_PT_xN_ExportPanel(bpy.types.Panel):
         
 #        layout.label(text="Generate maps with xNormal:")
         row = layout.row()
-        row.operator("xnormal.export", icon='XNORMAL')       
+        row.operator("xnormal.export")       
 #        layout.label(text="Import the maps from xNormal:")
         row.operator("xnormal.import", text = "Import Maps", icon='BLENDER')
         
@@ -686,7 +686,7 @@ class PROPERTIES_PT_xN_ExportPanel(bpy.types.Panel):
 
         row = layout.row(align=True)
         row.scale_y = 2.0
-        row.operator("xnormal.launch", icon= 'XNORMAL')
+        row.operator("xnormal.launch")
         
 #-------------------------------------------------------------
 #Function for getting all the objects in the scene for EnumProps
@@ -852,7 +852,7 @@ def register():
     bpy.types.Scene.xN_output = StringProperty(
     name = "Output File",
     description = "File location and file name to use for exporting .obj and saving maps",
-    default = '')
+    default = str(r'C:\Users\Joel\Documents\xNormal\default'))
     
     #---------------
     
@@ -868,7 +868,7 @@ def register():
     bpy.types.Scene.xN_exec_path = StringProperty(
     name = "Path to xNormal",
     description = "Path to the xNormal .exe",
-    default = '')
+    default = str(r"C:\Program Files\Santiago Orgaz\xNormal 3.18.1\x64\xNormal.exe"))
     
     #----------------   
     

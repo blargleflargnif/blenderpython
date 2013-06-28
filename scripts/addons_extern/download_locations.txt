@@ -41,7 +41,7 @@ compositing presets (compositing_preset) -- by Fabio Russo (ruesp83)
 import/export AFM mesh (io_import_mesh_afm_ascii) -- by zeffii
 	http://blenderartists.org/forum/showthread.php?205022#post2143557
 	
-import/export IFC (io_import_scene_ifc-32/64) -- by ifcopenshell
+import/export IFC (io_import_scene_ifc-32/64) -- by ifcopenshell *REMOVED*
 	http://ifcopenshell.org/ifcblender.html
 	
 material library (matlib) -- by Mackraken

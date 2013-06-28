@@ -133,7 +133,6 @@ class luxrender_integrator(declarative_property_group):
 		'lightpathstrategy',
 		['eyedepth', 'lightdepth'],
 		['eyerrthreshold', 'lightrrthreshold'],
-		'lightraycount',
 		
 		# dl +
 		'maxdepth',
@@ -219,7 +218,7 @@ class luxrender_integrator(declarative_property_group):
 		'useproba',
 
 				
-		# path + bidir
+		# path
 		'shadowraycount',
 	]
 	
@@ -231,11 +230,10 @@ class luxrender_integrator(declarative_property_group):
 		'eyerrthreshold':					{ 'advanced': True, 'surfaceintegrator': 'bidirectional' },
 		'lightrrthreshold':					{ 'advanced': True, 'surfaceintegrator': 'bidirectional' },
 		'lightstrategy':					{ 'surfaceintegrator': O(['directlighting', 'exphotonmap', 'igi', 'path',  'distributedpath', 'bidirectional'])},
-		'lightraycount':					{ 'surfaceintegrator': 'bidirectional' },
 		
 		# dl +
 		'maxdepth':							{ 'surfaceintegrator': O(['directlighting', 'igi', 'path']) },
-		'shadowraycount':					{ 'advanced': True, 'surfaceintegrator': O(['exphotonmap', 'directlighting', 'bidirectional','path']) },
+		'shadowraycount':					{ 'advanced': True, 'surfaceintegrator': O(['exphotonmap', 'directlighting', 'path']) },
 		
 		# dp
 		'lbl_direct':						{ 'surfaceintegrator': 'distributedpath' },
@@ -327,8 +325,7 @@ class luxrender_integrator(declarative_property_group):
 	alert = {}
 	
 	properties = [
-		#This parameter is fed to the "integrator' context, and holds the actual surface integrator setting. The user does not interact with it directly, and it does not appear in the UI.
-		#It is set via the Rendering Mode menu and update_rendering_mode function
+		#This parameter is fed to the "integrator' context, and holds the actual surface integrator setting. The user does not interact with it directly, and it does not appear in the panels
 		{
 			'type': 'enum', 
 			'attr': 'surfaceintegrator',
@@ -380,7 +377,7 @@ class luxrender_integrator(declarative_property_group):
 			'attr': 'eyedepth',
 			'name': 'Max Eye Depth',
 			'description': 'Max recursion depth for ray casting from eye',
-			'default': 16,
+			'default': 48,
 			'min': 1,
 			'max': 2048,
 			'save_in_preset': True
@@ -390,7 +387,7 @@ class luxrender_integrator(declarative_property_group):
 			'attr': 'lightdepth',
 			'name': 'Max Light Depth',
 			'description': 'Max recursion depth for ray casting from light',
-			'default': 16,
+			'default': 48,
 			'min': 1,
 			'max': 2048,
 			'save_in_preset': True
@@ -420,7 +417,7 @@ class luxrender_integrator(declarative_property_group):
 			'attr': 'maxdepth',
 			'name': 'Max. depth',
 			'description': 'Max recursion depth for ray casting from eye',
-			'default': 16,
+			'default': 48,
 			'min': 1,
 			'max': 2048,
 			'save_in_preset': True
@@ -446,20 +443,7 @@ class luxrender_integrator(declarative_property_group):
 			'type': 'int',
 			'attr': 'shadowraycount',
 			'name': 'Shadow Ray Count',
-			'description': 'Multiplier for the number of shadow rays traced: higher values are slower overall, but can speed convergence of direct light and soft shadows',
 			'default': 1,
-			'min': 1,
-			'max': 1024,
-			'save_in_preset': True
-		},
-		{
-			'type': 'int',
-			'attr': 'lightraycount',
-			'name': 'Light Ray Count',
-			'description': 'Multiplier for the number of light paths traced: higher values can speed convergence of indirect light and caustics at the expense of reflections and refractions',
-			'default': 1,
-			'min': 1,
-			'max': 1024,
 			'save_in_preset': True
 		},
 		{
@@ -707,7 +691,7 @@ class luxrender_integrator(declarative_property_group):
 			'attr': 'maxphotondepth',
 			'name': 'Max. photon depth',
 			'description': 'Max recursion depth for photon tracing',
-			'default': 16,
+			'default': 48,
 			'min': 1,
 			'max': 2048,
 			'save_in_preset': True
@@ -1081,9 +1065,7 @@ class luxrender_integrator(declarative_property_group):
 			if self.advanced:
 				params.add_float('eyerrthreshold', self.eyerrthreshold) \
 					  .add_float('lightrrthreshold', self.lightrrthreshold) \
-					  .add_string('lightpathstrategy', self.lightpathstrategy if not hybrid_compat else 'one') \
-					  .add_integer('shadowraycount', self.shadowraycount) \
-					  .add_integer('lightraycount', self.lightraycount)
+					  .add_string('lightpathstrategy', self.lightpathstrategy if not hybrid_compat else 'one')
 		
 		if self.surfaceintegrator == 'directlighting':
 			params.add_integer('maxdepth', self.maxdepth)

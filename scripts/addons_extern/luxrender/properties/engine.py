@@ -97,22 +97,22 @@ class luxrender_testing(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'clay_render',
-			'name': 'Clay Render',
+			'name': 'Clay render',
 			'description': 'Export all non-glass materials as default "clay"',
 			'default': False
 		},
 		{
 			'type': 'bool',
 			'attr': 'object_analysis',
-			'name': 'Debug: Print Object Analysis',
+			'name': 'Debug: print object analysis',
 			'description': 'Show extra output as objects are processed',
 			'default': False
 		},
 		{
 			'type': 'bool',
 			'attr': 're_raise',
-			'name': 'Debug: Show Error Traceback Messages',
-			'description': 'Show export error messages in the UI as well as the console',
+			'name': 'Debug: show full trace on export error',
+			'description': 'Flash export error messages in UI',
 			'default': False
 		},
 	]
@@ -198,7 +198,7 @@ class luxrender_engine(declarative_property_group):
 			'type': 'bool',
 			'attr': 'render',
 			'name': 'Run Renderer',
-			'description': 'Run renderer after export',
+			'description': 'Run Renderer after export',
 			'default': efutil.find_config_value('luxrender', 'defaults', 'auto_start', True),
 		},
 		{
@@ -221,12 +221,11 @@ class luxrender_engine(declarative_property_group):
 			'type': 'enum',
 			'attr': 'binary_name',
 			'name': 'External Type',
-			'description': 'Choose full GUI, console renderer or real-time rendering',
+			'description': 'Choose full GUI or console renderer',
 			'default': 'luxrender',
 			'items': [
-				('luxrender', 'LuxRender GUI', 'Render with the LuxRender GUI application'),
-				('luxconsole', 'LuxConsole', 'Render with LuxConsole and feed the result to the UV/Image Editor'),
-				('luxvr', 'LuxVR', 'Render with the LuxVR realtime preview tool'),
+				('luxrender', 'LuxRender GUI', 'luxrender'),
+				('luxconsole', 'LuxConsole', 'luxconsole'),
 			],
 			'save_in_preset': True
 		},
@@ -272,8 +271,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'enum',
 			'attr': 'mesh_type',
-			'name': 'Mesh Format',
-			'description': 'Sets whether to export scene geometry as PLY files or directly in the LXO file, PLY is faster and recommended. This can be overridden per mesh from the mesh properties panel',
+			'name': 'Default mesh format',
+			'description': 'Sets whether to export scene geometry as PLY files or directly in the LXO file. PLY is faster and recommended',
 			'items': [
 				('native', 'LuxRender mesh', 'native'),
 				('binary_ply', 'Binary PLY', 'binary_ply')
@@ -284,8 +283,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'enum',
 			'attr': 'log_verbosity',
-			'name': 'Log Verbosity',
-			'description': 'Logging verbosity level',
+			'name': 'Log verbosity',
+			'description': 'Logging verbosity',
 			'default': 'default',
 			'items': [
 				('verbose', 'Verbose', 'verbose'),
@@ -298,8 +297,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'fixed_seed',
-			'name': 'Use Fixed Seeds',
-			'description': 'Use fixed seeds for render threads. Helps with keeping noise even for animations',
+			'name': 'Use fixed seeds',
+			'description': 'Use fixed seeds for threads. Helps with keeping noise even for animations',
 			'default': False,
 			'save_in_preset': True
 		},

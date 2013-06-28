@@ -109,8 +109,14 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 	if tex != None:
 		film_params.add_float('haltthreshold', 0.999)	# testcommit to reduce texture flat rendertimes
 
-	film_params.add_float('gamma', 1.0)
-	film_params.add_float('linear_exposure', 1.25)
+	# workaround for too dark texture preview
+	# remove when solved in blender colormanagement
+	if tex != None and bpy.app.version > (2, 64, 4) and bpy.app.version < (2, 65, 8):
+		film_params.add_float('gamma', 2.2)
+	else:
+		film_params.add_float('gamma', 1.0)
+	if bpy.app.version > (2, 64, 8):
+		film_params.add_float('linear_exposure', 1.25)
 
 	film_params \
 		.add_bool('write_exr', False) \
@@ -408,7 +414,22 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 		
 		lux_context.concatTransform(pv_transform)
 		
-		if pv_export_shape: #Any material, texture, light, or volume definitions created from the node editor do not exist before this conditional!
+		int_v, ext_v = get_material_volume_defs(mat)
+		if int_v != '' or ext_v != '':
+			if int_v != '': lux_context.interior(int_v)
+			if ext_v != '': lux_context.exterior(ext_v)
+		
+		if int_v == '' and bl_scene.luxrender_world.default_interior_volume != '':
+			lux_context.interior(bl_scene.luxrender_world.default_interior_volume)
+		if ext_v == '' and bl_scene.luxrender_world.default_exterior_volume != '':
+			lux_context.exterior(bl_scene.luxrender_world.default_exterior_volume)
+		
+		object_is_emitter = hasattr(mat, 'luxrender_emission') and mat.luxrender_emission.use_emission
+		if object_is_emitter:
+			# lux_context.lightGroup(mat.luxrender_emission.lightgroup, [])
+			lux_context.areaLightSource( *mat.luxrender_emission.api_output(obj) )
+		
+		if pv_export_shape:
 			GE = GeometryExporter(lux_context, scene)
 			GE.is_preview = True
 			GE.geometry_scene = scene
@@ -422,25 +443,10 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 					lux_context.material('matte', ParamSet().add_texture('Kd', texture_name))
 				else:
 					mat.luxrender_material.export(scene, lux_context, mat, mode='direct')
-					int_v, ext_v = get_material_volume_defs(mat)
-					if int_v != '' or ext_v != '':
-						if int_v != '': lux_context.interior(int_v)
-						if ext_v != '': lux_context.exterior(ext_v)
-
-					if int_v == '' and bl_scene.luxrender_world.default_interior_volume != '':
-						lux_context.interior(bl_scene.luxrender_world.default_interior_volume)
-					if ext_v == '' and bl_scene.luxrender_world.default_exterior_volume != '':
-						lux_context.exterior(bl_scene.luxrender_world.default_exterior_volume)
-							
-					object_is_emitter = hasattr(mat, 'luxrender_emission') and mat.luxrender_emission.use_emission
-					if object_is_emitter:
-						# lux_context.lightGroup(mat.luxrender_emission.lightgroup, [])
-						lux_context.areaLightSource( *mat.luxrender_emission.api_output(obj) )
-
+					
 				lux_context.shape(mesh_type, mesh_params)
 		else:
 			lux_context.shape('sphere', ParamSet().add_float('radius', 1.0))
-
 		lux_context.attributeEnd()
 		
 	# Default 'Camera' Exterior, just before WorldEnd

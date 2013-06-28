@@ -89,8 +89,8 @@ class luxrender_mesh(declarative_property_group):
 			'attr': 'mesh_type',
 			'name': 'Export as',
 			'items': [
-				('global', 'Use Default Setting', 'global'),
-				('native', 'LuxRender Mesh', 'native'),
+				('global', 'Use default setting', 'global'),
+				('native', 'LuxRender mesh', 'native'),
 				('binary_ply', 'Binary PLY', 'binary_ply')
 			],
 			'default': 'global'
@@ -110,7 +110,7 @@ class luxrender_mesh(declarative_property_group):
 			'type': 'bool',
 			'attr': 'portal',
 			'name': 'Exit Portal',
-			'description': 'Use this mesh as an exit portal (geometry should be open/planar)',
+			'description': 'Use this mesh as an exit portal',
 			'default': False,
 		},
 		{
@@ -141,16 +141,15 @@ class luxrender_mesh(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'sharpbound',
-			'name': 'Sharpen Bounds',
-			'description': 'Perserve hard borders in geometry',
+			'name': 'Sharpen bounds',
 			'default': False,
 		},
 		{
 			'type': 'bool',
 			'attr': 'splitnormal',
-			'name': 'Keep Split Edges',
+			'name': 'Keep split edges',
 			'default': False,
-			'description': 'Preserves effects of split-edges by splitting at breaks in the normal. WARNING: This will cause solid-shaded meshes to rip open!'},
+			'description': 'Preserves effects of edge-split modifier with smooth-shaded meshes. WARNING: This will cause solid-shaded meshes to rip open!'},
 		{
 			'type': 'int',
 			'attr': 'sublevels',
@@ -220,9 +219,9 @@ class luxrender_mesh(declarative_property_group):
 			texture_name = getattr(self, 'dm_floattexturename')
 			texture = get_texture_from_scene(LuxManager.CurrentScene, texture_name)
 			if texture.type in ('IMAGE', 'OCEAN') and texture.luxrender_texture.type == 'BLENDER':
-				params.add_texture('displacementmap', '%s_float' % self.dm_floattexturename)
+				params.add_string('displacementmap', '%s_float' % self.dm_floattexturename)
 			else:	
-				params.add_texture('displacementmap', self.dm_floattexturename)
+				params.add_string('displacementmap', self.dm_floattexturename)
 			params.add_float('dmscale', self.dmscale)
 			params.add_float('dmoffset', self.dmoffset)
 		

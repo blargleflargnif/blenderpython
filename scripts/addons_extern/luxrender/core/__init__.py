@@ -51,25 +51,23 @@ from ..outputs.pure_api import LUXRENDER_VERSION
 # Exporter Property Groups need to be imported to ensure initialisation
 from ..properties import (
 	accelerator, camera, engine, filter, integrator, ior_data, lamp, lampspectrum_data,
-	material, node_material, node_texture, node_spectrum, node_fresnel, node_utilities, mesh, object as prop_object, particles, rendermode, sampler, texture, world
+	material, mesh, object as prop_object, rendermode, sampler, texture, world
 )
 
 # Exporter Interface Panels need to be imported to ensure initialisation
 from ..ui import (
-	render_panels, camera, image, lamps, mesh, object as ui_object, particles, world
+	render_panels, camera, image, lamps, mesh, object as ui_object, world
 )
 
-#Legacy material editor panels, node editor UI is initialized above
 from ..ui.materials import (
 	main as mat_main, compositing, carpaint, cloth, glass, glass2, roughglass, glossytranslucent,
 	glossycoating, glossy, layered, matte, mattetranslucent, metal, metal2, mirror, mix as mat_mix, null,
 	scatter, shinymetal, velvet
 )
 
-#Legacy texture editor panels
 from ..ui.textures import (
-	main as tex_main, abbe, add, band, blender, bilerp, blackbody, brick, cauchy, constant, colordepth,
-	checkerboard, dots, equalenergy, fbm, fresnelcolor, fresnelname, gaussian, harlequin, hitpointcolor, hitpointalpha, hitpointgrey, imagemap, imagesampling, normalmap,
+	main as tex_main, add, band, blender, bilerp, blackbody, brick, cauchy, constant, colordepth,
+	checkerboard, dots, equalenergy, fbm, fresnelcolor, fresnelname, gaussian, harlequin, imagemap, imagesampling, normalmap,
 	lampspectrum, luxpop, marble, mix as tex_mix, multimix, sellmeier, scale, subtract, sopra, uv,
 	uvmask, windy, wrinkled, mapping, tabulateddata, transform
 )
@@ -99,7 +97,8 @@ _register_elm(bl_ui.properties_scene.SCENE_PT_keying_set_paths)
 _register_elm(bl_ui.properties_scene.SCENE_PT_unit)
 _register_elm(bl_ui.properties_scene.SCENE_PT_color_management)
 
-_register_elm(bl_ui.properties_scene.SCENE_PT_rigid_body_world)
+if bpy.app.version > (2, 65, 8):
+	_register_elm(bl_ui.properties_scene.SCENE_PT_rigid_body_world)
 
 _register_elm(bl_ui.properties_scene.SCENE_PT_custom_props)
 
@@ -110,13 +109,10 @@ _register_elm(bl_ui.properties_texture.TEXTURE_PT_preview)
 
 _register_elm(bl_ui.properties_data_lamp.DATA_PT_context_lamp)
 
-# Node-editor related stuff
-_register_elm(bpy.types.NODE_MT_add.append(node_material.luxrender_mat_node_editor.draw_add_menu))
-
 ### Some additions to Blender panels for better allocation in context
-### Use this example for such overrides
+### use this example for such overrides
 
-# Add output format flags to output panel
+# Add a hint to differentiate blender output and lux output
 def lux_output_hints(self, context):
 	if context.scene.render.engine == 'LUXRENDER_RENDER':
 	
@@ -155,7 +151,7 @@ def lux_output_hints(self, context):
 		if not context.scene.luxrender_engine.integratedimaging or context.scene.luxrender_engine.export_type == 'EXT':
 			row.prop(context.scene.camera.data.luxrender_camera.luxrender_film, "output_alpha", text="Alpha Channel") # Alpha and coupled premul option for all modes but integrated imaging
 		else:
-			row.prop(context.scene.camera.data.luxrender_camera.luxrender_film, "output_alpha", text="Transparent Background") # Integrated imaging always with premul named according to Blender usage
+			row.prop(context.scene.camera.data.luxrender_camera.luxrender_film, "output_alpha", text="Transparent Background") # Integrated imaging always with premul named according Blender usage
 				
 		if (context.scene.camera.data.luxrender_camera.luxrender_film.output_alpha):
 			if not context.scene.luxrender_engine.integratedimaging or context.scene.luxrender_engine.export_type == 'EXT': # Premul only availyble for non integrated imaging
@@ -215,16 +211,16 @@ def lux_use_dof(self, context):
 
 _register_elm(bl_ui.properties_data_camera.DATA_PT_camera_dof.append(lux_use_dof))
 
-# Add options by render image/anim buttons
+#Add options by render image/anim buttons
 def render_start_options(self, context):
 
 	if context.scene.render.engine == 'LUXRENDER_RENDER':
 		col = self.layout.column()
 		row = self.layout.row()
 		
-		col.prop(context.scene.luxrender_engine, "export_type", text="Export Type")
+		col.prop(context.scene.luxrender_engine, "export_type", text="Export type")
 		if context.scene.luxrender_engine.export_type == 'EXT':
-			col.prop(context.scene.luxrender_engine, "binary_name", text="Render Using")
+			col.prop(context.scene.luxrender_engine, "binary_name", text="Render using")
 			col.prop(context.scene.luxrender_engine, "install_path", text="Path to LuxRender Installation")
 		if context.scene.luxrender_engine.export_type == 'INT':
 			row.prop(context.scene.luxrender_engine, "write_files", text="Write to Disk")
@@ -232,7 +228,6 @@ def render_start_options(self, context):
 
 _register_elm(bl_ui.properties_render.RENDER_PT_render.append(render_start_options))
 
-# Add standard Blender elements for legacy texture editor
 @classmethod
 def blender_texture_poll(cls, context):
 	tex = context.texture
@@ -314,8 +309,12 @@ class RENDERENGINE_luxrender(bpy.types.RenderEngine):
 					self.render_preview(scene)
 					return
 
-				if scene.display_settings.display_device != "sRGB":
-					LuxLog('WARNING: Colour Management not set to sRGB, render results may look too dark.')
+				if bpy.app.version < (2, 63, 19 ):
+					if scene.render.use_color_management == False:
+						LuxLog('WARNING: Colour Management is switched off, render results may look too dark.')
+				else:
+					if scene.display_settings.display_device != "sRGB":
+						LuxLog('WARNING: Colour Management not set to sRGB, render results may look too dark.')
 				
 				api_type, write_files = self.set_export_path(scene)
 				

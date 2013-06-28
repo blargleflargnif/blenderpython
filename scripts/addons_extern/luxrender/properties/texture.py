@@ -650,9 +650,6 @@ tex_names = (
 		('imagemap', 'Image Map'),
 		('normalmap', 'Normal Map'),
 		('marble', 'Marble'),
-		('hitpointcolor', 'Vertex Color'),
-		('hitpointgrey', 'Vertex Grey'),
-		('hitpointalpha', 'Vertex Alpha'),
 		('windy', 'Windy'),
 		('wrinkled', 'Wrinkled'),
 	)),
@@ -669,7 +666,6 @@ tex_names = (
 	
 	('Fresnel Textures',
 	(
-		('abbe', 'Abbe'),
 		('cauchy', 'Cauchy'),
 		('fresnelcolor', 'Fresnel Color'),
 		('fresnelname', 'Fresnel Name (preset/nk data)'),
@@ -1440,7 +1436,7 @@ class luxrender_tex_brick(declarative_property_group):
 				('english', 'English', 'english'),
 				('herringbone', 'Herringbone', 'herringbone'),
 				('basket', 'Basket', 'basket'),
-				('chain link', 'Chain link', 'chain Link')
+				('chain link', 'Chain link', 'chain link')
 			],
 			'save_in_preset': True
 		},
@@ -1578,235 +1574,6 @@ class luxrender_tex_brick(declarative_property_group):
 			TC_brickmodtex.load_paramset(self, ps)
 			TC_bricktex.load_paramset(self, ps)
 			TC_mortartex.load_paramset(self, ps)
-
-@LuxRenderAddon.addon_register_class
-class luxrender_tex_abbe(declarative_property_group):
-	ef_attach_to = ['luxrender_texture']
-	alert = {}
-	
-	controls = [
-		'spectral_line',
-		'n_d',
-		'n_D',
-		'n_e',
-		'n_custom',
-		'V_d',
-		'V_D',
-		'V_e',
-		'V_custom',
-		'lambda_D',
-		'lambda_F',
-		'lambda_C',
-	]
-	
-	visibility = {
-		'n_d': { 'spectral_line': 'd' },
-		'n_D': { 'spectral_line': 'D' },
-		'n_e': { 'spectral_line': 'e' },
-		'n_custom': { 'spectral_line': 'custom' },
-		'V_d': { 'spectral_line': 'd' },
-		'V_D': { 'spectral_line': 'D' },
-		'V_e': { 'spectral_line': 'e' },
-		'V_custom': { 'spectral_line': 'custom' },
-		'lambda_D': { 'spectral_line': 'custom' },
-		'lambda_F': { 'spectral_line': 'custom' },
-		'lambda_C': { 'spectral_line': 'custom' },
-	}
-	
-	properties = [
-		{
-			'type': 'string',
-			'attr': 'variant',
-			'default': 'fresnel'
-		},
-		{
-			'attr': 'spectral_line',
-			'type': 'enum',
-			'name': 'Type',
-			'items': [
-				('d', 'd', 'd = 587.56 nm'),
-				('D', 'D', 'D = 589.3 nm'),
-				('e', 'e', 'e = 546.073 nm'),
-				('custom', 'Custom', ''),
-			],
-			'default': 'd',
-			'description': 'Select emission lines used to describe the Abbe number based on the primary emission line',
-			'expand': True,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'n_d',
-			'name': 'n_d',
-			'description' : 'Index of Refraction at the d emission line',
-			'default': 1.51680,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 10.0,
-			'soft_max': 10.0,
-			'precision': 6,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'n_D',
-			'name': 'n_D',
-			'description' : 'Index of Refraction at the D emission line',
-			'default': 1.51673,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 10.0,
-			'soft_max': 10.0,
-			'precision': 6,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'n_e',
-			'name': 'n_e',
-			'description' : 'Index of Refraction at the e emission line',
-			'default': 1.51872,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 10.0,
-			'soft_max': 10.0,
-			'precision': 6,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'n_custom',
-			'name': 'n',
-			'description' : 'Index of Refraction at the specified D emission line',
-			'default': 1.51680,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 10.0,
-			'soft_max': 10.0,
-			'precision': 6,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'V_d',
-			'name': 'V_d',
-			'description' : 'Abbe number at the d emission line',
-			'default': 64.17,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 3,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'V_D',
-			'name': 'V_D',
-			'description' : 'Abbe number at the D emission line',
-			'default': 64.161,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 3,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'V_e',
-			'name': 'V_e',
-			'description' : 'Abbe number at the e emission line',
-			'default': 63.793,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 3,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'V_custom',
-			'name': 'V',
-			'description' : 'Abbe number at the specified D emission line',
-			'default': 64.17,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 3,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'lambda_D',
-			'name': 'D spectral line',
-			'description' : 'Wavelength (in nm) representing the D emission line in the Abbe equation',
-			'default': 587.5618,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 4,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'lambda_F',
-			'name': 'F spectral line',
-			'description' : 'Wavelength (in nm) representing the F emission line in the Abbe equation',
-			'default': 486.13,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 4,
-			'save_in_preset': True
-		},
-		{
-			'type': 'float',
-			'attr': 'lambda_C',
-			'name': 'C spectral line',
-			'description' : 'Wavelength (in nm) representing the C emission line in the Abbe equation',
-			'default': 656.28,
-			'min': 0.0,
-			'soft_min': 0.0,
-			'max': 1000.0,
-			'soft_max': 1000.0,
-			'precision': 4,
-			'save_in_preset': True
-		},
-	]
-	
-	def get_paramset(self, scene, texture):
-		cp = ParamSet()
-		
-		cp.add_string('type', self.spectral_line)
-		
-		cp.add_float('n', getattr(self, 'n_%s' % self.spectral_line))
-		cp.add_float('V', getattr(self, 'V_%s' % self.spectral_line))
-			
-		if self.spectral_line == 'custom':
-			cp.add_float('lambda_D', self.lambda_D)
-			cp.add_float('lambda_F', self.lambda_F)
-			cp.add_float('lambda_C', self.lambda_C)
-		
-		return set(), cp
-	
-	def load_paramset(self, variant, ps):
-		psi_accept = {
-			'spectral_line': 'float',
-			'n': 'float', 
-			'V': 'float',
-			'lambda_D': 'float',
-			'lambda_F': 'float',
-			'lambda_C': 'float',
-		}
-		psi_accept_keys = psi_accept.keys()
-		for psi in ps:
-			if psi['name'] in psi_accept_keys and psi['type'].lower() == psi_accept[psi['name']]:
-				setattr(self, psi['name'], psi['value'])
 
 @LuxRenderAddon.addon_register_class
 class luxrender_tex_cauchy(declarative_property_group):
@@ -2356,11 +2123,11 @@ class luxrender_tex_fresnelname(declarative_property_group):
 			'description': 'Metal type to use, select "Use NK file" to input external metal data',
 			'items': [
 				('nk', 'Use NK file', 'nk'),
-				('amorphous carbon', 'Amorphous carbon', 'amorphous carbon'),
-				('copper', 'Copper', 'copper'),
-				('gold', 'Gold', 'gold'),
-				('silver', 'Silver', 'silver'),
-				('aluminium', 'Aluminium', 'aluminium')
+				('amorphous carbon', 'amorphous carbon', 'amorphous carbon'),
+				('copper', 'copper', 'copper'),
+				('gold', 'gold', 'gold'),
+				('silver', 'silver', 'silver'),
+				('aluminium', 'aluminium', 'aluminium')
 			],
 			'default': 'aluminium',
 			'save_in_preset': True
@@ -2498,81 +2265,6 @@ class luxrender_tex_harlequin(declarative_property_group):
 	
 	def load_paramset(self, ps):
 		pass
-		
-@LuxRenderAddon.addon_register_class
-class luxrender_tex_hitpointcolor(declarative_property_group):
-	ef_attach_to = ['luxrender_texture']
-	alert = {}
-	
-	controls = []
-	
-	visibility = {}
-	
-	properties = [
-		{
-			'attr': 'variant',
-			'type': 'string',
-			'default': 'color'
-		},
-	]
-	
-	def get_paramset(self, scene, texture):
-		hitpointcolor_params = ParamSet()
-		
-		return set(), hitpointcolor_params
-	
-	def load_paramset(self, variant, ps):
-		pass
-		
-@LuxRenderAddon.addon_register_class
-class luxrender_tex_hitpointgrey(declarative_property_group):
-	ef_attach_to = ['luxrender_texture']
-	alert = {}
-	
-	controls = []
-	
-	visibility = {}
-	
-	properties = [
-		{
-			'attr': 'variant',
-			'type': 'string',
-			'default': 'float'
-		},
-	]
-	
-	def get_paramset(self, scene, texture):
-		hitpointgrey_params = ParamSet()
-		
-		return set(), hitpointgrey_params
-	
-	def load_paramset(self, variant, ps):
-		pass
-
-@LuxRenderAddon.addon_register_class
-class luxrender_tex_hitpointalpha(declarative_property_group):
-	ef_attach_to = ['luxrender_texture']
-	alert = {}
-	
-	controls = []
-	
-	visibility = {}
-	
-	properties = [
-		{
-			'attr': 'variant',
-			'type': 'string',
-			'default': 'float'
-		},
-	]
-	
-	def get_paramset(self, scene, texture):
-		hitpointalpha_params = ParamSet()
-		
-		return set(), hitpointalpha_params
-	
-	def load_paramset(self, variant, ps):
-		pass
 
 @LuxRenderAddon.addon_register_class
 class luxrender_tex_imagemap(declarative_property_group):
@@ -2626,7 +2318,7 @@ class luxrender_tex_imagemap(declarative_property_group):
 				('green', 'Green', 'green'),
 				('blue', 'Blue', 'blue'),
 				('alpha', 'Alpha', 'alpha'),
-				('colored_mean', 'Colored Mean', 'colored_mean')
+				('colored_mean', 'Colored mean', 'colored_mean')
 			],
 			'save_in_preset': True
 		},
@@ -2645,9 +2337,9 @@ class luxrender_tex_imagemap(declarative_property_group):
 			'name': 'Filter type',
 			'items': [
 				('bilinear', 'Bilinear', 'bilinear'),
-				('mipmap_trilinear', 'MipMap Trilinear', 'mipmap_trilinear'),
+				('mipmap_trilinear', 'MipMap trilinear', 'mipmap_trilinear'),
 				('mipmap_ewa', 'MipMap EWA', 'mipmap_ewa'),
-				('nearest', 'Nearest Neighbor', 'nearest'),
+				('nearest', 'Nearest neighbor', 'nearest'),
 			],
 			'save_in_preset': True
 		},
@@ -2810,7 +2502,7 @@ class luxrender_tex_imagesampling(declarative_property_group):
 				('bilinear', 'Bilinear', 'bilinear'),
 				('mipmap_trilinear', 'MipMap trilinear', 'mipmap_trilinear'),
 				('mipmap_ewa', 'MipMap EWA', 'mipmap_ewa'),
-				('nearest', 'Nearest Neighbor', 'nearest'),
+				('nearest', 'Nearest neighbor', 'nearest'),
 			],
 			'save_in_preset': True
 		},
@@ -2908,9 +2600,9 @@ class luxrender_tex_normalmap(declarative_property_group):
 			'name': 'Filter type',
 			'items': [
 				('bilinear', 'Bilinear', 'bilinear'),
-				('mipmap_trilinear', 'MipMap Trilinear', 'mipmap_trilinear'),
+				('mipmap_trilinear', 'MipMap trilinear', 'mipmap_trilinear'),
 				('mipmap_ewa', 'MipMap EWA', 'mipmap_ewa'),
-				('nearest', 'Nearest Neighbor', 'nearest'),
+				('nearest', 'Nearest neighbor', 'nearest'),
 			],
 			'save_in_preset': True
 		},
@@ -3910,8 +3602,6 @@ class luxrender_tex_transform(declarative_property_group):
 			'name': 'Rotate',
 			'default': (0.0, 0.0, 0.0),
 			'precision': 5,
-			'subtype': 'DIRECTION',
-			'unit': 'ROTATION',
 			'save_in_preset': True
 		},
 		{

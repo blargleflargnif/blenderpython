@@ -42,8 +42,8 @@ class luxrender_rendermode(declarative_property_group):
 	
 	controls = [
 		'rendermode',
-		['usegpus', 'usecpus'],
 		'opencl_prefs',
+		['usegpus', 'usecpus'],
 		'opencl_platform_index',
 		'configfile',
 		'raybuffersize',
@@ -51,7 +51,6 @@ class luxrender_rendermode(declarative_property_group):
 		'workgroupsize',
 		'qbvhstacksize',
 		'deviceselection',
-		'kernelcache'
 		]
 	
 	visibility = {
@@ -63,9 +62,8 @@ class luxrender_rendermode(declarative_property_group):
 		'workgroupsize':			{ 'opencl_prefs': True, 'rendermode': O(['hybridpath','hybridbidir','slgpath']) },
 		'qbvhstacksize':			{ 'opencl_prefs': True, 'renderer': 'hybrid' },
 		'deviceselection':			{ 'opencl_prefs': True, 'rendermode': O(['hybridpath','hybridbidir','slgpath']) },
-		'kernelcache':				{ 'opencl_prefs': True, 'rendermode': O(['slgpath']) },
-		'usegpus':					{ 'rendermode': O(['hybridpath','hybridbidir','slgpath']) },
-		'usecpus':					{ 'rendermode': 'slgpath' },
+		'usegpus':					{ 'opencl_prefs': True, 'rendermode': O(['hybridpath','hybridbidir','slgpath']) },
+		'usecpus':					{ 'opencl_prefs': True, 'rendermode': 'slgpath' },
 		}
 	
 	#This function sets renderer and surface integrator according to rendermode setting
@@ -97,14 +95,14 @@ class luxrender_rendermode(declarative_property_group):
 				('bidirectional', 'Bidirectional', 'Bidirectional path tracer'),
 				('path', 'Path', 'Simple (eye-only) path tracer'),
 				('directlighting', 'Direct Lighting', 'Direct-light (Whitted) ray tracer'),
-				('distributedpath', 'Distributed Path', 'Distributed path tracer, similar to Cycles non-progressive integrator'),
+				('distributedpath', 'Distributed Path', 'Distributed path tracer'),
 # 				('igi', 'Instant Global Illumination', 'Instant global illumination renderer',),
 				('exphotonmap', 'Ex-Photon Map', 'Traditional photon mapping integrator'),
 				('sppm', 'SPPM (Experimental)', 'Experimental stochastic progressive photon mapping integrator'),
 #				('hybridbidir', 'Hybrid Bidirectional', 'Experimental OpenCL-acclerated bidirectional path tracer'),
-				('hybridpath', 'Hybrid Path', 'OpenCL-accelerated simple (eye-only) path tracer'),
-  				('slgpath', 'SLG Path OpenCL', 'Experimental pure GPU path tracer'),
-  				('slgbidir', 'SLG BidirVCM', 'Experimental OpenCL bidirectional/vertex merging integrator'),
+				('hybridpath', 'Hybrid Path (Experimental)', 'OpenCL-accelerated simple (eye-only) path tracer'),
+#   				('slgpath', 'SLG Path OpenCL', 'Experimental pure GPU path tracer'),
+#   				('slgbidir', 'SLG BidirVCM', 'Experimental OpenCL bidirectional/vertex merging integrator'),
 			],
 			'update': update_rendering_mode,
 			'save_in_preset': True
@@ -114,7 +112,7 @@ class luxrender_rendermode(declarative_property_group):
 			'type': 'enum',
 			'attr': 'renderer',
 			'name': 'Renderer',
-			'description': 'Renderer Type',
+			'description': 'Renderer type',
 			'default': 'sampler',
 			'items': [
 				('sampler', 'Sampler (traditional CPU)', 'sampler'),
@@ -128,7 +126,7 @@ class luxrender_rendermode(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'opencl_prefs',
-			'name': 'Show OpenCL Options',
+			'name': 'Show OpenCL options',
 			'description': 'Enable manual OpenCL configuration options',
 			'default': False,
 			'save_in_preset': True
@@ -136,7 +134,7 @@ class luxrender_rendermode(declarative_property_group):
 		{
 			'type': 'int',
 			'attr': 'opencl_platform_index',
-			'name': 'OpenCL Platform Index',
+			'name': 'OpenCL platform index',
 			'description': 'OpenCL Platform to target. Try increasing this value 1 at a time if LuxRender fails to use your GPU. -1=all platforms',
 			'default': 0,
 			'min': -1,
@@ -149,7 +147,7 @@ class luxrender_rendermode(declarative_property_group):
 			'type': 'string',
 			'subtype': 'FILE_PATH',
 			'attr': 'configfile',
-			'name': 'OpenCL Config File',
+			'name': 'OpenCL config file',
 			'description': 'Path to a machine-specific OpenCL configuration file. The settings from the lxs (set below) are used if this is not specified or found',
 			'default': '',
 			'save_in_preset': True
@@ -157,19 +155,19 @@ class luxrender_rendermode(declarative_property_group):
 		{
 			'type': 'int',
 			'attr': 'raybuffersize',
-			'name': 'Ray Buffer Size',
+			'name': 'Ray buffer size',
 			'description': 'Size of ray "bundles" fed to OpenCL device',
 			'default': 8192,
-			'min': 1024,
-			'soft_min': 1024,
-			'max': 65536,
-			'soft_max': 65536,
+			'min': 2,
+			'soft_min': 2,
+			'max': 16384,
+			'soft_max': 16384,
 			'save_in_preset': True
 		},
 		{
 			'type': 'int',
 			'attr': 'statebuffercount',
-			'name': 'State Buffer Count',
+			'name': 'State buffer count',
 			'description': 'Numbers of ray buffers to maintain simultaneously',
 			'default': 1,
 			'min': 1,
@@ -179,7 +177,7 @@ class luxrender_rendermode(declarative_property_group):
 		{
 			'type': 'int',
 			'attr': 'workgroupsize',
-			'name': 'OpenCL Work Group Size',
+			'name': 'OpenCL work group size',
 			'description': 'Size of OpenCL work group. Use 0 for auto',
 			'default': 64,
 			'min': 0,
@@ -201,29 +199,16 @@ class luxrender_rendermode(declarative_property_group):
 		{
 			'type': 'string',
 			'attr': 'deviceselection',
-			'name': 'OpenCL Devices',
+			'name': 'OpenCL devices',
 			'description': 'Enter target OpenCL devices here. Leave blank to use all available',
 			'default': '',
-			'save_in_preset': True
-		},
-		{
-			'type': 'enum',
-			'attr': 'kernelcache',
-			'name': 'OpenCL Kernel Cache',
-			'description': 'Select the type of OpenCL compilation kernel cache used (in order to reduce compilation time)',
-			'default': 'NONE',
-			'items': [
-				('NONE', 'None', 'NONE'),
-				('VOLATILE', 'Volatile', 'VOLATILE'),
-				('PERSISTENT', 'Persistent', 'PERSISTENT'),
-			],
 			'save_in_preset': True
 		},
 		{
 			'type': 'bool',
 			'attr': 'usegpus',
 			'name': 'Use GPUs',
-			'description': 'Target GPU devices in SLG or hybrid',
+			'description': 'Target GPU devices in slg or hybrid',
 			'default': True,
 			'save_in_preset': True
 		},
@@ -231,7 +216,7 @@ class luxrender_rendermode(declarative_property_group):
 			'type': 'bool',
 			'attr': 'usecpus',
 			'name': 'Use CPUs',
-			'description': 'Target CPU devices in SLG render',
+			'description': 'Target CPU devices in slg render',
 			'default': True,
 			'save_in_preset': True
 		},
@@ -240,28 +225,23 @@ class luxrender_rendermode(declarative_property_group):
 	def api_output(self):
 		renderer_params = ParamSet()
 		
-		if self.renderer in ['hybrid']:		
+		if self.renderer in ['hybrid'] and self.opencl_prefs == True:
+			renderer_params.add_integer('opencl.platform.index', self.opencl_platform_index)
 			renderer_params.add_bool('opencl.gpu.use', self.usegpus)
-			if self.opencl_prefs == True:
-				renderer_params.add_integer('opencl.platform.index', self.opencl_platform_index)
-				renderer_params.add_string('configfile', self.configfile)
-				renderer_params.add_integer('raybuffersize', self.raybuffersize)
-				renderer_params.add_integer('statebuffercount', self.statebuffercount)
-				renderer_params.add_integer('opencl.gpu.workgroup.size', self.workgroupsize)
-				renderer_params.add_integer('accelerator.qbvh.stacksize.max', self.qbvhstacksize)
-				renderer_params.add_string('opencl.devices.select', self.deviceselection)
+			renderer_params.add_string('configfile', self.configfile)
+			renderer_params.add_integer('raybuffersize', self.raybuffersize)
+			renderer_params.add_integer('statebuffercount', self.statebuffercount)
+			renderer_params.add_integer('opencl.gpu.workgroup.size', self.workgroupsize)
+			renderer_params.add_integer('accelerator.qbvh.stacksize.max', self.qbvhstacksize)
+			renderer_params.add_string('opencl.devices.select', self.deviceselection)
 		
-		if self.renderer in ['slg']:
+		if self.renderer in ['slg'] and self.opencl_prefs == True: # this is WIP to take over some slg configs
+			slg_gpu_workgroups = "opencl.gpu.workgroup.size = " + str(self.workgroupsize)
 			slg_use_gpu = "opencl.gpu.use = 1" if self.usegpus else "opencl.gpu.use = 0"
 			slg_use_cpu = "opencl.cpu.use = 1" if self.usecpus else "opencl.cpu.use = 0"
-			slg_params = '" "'.join((slg_use_gpu, slg_use_cpu))
-			
-			if self.opencl_prefs == True:
-				slg_gpu_workgroups = "opencl.gpu.workgroup.size = " + str(self.workgroupsize)
-				slg_devices_select =  "opencl.devices.select = " + self.deviceselection if self.deviceselection else "opencl.devices.select = " # blank
-				slg_kernel_cache = "opencl.kernelcache = " + self.kernelcache
-				slg_params = '" "'.join((slg_params, slg_gpu_workgroups, slg_devices_select, slg_kernel_cache))
-			
+			slg_devices_select =  "opencl.devices.select = " + self.deviceselection if self.deviceselection else "opencl.devices.select = " # blank
+			slg_config_seperator = '" "'
+			slg_params = slg_gpu_workgroups	+ slg_config_seperator + slg_use_gpu + slg_config_seperator + slg_use_cpu + slg_config_seperator + slg_devices_select
 			renderer_params.add_string('config', slg_params)
 		
 		return self.renderer, renderer_params
@@ -289,7 +269,7 @@ class luxrender_halt(declarative_property_group):
 			'min': 0,
 			'soft_min': 0,
 			'max': 65535,
-			'soft_max': 10000,
+			'soft_max': 65535,
 			'save_in_preset': True
 		},
 		{

@@ -23,7 +23,7 @@
 bl_info = {
     "name": "IES to Cycles",
     "author": "Lockal S.",
-    "version": (0, 7),
+    "version": (0, 8),
     "blender": (2, 6, 6),
     "location": "File &gt; Import &gt; IES Lamp Data (.ies)",
     "description": "Import IES lamp data to cycles",
@@ -173,7 +173,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     if s in version_table:
         version = version_table[s]
     else:
-        log({'INFO'}, 'IES file does not specify any version')
+        log({'INFO'}, "IES file does not specify any version")
         version = None
 
     keywords = dict()
@@ -189,7 +189,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     s, content = content.split('\n', 1)
 
     if not s.startswith('TILT'):
-        log({'ERROR'}, 'TILT keyword not found, check your IES file')
+        log({'ERROR'}, "TILT keyword not found, check your IES file")
         return {'CANCELLED'}
 
     # fight against ill-formed files
@@ -197,7 +197,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
 
     lamps_num = int(file_data[0])
     if lamps_num != 1:
-        log({'INFO'}, 'Only 1 lamp is supported, %d in IES file' % lamps_num)
+        log({'INFO'}, "Only 1 lamp is supported, %d in IES file" % lamps_num)
 
     lumens_per_lamp = float(file_data[1])
     candela_mult = float(file_data[2])
@@ -205,14 +205,14 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     v_angles_num = int(file_data[3])
     h_angles_num = int(file_data[4])
     if not v_angles_num or not h_angles_num:
-        log({'ERROR'}, 'TILT keyword not found, check your IES file')
+        log({'ERROR'}, "TILT keyword not found, check your IES file")
         return {'CANCELLED'}
 
     photometric_type = int(file_data[5])
 
     units_type = int(file_data[6])
     if units_type not in [1, 2]:
-        log({'INFO'}, 'Units type should be either 1 (feet) or 2 (meters)')
+        log({'INFO'}, "Units type should be either 1 (feet) or 2 (meters)")
 
     width, length, height = map(float, file_data[7:10])
 
@@ -220,7 +220,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
 
     future_use = float(file_data[11])
     if future_use != 1.0:
-        log({'INFO'}, 'Invalid future use field')
+        log({'INFO'}, "Invalid future use field")
 
     input_watts = float(file_data[12])
 
@@ -233,7 +233,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     elif v_angs[0] == 0 and v_angs[-1] == 180:
         lamp_cone_type = 'TYPE180'
     else:
-        log({'INFO'}, 'Lamps with vertical angles (%d-%d) are not supported' %
+        log({'INFO'}, "Lamps with vertical angles (%d-%d) are not supported" %
                        (v_angs[0], v_angs[-1]))
         lamp_cone_type = 'TYPE180'
 
@@ -245,7 +245,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     elif abs(h_angs[0] - h_angs[-1]) == 90:
         lamp_h_type = 'TYPE90'
     else:
-        log({'INFO'}, 'Lamps with horizontal angles (%d-%d) are not supported' %
+        log({'INFO'}, "Lamps with horizontal angles (%d-%d) are not supported" %
                        (h_angs[0], h_angs[-1]))
         lamp_h_type = 'TYPE360'
         
@@ -308,7 +308,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
         candela_2d = new_candela_2d
 
     if not h_same:
-        log({'INFO'}, 'Different offsets for horizontal angles!')
+        log({'INFO'}, "Different offsets for horizontal angles!")
         
     # normalize candela values
     maxval = max([max(row) for row in candela_2d])
@@ -451,6 +451,7 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
     
     nt.inputs.new('NodeSocketVector', "Vector")
     nt.inputs.new('NodeSocketFloat', "Strength")
+    nt.inputs.new('NodeSocketFloat', "Size")
     
     nt.outputs.new('NodeSocketFloat', "Intensity")
     
@@ -515,10 +516,15 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
         nt_data_out = nt_data.outputs[0]
 
     nt.links.new(n0.inputs[0], nt_input.outputs[0])
+    
+    nt_intensity = nt.nodes.new('ShaderNodeMath')
+    nt_intensity.operation = 'MULTIPLY'
+    nt.links.new(nt_input.outputs[1], nt_intensity.inputs[0])
+    nt.links.new(nt_input.outputs[2], nt_intensity.inputs[1])
 
     nmult = nt.nodes.new('ShaderNodeMath')
     nmult.operation = 'MULTIPLY'
-    nt.links.new(nmult.inputs[0], nt_input.outputs[1])
+    nt.links.new(nt_intensity.outputs[0], nmult.inputs[0])
 
     nt.links.new(nt_output.inputs[0], nmult.outputs[0])
 
@@ -555,6 +561,7 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
     lnt.links.new(emission_node.inputs[1], lnt_grp.outputs[0])
     
     lnt_grp.inputs[1].default_value = intensity
+    lnt_grp.inputs[2].default_value = 1.0
 
     lnt_map = lnt.nodes.new('ShaderNodeMapping')
     lnt_map.rotation[0] = pi
@@ -565,47 +572,48 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
         rig_object = bpy.data.objects[rig_name]
         
         # add RGBA color drivers
-        fcurves = lnt.driver_add(emission_node.inputs[0].path_from_id('default_value'))
+        fcurves = lnt.driver_add(emission_node.inputs[0].path_from_id("default_value"))
         for i, fcurve in enumerate(fcurves):
             var = fcurve.driver.variables.new()
             var.targets[0].id = rig_object
             var.targets[0].data_path = '["ies_settings"]["color"][%d]' % i
-            fcurve.driver.expression = "var"
+            fcurve.driver.type = 'SUM'
         
         rig_object.ies_settings.color = t2rgb(color_temperature)[0:3]
         
-        # add intensity driver
-        strength_fc = lnt.driver_add(lnt_grp.inputs[1].path_from_id('default_value'))
-        strength_v1 = strength_fc.driver.variables.new()
-        strength_v1.name = "strength"
-        strength_v1.targets[0].id = rig_object
-        strength_v1.targets[0].data_path = '["ies_settings"]["strength_mult"]'
+        # add factor -&gt; intensity driver
+        strength_fc = lnt.driver_add(lnt_grp.inputs[1].path_from_id("default_value"))
+        strength_fc.driver.type = 'SUM'
+        strength_var = strength_fc.driver.variables.new()
+        strength_var.targets[0].id = rig_object
+        strength_var.targets[0].data_path = '["ies_settings"]["strength_mult"]'
         
-        strength_v2 = strength_fc.driver.variables.new()
-        strength_v2.name = "scale"
-        strength_v2.type = 'TRANSFORMS'
-        strength_v2.targets[0].id = rig_object
-        strength_v2.targets[0].transform_type = 'SCALE_Z'
+        # add size -&gt; intensity driver
+        strength_fc = lnt.driver_add(lnt_grp.inputs[2].path_from_id("default_value"))
+        strength_fc.driver.type = 'SUM'
+        strength_var = strength_fc.driver.variables.new()
+        strength_var.type = 'TRANSFORMS'
+        strength_var.targets[0].id = rig_object
+        strength_var.targets[0].transform_type = 'SCALE_Z'
         
-        strength_fc.driver.expression = "strength * scale"
-        
+        # set and recalculate intensity
         rig_object.ies_settings.strength_mult = intensity
         
         # add rotation drivers
         fcurves = lnt.driver_add(lnt_map.path_from_id('rotation'))
         fc_types = ['ROT_X', 'ROT_Y', 'ROT_Z']
-        fc_exprs = ['var', 'var', 'pi - var']
+        fc_coeffs = [[0.0, 1.0], [0.0, 1.0], [pi, -1.0]]
         
-        for fcurve, trans_type, expr in zip(fcurves, fc_types, fc_exprs):
+        for fcurve, trans_type, coeffs in zip(fcurves, fc_types, fc_coeffs):
             v = fcurve.driver.variables.new()
             v.type = 'TRANSFORMS'
             v.targets[0].id = rig_object
             v.targets[0].transform_type = trans_type
-            fcurve.driver.expression = expr
+            fcurve.driver.type = 'SUM'
+            fcurve.modifiers[0].coefficients = coeffs
             
         # recalculate driver data by changing rig angle
         rig_object.rotation_euler.x = pi
-        
         
 
     lnt_geo = lnt.nodes.new('ShaderNodeNewGeometry')

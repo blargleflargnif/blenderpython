@@ -241,6 +241,7 @@ Bullet Viewport Constraints Tool (Bullet_Viewport_Constraints_Tool-0374-Deactiva
 	
 xNormal importer/exporter -- by ohsnapitsjoel
 	http://www.blenderartists.org/forum/showthread.php?291665-AddOn-xNormal-3-18-1-import-export-Updated-6-7-13&p=2372563&viewfull=1#post2372563
+	https://bitbucket.org/ohsnapitsjoel/io_xnormal
 	
 GoB ZBrush integration -- by ODe
 	http://www.zbrushcentral.com/showthread.php?127419-GoB-an-unofficial-GoZ-for-Blender

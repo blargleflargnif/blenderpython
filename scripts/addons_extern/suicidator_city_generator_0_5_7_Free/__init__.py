@@ -1,7 +1,7 @@
 """
 Suicidator City Generator's Blender addon
 Official website: http://cgchan.com/suicidator
-Original author: Arnaud Couturier (piiichan) couturier.arnaud@gmail.com
+Author: Arnaud Couturier (piiichan) couturier.arnaud@gmail.com
 Licence: you can modify and reditribute this file as you wish.
 """
 
@@ -26,7 +26,7 @@ SCG_JAR_FILE_PATH = os.path.join(
 bl_info = {
 	"name": "Suicidator City Generator",
 	"author": "Arnaud Couturier (piiichan)",
-	"version": (0,5,5),
+	"version": (0,5,7),
 	"blender": (2, 6, 3),
 	"api": 45996,
 	"location": "View3D > Tool Shelf > 3D Nav",
@@ -254,6 +254,33 @@ def get_or_create_uv_layer(uvLayerName, mesh):
 	uvLayer.name = uvLayerName
 	return uvLayer
 	
+#--------------------------------------------------------------------------------------------------------------------
+
+# Method useful for backward compatibility because shader nodes' names changed with Blender 2.67
+# node_type: 
+def add_material_node(target_node_tree, node_type):
+	result_node = None
+	alternative_node_type = None
+	
+	if node_type == "GEOMETRY":
+		alternative_node_type = "ShaderNodeGeometry"
+	elif node_type == "MATERIAL_EXT":
+		alternative_node_type = "ShaderNodeExtendedMaterial"
+	elif node_type == "MIX_RGB":
+		alternative_node_type = "ShaderNodeMixRGB"
+	if node_type == "MATERIAL":
+		alternative_node_type = "ShaderNodeMaterial"
+	elif node_type == "TEXTURE":
+		alternative_node_type = "ShaderNodeTexture"
+	elif node_type == "OUTPUT":
+		alternative_node_type = "ShaderNodeOutput"
+		
+	try:
+		result_node = target_node_tree.nodes.new(type = node_type)
+	except RuntimeError:
+		result_node = target_node_tree.nodes.new(type = alternative_node_type)
+	return result_node
+
 #--------------------------------------------------------------------------------------------------------------------
 
 def unwrap_mesh_from_data(mesh, uvLayer, facesMaterials, facesData):

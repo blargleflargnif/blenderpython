@@ -1,6 +1,8 @@
 ﻿This program, Suicidator City Generator (SCG) is copyright Arnaud Couturier.
 It allows you to quickly create 3d cities in the 3D software Blender.
 
+Official website:
+http://cgchan.com/suicidator
 
 Licence for the free version:
 You are free to use and redistribute Suicidator City Generator Free as you like, provided you keep it unaltered. 
@@ -10,17 +12,15 @@ Licence for the full (paid) version:
 The copy of Suicidator City Generator Full you purchase can be used by only you. 
 You cannot modify it nor redistribute it. You are not allowed to reverse-engineer the code. 
 
+//---------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------
 
-Website:
-http://arnaud.ile.nc/scg
-This is SCG's homepage
-
-
-Quick start:
+#######  QUICK START
 In order to start using SCG, follow these 3 steps:
 
 
-(1) Install the latest version of Blender
+#######  (1) Install the latest version of Blender
 Get it from http://www.blender.org/download/get-blender/
 SCG will probably not run with previous versions of Blender.
 If SCG is not compatible with a particular version of Blender, you will see it in the list of addons, but you won't be able to activate it.
@@ -28,7 +28,7 @@ Check the SCG website for SCG compatibility updates as new version of Blender an
 
 
 
-(2) Install / upgrade Java
+#######  (2) Install / upgrade Java
 SCG requires Java 5 minimum (sometimes also referred to as Java 1.5, JRE 5 or J2SE 1.5)
 The more recent your Java version, the faster SCG will run.
 Java 6 (which is the same as Java 1.6) and above is recommended.
@@ -64,7 +64,7 @@ Restart your computer, and check "java -version" in a console again, and it shou
 
 
 
-(3) Install the addon in Blender
+#######  (3) Install the addon in Blender
 You must copy the whole SCG folder in the Blender addons folder.
 The Blender addons folder should be "Blender install directory/blender version/scripts/addons"
 For example, mine on Windows XP is "C:\Program Files\Blender\2.62\scripts\addons"
@@ -79,7 +79,7 @@ Check its checkbox.
 It is possible to have multiple versions of SCG (free, full, 0.5, 0.6 ...)
 but only one version can be registered at a time in Blender.
 You must first disable the current SCG, then enable the other version of SCG you want.
-More information about Blender addons in general on the Blender wiki: http://wiki.blender.org/index.php/Doc:2.5/Manual/Extensions/Python/Add-Ons
+More information about Blender addons in general on the Blender wiki: http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons
 
 Once the addon is registered, open the toolshelf (shortcut "t") in the 3D view.
 You should see the SCG panel at the bottom.
@@ -90,18 +90,18 @@ To use SCG:
 
 You'll find all the SCG output textures in your Blender temporary folder ("temp"), usually at C:\tmp (windows) or /tmp (Mac, Linux).
 To know where it is located, see
-http://wiki.blender.org/index.php/Doc:2.5/Manual/Interface/Configuration/File
+http://wiki.blender.org/index.php/Doc:2.6/Manual/Preferences/File
 
 
 
 
 This was just an introduction. Check the online manual for more info.
-http://arnaud.ile.nc/scg/learn
 
+//---------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-Credits:
+CREDITS
 SCG would not be possible without the follwoing libraries (used legally)
 - JTS, by the great Martin Davis!
 - pyrolite, by Irmen de Jong

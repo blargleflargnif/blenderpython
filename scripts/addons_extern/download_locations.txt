@@ -246,3 +246,8 @@ xNormal importer/exporter -- by ohsnapitsjoel
 GoB ZBrush integration -- by ODe
 	http://www.zbrushcentral.com/showthread.php?127419-GoB-an-unofficial-GoZ-for-Blender
 	http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Import-Export/GoB_ZBrush_import_export
+	
+Appleseed Render -- Joel Daniels
+	https://bitbucket.org/ohsnapitsjoel/render_appleseed
+	http://www.blenderartists.org/forum/showthread.php?297703-Addon-Appleseed-Render-Exporter
+	

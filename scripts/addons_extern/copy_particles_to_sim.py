@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Copy Particles to Rigid Bodies",
-    "version": (0, 0, 5),
-    "blender": (2, 6, 5),
+    "version": (0, 0, 7),
+    "blender": (2, 6, 6),
     "location": "View3D > Tool Shelf",
     "description": "Transfers dupliobjects from a PS to a Rigid Bodies simulation",
     "category": "Animation",
@@ -28,19 +28,27 @@ class Particles_to_Sim(bpy.types.Operator):
         obj = bpy.context.object
         set = obj.particle_systems[0].settings
         par = obj.particle_systems[0].particles
+        txt = 'Set Particle System dupliobject to a Rigid Body object / group'
+        
+        # disable simulation
+        scn.rigidbody_world.enabled = False
 
         # to avoid PS cache troubles
         obj.particle_systems[0].seed += 1
 
         # get dupliobject from particles system
-        if set.render_type == 'OBJECT': duplist = [set.dupli_object]
-        elif set.render_type == 'GROUP': duplist = set.dupli_group.objects[:]
+        if set.render_type == 'OBJECT':
+            duplist = [set.dupli_object]
+        elif set.render_type == 'GROUP':
+            duplist = set.dupli_group.objects[:]
         else:
+            self.report({'ERROR'}, txt)
             return{'FINISHED'}
 
         # check if dupliobjects are valid
         for d in duplist:
             if not d.rigid_body:
+                self.report({'ERROR'}, txt)
                 return{'FINISHED'}
 
         # an Empty as parent allows to move / rotate later
@@ -53,7 +61,7 @@ class Particles_to_Sim(bpy.types.Operator):
 
         for p in par:
             dup = random.choice(duplist)
-            btime = round(p.birth_time,2)
+            btime = round(p.birth_time, 2)
             scn.frame_set(btime)
             phy = bpy.data.objects.new('particle.000', dup.data)
             scn.objects.link(phy)
@@ -80,7 +88,7 @@ class Particles_to_Sim(bpy.types.Operator):
             phy.keyframe_insert('location', frame = btime)
             phy.rigid_body.keyframe_insert('kinematic', frame = btime)
 
-            # keyframe particle pop
+            # keyframe particle pop up
             if not set.show_unborn:
                 phy.scale = [0] * 3
                 phy.keyframe_insert('scale', frame = btime - wm.pre_frames)
@@ -100,6 +108,9 @@ class Particles_to_Sim(bpy.types.Operator):
         scn.objects.active = root
         root.select = True
 
+        # enable simulation
+        scn.rigidbody_world.enabled = True
+
         return{'FINISHED'}
 
 
@@ -107,9 +118,15 @@ class PanelP2RB(bpy.types.Panel):
     bl_label = 'Particles to Simulation'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
+    @classmethod
+
+    def poll(cls, context):
+        obj = bpy.context.object
+        return(obj and obj.particle_systems)
 
     def draw(self, context):
         wm = bpy.context.window_manager
+        scn = bpy.context.scene
         obj = bpy.context.object
         set = obj.particle_systems[0].settings
         layout = self.layout
@@ -119,11 +136,14 @@ class PanelP2RB(bpy.types.Panel):
         column.prop(wm, 'vel_mult')
         if not set.show_unborn:
             column.prop(wm, 'pre_frames')
+        column.separator()
+        column.prop(scn.rigidbody_world, "use_split_impulse")
 
 bpy.types.WindowManager.vel_mult=bpy.props.FloatProperty(name='Speed',
         min=0.01, max=50, default=1, description='Particle speed multiplier')
 bpy.types.WindowManager.use_loc=bpy.props.BoolProperty(name='Origin at emiter',
-        default=False, description='Use emiter start position rather than world center to place simulation root object')
+        default=True, description='Place simulation root object at emiter start position '
+        ', maybe disable for animated emitters')
 bpy.types.WindowManager.pre_frames=bpy.props.IntProperty(name='Grow time',
         min=1, max=50, default=1, description='Frames to scale particles before simulating')
 

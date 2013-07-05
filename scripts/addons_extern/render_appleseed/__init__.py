@@ -1,4 +1,3 @@
-
 #
 # This source file is part of appleseed.
 # Visit http://appleseedhq.net/ for additional information and resources.
@@ -29,7 +28,7 @@
 bl_info = {
     "name": "Appleseed",
     "author": "Joel Daniels",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 6, 7),
     "location": "Info Header (engine dropdown)",
     "description": "Appleseed integration - this is an unofficial fork of Esteban Tovagliari's addon",
@@ -46,13 +45,13 @@ from datetime import datetime
 import os, subprocess, time
 from extensions_framework import util as efutil
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-#from bpy.props import StringProperty, BoolProperty, EnumProperty, PointerProperty
-#from bpy.props import IntProperty, FloatProperty, FloatVectorProperty, CollectionProperty
 
 
 #A global list for keeping track of exported textures
-textures_set = set()
+#textures_set = set()
 
+#Path separator for the current platform
+sep = os.path.sep
 #--------------------------------------------------------------------------------------------------
 # Settings.
 #--------------------------------------------------------------------------------------------------
@@ -69,132 +68,6 @@ def get_version_string():
 #--------------------------------------------------------------------------------------------------
 def realpath(path):
     return os.path.realpath(efutil.filesystem_path(path))
-    
-def render_init(engine):
-    pass
-
-
-def update_preview(engine, data, scene):
-    pass
-
-def render_preview(engine, scene):
-    pass
-
-
-def update_scene( engine, data, scene):
-    if os.path.isdir(realpath(scene.appleseed.project_path)):
-        proj_name = None
-    else:
-        proj_name = (scene.appleseed.project_path).split('\\')[-1]
-    
-def render_scene(engine, scene):
-    bpy.ops.appleseed.export()
-    DELAY = 0.1
-
-    project_file = realpath(scene.appleseed.project_path)
-    render_dir = 'render\\' if scene.appleseed.project_path[-1] == '\\' else '\\render\\' 
-    render_output = realpath(scene.appleseed.project_path) + render_dir
-    
-    width = scene.render.resolution_x
-    height = scene.render.resolution_y
-
-
-
-    try:
-        for item in os.listdir(render_output):
-            if item == scene.name + '_' + str(scene.frame_current) + scene.render.file_extension:
-                os.remove( render_output + item)
-    except:
-        pass
-    
-    #Set filename to render
-    filename = scene.name
-    
-    if not filename.endswith( ".appleseed"):
-        filename += ".appleseed"
-        
-    filename = os.path.join(realpath(scene.appleseed.project_path), filename)
-    
-    appleseed_exe = "appleseed.cli.exe" if scene.appleseed.renderer_type == 'CLI' else "appleseed.studio.exe"
-    
-    #Start the Appleseed executable
-    if scene.appleseed.renderer_type == 'CLI':
-        #Get the absolute path to the executable dir
-        cmd = (os.path.realpath(efutil.filesystem_path(scene.appleseed.appleseed_path)) + '\\'+ appleseed_exe, filename, '-o', (render_dir + scene.name + '_' + str(scene.frame_current) + scene.render.file_extension))
-    else:    
-        cmd = (os.path.realpath(efutil.filesystem_path(scene.appleseed.appleseed_path)) + '\\'+ appleseed_exe, filename)
-    print("Rendering with ", cmd[0])
-    print("Filename: ", cmd[1])
-    cdir = os.path.dirname( project_file)
-    process = subprocess.Popen( cmd, cwd = cdir, stdout=subprocess.PIPE)
-    
-    
-    # Wait for the file to be created
-    while not os.path.exists( render_output):
-        if engine.test_break():
-            try:
-                process.kill()
-            except:
-                pass
-            break
-
-        if process.poll() != None:
-            engine.update_stats("", "Appleseed: Error")
-            break
-
-        time.sleep( DELAY)
-
-    if os.path.exists(render_output):
-        engine.update_stats("", "Appleseed: Rendering")
-
-        prev_size = -1
-
-        def update_image():
-            result = engine.begin_result( 0, 0, width, height)
-            lay = result.layers[0]
-            # possible the image wont load early on.
-            try:
-                lay.load_from_file( render_output + scene.name + '_' + str(scene.frame_current) + scene.render.file_extension)
-            except:
-                pass
-
-            engine.end_result( result)
-
-        # Update while rendering
-        while True:
-            if process.poll() != None:
-                update_image()
-                break
-
-            # user exit
-            if engine.test_break():
-                try:
-                    process.kill()
-                except:
-                    pass
-                break
-
-            # check if the file updated
-            new_size = os.path.getsize( render_output)
-
-            if new_size != prev_size:
-                update_image()
-                prev_size = new_size
-
-            time.sleep( DELAY)
-
-def update_start(engine, data, scene):
-    if engine.is_preview:
-        update_preview( engine, data, scene)
-    else:
-        update_scene( engine, data, scene)
-        
-def render_start(engine, scene):
-    if engine.is_preview:
-        render_preview( engine, scene)
-    else:
-        render_scene( engine, scene)
-
 
 def square(x):
     return x * x
@@ -244,6 +117,166 @@ def texture_list(self, context):
                 if tex.texture.type == 'IMAGE' and tex.uv_layer != '' and tex.texture_coords == 'UV' and tex.texture.image.name != '':
                     tex_list.append((tex.name, tex.name, ''))
     return tex_list    
+
+def is_uv_img(tex):
+    if tex and tex.type == 'IMAGE' and tex.image:
+        return True
+    else:
+        return False
+
+            
+
+def update_start(engine, data, scene):
+    if engine.is_preview:
+        update_preview( engine, data, scene)
+    else:
+        update_scene( engine, data, scene)
+        
+def render_start(engine, scene):
+    if engine.is_preview:
+        render_preview( engine, scene)
+    else:
+        render_scene( engine, scene)
+        
+def render_init(engine):
+    pass
+
+
+def update_preview(engine, data, scene):
+    pass
+
+def render_preview(engine, scene):
+    pass
+
+def update_scene( engine, data, scene):
+    if os.path.isdir(realpath(scene.appleseed.project_path)):
+        proj_name = None
+    else:
+        proj_name = (scene.appleseed.project_path).split(sep)[-1]
+    
+    
+#Scene render function
+#------------------------------    
+def render_scene(engine, scene):
+    #Export the scene
+    bpy.ops.appleseed.export()
+    
+    DELAY = 0.1
+    project_file = realpath(scene.appleseed.project_path)
+    render_dir = 'render' + sep if scene.appleseed.project_path[-1] == sep else sep + 'render' + sep 
+    render_output = os.path.join(realpath(scene.appleseed.project_path), render_dir)
+    width = scene.render.resolution_x
+    height = scene.render.resolution_y
+    
+    #Make the output directory, if it doesn't exist yet
+    if not os.path.exists(project_file):
+        try:
+            os.mkdir(project_file)
+        except:
+            self.report({"INFO"}, "The project directory cannot be created. Check directory permissions.")
+            return
+    
+    #Make the render directory, if it doesn't exist yet
+    if not os.path.exists(render_output):
+        try:
+            os.mkdir(render_output)
+        except:
+            self.report({"INFO"}, "The project render directory cannot be created. Check directory permissions.")
+            return
+            
+    try:
+        for item in os.listdir(render_output):
+            if item == scene.name + '_' + str(scene.frame_current) + scene.render.file_extension:
+                os.remove( render_output + item)
+    except:
+        pass
+    
+    #Set filename to render
+    filename = scene.name
+    if not filename.endswith( ".appleseed"):
+        filename += ".appleseed"
+        
+    filename = os.path.join(realpath(scene.appleseed.project_path), filename)
+    
+    appleseed_exe = "appleseed.cli" if scene.appleseed.renderer_type == 'CLI' else "appleseed.studio"
+    
+    
+    #Start the Appleseed executable 
+    if scene.appleseed.renderer_type == "CLI":        
+        #Get the absolute path to the executable dir
+        cmd = (os.path.join(realpath(scene.appleseed.appleseed_path), appleseed_exe), filename, '-o', (render_output + scene.name + '_' + str(scene.frame_current) + scene.render.file_extension))
+        
+    elif scene.appleseed.renderer_type == "GUI":
+        if not scene.appleseed.new_build_options:
+            cmd = (realpath(scene.appleseed.appleseed_path) + sep + appleseed_exe)
+        else: 
+            if scene.appleseed.interactive_mode:
+                cmd = os.path.join(realpath(scene.appleseed.appleseed_path), appleseed_exe) + ' ' + filename + " --render interactive"
+            else:
+                cmd = os.path.join(realpath(scene.appleseed.appleseed_path), appleseed_exe) + ' ' + filename + " --render final"
+            
+    print("Rendering:", cmd)
+    process = subprocess.Popen(cmd, cwd = render_output, stdout=subprocess.PIPE)
+    
+    
+    #The rendered image name and path
+    render_image = render_output + scene.name + '_' + str(scene.frame_current) + scene.render.file_extension
+    # Wait for the file to be created
+    while not os.path.exists( render_image):
+        if engine.test_break():
+            try:
+                process.kill()
+            except:
+                pass
+            break
+
+        if process.poll() != None:
+            engine.update_stats("", "Appleseed: Error")
+            break
+
+        time.sleep(DELAY)
+
+    if os.path.exists(render_image):
+        engine.update_stats("", "Appleseed: Rendering")
+
+        prev_size = -1
+
+        def update_image():
+            result = engine.begin_result( 0, 0, width, height)
+            lay = result.layers[0]
+            # possible the image wont load early on.
+            try:
+                lay.load_from_file( render_image)
+            except:
+                pass
+
+            engine.end_result( result)
+
+        # Update while rendering
+        while True:
+            if process.poll() != None:
+                update_image()
+                break
+
+            # user exit
+            if engine.test_break():
+                try:
+                    process.kill()
+                except:
+                    pass
+                break
+
+            # check if the file updated
+            new_size = os.path.getsize( render_image)
+
+            if new_size != prev_size:
+                update_image()
+                prev_size = new_size
+
+            time.sleep(DELAY)
+
+
+
 #--------------------------------------------------------------------------------------------------
 # Material-related utilities.
 #--------------------------------------------------------------------------------------------------
@@ -258,15 +291,18 @@ class MatUtils:
         return MatUtils.compute_reflection_factor(material) > 0.0
 
     @staticmethod
-    def compute_transparency_factor(material):
-        material_transp_factor = (1.0 - material.alpha) if material.use_transparency else 0.0
-        # We don't really support the Fresnel parameter yet, hack something together...
-        material_transp_factor += material.raytrace_transparency.fresnel / 3.0
+    def compute_transparency_factor(material, index):
+        layer = material.appleseed.layers[index]
+        material_transp_factor = 0.0
+        if layer.bsdf_type == "specular_btdf":
+            material_transp_factor =  layer.spec_btdf_weight
+   
+                
         return material_transp_factor
 
     @staticmethod
     def is_material_transparent(material):
-        return MatUtils.compute_transparency_factor(material) > 0.0
+        return MatUtils.compute_transparency_factor(material, index) > 0.0
 
 
 #--------------------------------------------------------------------------------------------------
@@ -396,7 +432,8 @@ def write_mesh_to_disk(mesh, mesh_faces, mesh_uvtex, filepath):
 class AppleseedExportOperator(bpy.types.Operator):
     bl_idname = "appleseed.export"
     bl_label = "Export"
-
+    
+    textures_set = set()
     
     selected_scene = bpy.props.EnumProperty(name="Scene",
                                             description="Select the scene to export",
@@ -424,12 +461,7 @@ class AppleseedExportOperator(bpy.types.Operator):
                                                         default=1.0,
                                                         subtype='FACTOR')
 
-    light_mats_exitance_mult = bpy.props.FloatProperty(name="Light-Emitting Materials Energy Multiplier",
-                                                       description="Multiply the exitance of light-emitting materials by this factor",
-                                                       min=0.0,
-                                                       max=1000.0,
-                                                       default=1.0,
-                                                       subtype='FACTOR')
+    
 
     env_exitance_mult = bpy.props.FloatProperty(name="Environment Energy Multiplier",
                                                 description="Multiply the exitance of the environment by this factor",
@@ -461,8 +493,7 @@ class AppleseedExportOperator(bpy.types.Operator):
             dis.dis(get_vector3_key)
             cProfile.runctx("self.export()", globals(), locals())
         else: 
-            global textures_set
-            textures_set.clear()
+            self.textures_set.clear()
             scene = context.scene
             self.export(scene)
             
@@ -495,7 +526,7 @@ class AppleseedExportOperator(bpy.types.Operator):
         # Object name -> (material index, mesh name).
         self._mesh_parts = {}
 
-        file_path = os.path.splitext(realpath(scene.appleseed.project_path) + '\\' + scene.name)[0] + ".appleseed"
+        file_path = os.path.splitext(realpath(scene.appleseed.project_path) + sep + scene.name)[0] + ".appleseed"
 
         self.__info("")
         self.__info("Starting export of scene '{0}' to {1}...".format(scene.name, file_path))
@@ -782,7 +813,7 @@ class AppleseedExportOperator(bpy.types.Operator):
 
             # Export the mesh to disk.
             self.__progress("Exporting object '{0}' to {1}...".format(object.name, mesh_filename))
-            mesh_filepath = os.path.join(os.path.dirname(realpath(scene.appleseed.project_path) + '\\' + scene.name), mesh_filename)
+            mesh_filepath = os.path.join(os.path.dirname(realpath(scene.appleseed.project_path) + sep  + scene.name), mesh_filename)
             try:
                 mesh_parts = write_mesh_to_disk(mesh, mesh_faces, mesh_uvtex, mesh_filepath)
                 if Verbose:
@@ -798,7 +829,7 @@ class AppleseedExportOperator(bpy.types.Operator):
             mesh_parts = map(lambda material_index : (material_index, "part_%d" % material_index), material_indices)
 
         # Emit object.
-        self.__emit_object_element(object.name, mesh_filename)
+        self.__emit_object_element(object.name, mesh_filename, object)
 
         return mesh_parts
 
@@ -831,18 +862,21 @@ class AppleseedExportOperator(bpy.types.Operator):
                 material = object.material_slots[material_index].material
                 if material:
                     front_material_name, back_material_name = self._emitted_materials[material]
-            self.__emit_object_instance_element(part_name, instance_name, self.global_matrix * object_matrix, front_material_name, back_material_name)
+            self.__emit_object_instance_element(part_name, instance_name, self.global_matrix * object_matrix, front_material_name, back_material_name, object)
 
-    def __emit_object_element(self, object_name, mesh_filepath):
+    def __emit_object_element(self, object_name, mesh_filepath, object):
         self.__open_element('object name="' + object_name + '" model="mesh_object"')
         self.__emit_parameter("filename", mesh_filepath)
         self.__close_element("object")
 
-    def __emit_object_instance_element(self, object_name, instance_name, instance_matrix, front_material_name, back_material_name):
+    def __emit_object_instance_element(self, object_name, instance_name, instance_matrix, front_material_name, back_material_name, object):
         self.__open_element('object_instance name="{0}" object="{1}"'.format(instance_name, object_name))
         self.__emit_transform_element(instance_matrix)
         self.__emit_line('<assign_material slot="0" side="front" material="{0}" />'.format(front_material_name))
         self.__emit_line('<assign_material slot="0" side="back" material="{0}" />'.format(back_material_name))
+        if bool(object.appleseed_render_layer):
+            render_layer = object.appleseed_render_layer
+            self.__emit_parameter("render_layer", render_layer)
         self.__close_element("object_instance")
 
     #----------------------------------------------------------------------------------------------
@@ -852,8 +886,9 @@ class AppleseedExportOperator(bpy.types.Operator):
     def __is_light_emitting_material(self, material, scene):
         #if material.get('appleseed_arealight', False):
         #return True;
-
-        return material.emit > 0.0 and scene.appleseed.export_emitting_obj_as_lights
+        asr_mat = material.appleseed
+        
+        return asr_mat.use_light_emission and scene.appleseed.export_emitting_obj_as_lights
 
     def __emit_physical_surface_shader_element(self):
         self.__emit_line('<surface_shader name="physical_surface_shader" model="physical_surface_shader" />')
@@ -868,17 +903,26 @@ class AppleseedExportOperator(bpy.types.Operator):
         self.__emit_material_element("__default_material", "__default_material_bsdf", "", "physical_surface_shader", scene, "")
 
     def __emit_material(self, material, scene):
+        asr_mat = material.appleseed
+        layers = asr_mat.layers
+        front_material_name = ""
+        
         if Verbose:
             self.__info("Translating material '{0}'...".format(material.name))
-
-        if MatUtils.is_material_transparent(material):
-            front_material_name = material.name + "_front"
-            back_material_name = material.name + "_back"
-            self.__emit_front_material(material, front_material_name, scene)
-            self.__emit_back_material(material, back_material_name, scene)
-        else:
+            
+        #Need to iterate through layers only once, to find out if we have any specular btdfs
+        for layer in layers:
+            if layer.bsdf_type == "specular_btdf":
+                front_material_name = material.name + "_front"
+                back_material_name = material.name + "_back"
+                self.__emit_front_material(material, front_material_name, scene, layers)
+                self.__emit_back_material(material, back_material_name, scene, layers)
+                break
+        
+        #If we didn't find any, then we're only exporting front material     #DEBUG
+        if front_material_name == "":
             front_material_name = material.name
-            self.__emit_front_material(material, front_material_name, scene)
+            self.__emit_front_material(material, front_material_name, scene, layers)
             if self.__is_light_emitting_material(material, scene):
                 # Assign the default material to the back face if the front face emits light,
                 # as we don't want mesh lights to emit from both faces.
@@ -887,57 +931,93 @@ class AppleseedExportOperator(bpy.types.Operator):
 
         return front_material_name, back_material_name
 
-    def __emit_front_material(self, material, material_name, scene):
-        bsdf_name = self.__emit_front_material_bsdf_tree(material, material_name, scene)
+    def __emit_front_material(self, material, material_name, scene, layers):
+        #material_name here is material.name + "_front" #DEBUG
+        bsdf_name = self.__emit_front_material_bsdf_tree(material, material_name, scene, layers)
 
         if self.__is_light_emitting_material(material, scene):
             edf_name = "{0}_edf".format(material_name)
-            self.__emit_edf(material, edf_name)
+            self.__emit_edf(material, edf_name, scene)
         else: edf_name = ""
 
         self.__emit_material_element(material_name, bsdf_name, edf_name, "physical_surface_shader", scene, material)
 
-    def __emit_back_material(self, material, material_name, scene):
-        bsdf_name = self.__emit_back_material_bsdf_tree(material, material_name, scene)
+    def __emit_back_material(self, material, material_name, scene, layers):
+        #material_name here is material.name + "_back" #DEBUG
+        bsdf_name = self.__emit_back_material_bsdf_tree(material, material_name, scene, layers)
         self.__emit_material_element(material_name, bsdf_name, "", "physical_surface_shader", scene, material)
-
-    def __emit_front_material_bsdf_tree(self, material, material_name, scene):
+    
+    
+    def __emit_front_material_bsdf_tree(self, material, material_name, scene, layers):
+        #material_name here is material.name + "_front" #DEBUG
         bsdfs = []
+        asr_mat = material.appleseed
+        #Iterate through layers and export their types, append names and weights to bsdfs list
+        for layer in layers:
+            if layer.bsdf_type == "specular_btdf":
+                transp_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_specular_btdf(material, transp_bsdf_name, 'front', layer)
+                bsdfs.append([ transp_bsdf_name, layer.spec_btdf_weight ])
 
-        # Transparent component.
-        material_transp_factor = MatUtils.compute_transparency_factor(material)
-        if material_transp_factor > 0.0:
-            transp_bsdf_name = "{0}|transparent".format(material_name)
-            self.__emit_specular_btdf(material, transp_bsdf_name, 'front')
-            bsdfs.append([ transp_bsdf_name, material_transp_factor ])
+            elif layer.bsdf_type == "specular_brdf":
+                mirror_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_specular_brdf(material, mirror_bsdf_name, scene, layer)
+                bsdfs.append([ mirror_bsdf_name, layer.specular_weight ])
 
-        # Mirror component.
-        material_refl_factor = MatUtils.compute_reflection_factor(material)
-        if material_refl_factor > 0.0:
-            mirror_bsdf_name = "{0}|specular".format(material_name)
-            self.__emit_specular_brdf(material, mirror_bsdf_name)
-            bsdfs.append([ mirror_bsdf_name, material_refl_factor ])
-
-        # Diffuse/glossy component.
-        dg_bsdf_name = "{0}|diffuseglossy".format(material_name)
-        if is_black(material.specular_color * material.specular_intensity):
-            self.__emit_lambertian_brdf(material, dg_bsdf_name, scene)
+            elif layer.bsdf_type == "diffuse_btdf":   
+                dt_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_diffuse_btdf(material, dt_bsdf_name, scene, layer)
+                bsdfs.append([ dt_bsdf_name, layer.transmission_weight])
+        
+            elif layer.bsdf_type == "lambertian_brdf":
+                lbrt_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_lambertian_brdf(material, lbrt_bsdf_name, scene, layer)
+                bsdfs.append([ lbrt_bsdf_name, layer.lambertian_weight])
             
-        else:
-            self.__emit_ashikhmin_brdf(material, dg_bsdf_name, scene)
-        material_dg_factor = 1.0 - max(material_transp_factor, material_refl_factor)
-        bsdfs.append([ dg_bsdf_name, material_dg_factor ])
+            elif layer.bsdf_type == "ashikhmin_brdf":
+                ashk_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_ashikhmin_brdf(material, ashk_bsdf_name, scene, layer)
+                bsdfs.append([ ashk_bsdf_name, layer.ashikhmin_weight ])
+                
+            elif layer.bsdf_type == "microfacet_brdf":
+                mfacet_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_microfacet_brdf(material, mfacet_bsdf_name, scene, layer)
+                bsdfs.append([ mfacet_bsdf_name, layer.microfacet_weight])
+                
+            elif layer.bsdf_type == "kelemen_brdf":
+                kelemen_bsdf_name = "{0}|{1}".format(material_name, layer.name)
+                self.__emit_kelemen_brdf(material, kelemen_bsdf_name, scene, layer)
+                bsdfs.append([ kelemen_bsdf_name, layer.kelemen_weight])
+                
+            elif not layer:
+                default_bsdf_name = "{0}|_default".format(material_name)
+                self.__emit_lambertian_brdf(material, default_bsdf_name, scene, layer)
+                bsdfs.append([default_bsdf_name, 1.0])
+                  
+            return self.__emit_bsdf_blend(bsdfs)
+    
+    #------------------------------------------------------------------------
+    
+    def __emit_back_material_bsdf_tree(self, material, material_name, scene, layers):
+        #material_name = material.name  + "_back"
+        #Need to include all instances of spec btdfs - iterate -> layers, find them, add to list
+        spec_btdfs = []
+        for layer in layers:
+            if layer.bsdf_type == "specular_btdf":
+                #This is a hack for now; just return the first one we find
+                spec_btdfs.append([layer.name, layer.spec_btdf_weight])
+                transp_bsdf_name = "{0}|{1}".format(material_name, spec_btdfs[0][0]) 
+                
+                self.__emit_specular_btdf(material, transp_bsdf_name, 'back', layer)
+        
 
-        return self.__emit_bsdf_blend(bsdfs)
-
-    def __emit_back_material_bsdf_tree(self, material, material_name, scene):
-        transp_bsdf_name = "{0}|transparent".format(material_name)
-        self.__emit_specular_btdf(material, transp_bsdf_name, 'back')
+        
         return transp_bsdf_name
-
+    
+    #------------------------------------
+    
     def __emit_bsdf_blend(self, bsdfs):
-        assert len(bsdfs) > 0
-
+        
         # Only one BSDF, no blending.
         if len(bsdfs) == 1:
             return bsdfs[0][0]
@@ -961,113 +1041,154 @@ class AppleseedExportOperator(bpy.types.Operator):
         # Blend the left and right branches together.
         mix_name = "{0}+{1}".format(bsdf0_name, bsdf1_name)
         self.__emit_bsdf_mix(mix_name, bsdf0_name, bsdf0_weight, bsdf1_name, bsdf1_weight)
-
+            
         return mix_name
     
+    #------------------------------------------------------------
     
-    
-    def __emit_lambertian_brdf(self, material, bsdf_name, scene):
+    def __emit_lambertian_brdf(self, material, bsdf_name, scene, layer):
+        asr_mat = material.appleseed
+        
         reflectance_name = ""
         diffuse_list = []
-        for tex in material.texture_slots:
-            if tex:    
-                if tex.use:
-                    if tex.texture.type == 'IMAGE' and tex.uv_layer != '' and tex.texture.image.name != '':
-                        if tex.use_map_color_diffuse:
-                            diffuse_list.append(tex.texture.name) 
-        if diffuse_list != []:
-            #Only add color contribution of first color texture
-            reflectance_name = diffuse_list[0] + "_inst"
-            print("\nLambertian reflectance name: ", diffuse_list[0])    #DEBUG
-            if reflectance_name not in textures_set:
-                self.__emit_texture(bpy.data.textures[diffuse_list[0]], False, scene)
-                textures_set.add(reflectance_name)
+                    
+        if layer.lambertian_use_tex:
+            if layer.lambertian_diffuse_tex != '':
+                reflectance_name = layer.lambertian_diffuse_tex + "_inst"
+                if reflectance_name not in self.textures_set:
+                    self.__emit_texture(bpy.data.textures[layer.lambertian_diffuse_tex], False, scene)
+                    self.textures_set.add(reflectance_name)
+
                     
         if reflectance_name == "":            
-            reflectance_name = "{0}_reflectance".format(bsdf_name)
+            reflectance_name = "{0}_lambertian_reflectance".format(bsdf_name)
             self.__emit_solid_linear_rgb_color_element(reflectance_name,
-                                                   material.diffuse_color,
-                                                   material.diffuse_intensity)
+                                                   layer.lambertian_reflectance,
+                                                   layer.lambertian_multiplier)
 
         self.__open_element('bsdf name="{0}" model="lambertian_brdf"'.format(bsdf_name))
         self.__emit_parameter("reflectance", reflectance_name)
         self.__close_element("bsdf")
+    #----------------------------------------------------------
+    def __emit_diffuse_btdf(self, material, bsdf_name, scene, layer):      
+        asr_mat = material.appleseed  
+        
+        transmittance_name = ""
+        
+        if layer.transmission_use_tex:
+            if layer.transmission_tex != "":
+                transmittance_name = layer.transmission_tex + "_inst"
+                if transmittance_name not in self.textures_set:
+                    self.textures_set.add(transmittance_name)
+                    self.__emit_texture(bpy.data.textures[layer.transmission_tex], False, scene)
     
-    #---------------------------------------------------
-    def __emit_ashikhmin_brdf(self, material, bsdf_name, scene):
+        if transmittance_name == "":
+            transmittance_name = "{0}_diffuse_transmittance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(transmittance_name, 
+                                                    layer.transmission_color,
+                                                    layer.transmission_multiplier)
+                                                    
+        self.__open_element('bsdf name="{0}" model="diffuse_btdf"'.format(bsdf_name))
+        self.__emit_parameter("transmittance", transmittance_name)
+        self.__emit_parameter("transmission_multiplier", layer.transmission_multiplier)
+        self.__close_element("bsdf")
+        
+    #----------------------------------------------------------
+    def __emit_ashikhmin_brdf(self, material, bsdf_name, scene, layer):
+        asr_mat = material.appleseed
+                
         diffuse_reflectance_name = ""
         glossy_reflectance_name = ""
-        diffuse_list = []
-        glossy_list = []
         
-        for tex in material.texture_slots:
-            if tex:
-                if tex.use:
-                    if tex.texture.type == 'IMAGE' and tex.uv_layer != '' and tex.texture.image.name != '':
-                        if tex.use_map_color_diffuse:
-                            diffuse_list.append(tex.texture.name)
-                        if tex.use_map_specular:
-                            glossy_list.append(tex.texture.name)
-        if diffuse_list != []:
-            diffuse_reflectance_name = diffuse_list[0] + "_inst"
-            if diffuse_reflectance_name not in textures_set:
-                self.__emit_texture(bpy.data.textures[diffuse_list[0]], False, scene)
-                textures_set.add(diffuse_reflectance_name)
+        if layer.ashikhmin_use_diff_tex:
+            if layer.ashikhmin_diffuse_tex != "":
+                diffuse_reflectance_name = layer.ashikhmin_diffuse_tex + "_inst"
+                if diffuse_reflectance_name not in self.textures_set:
+                    self.textures_set.add(diffuse_reflectance_name)
+                    self.__emit_texture(bpy.data.textures[layer.ashikhmin_diffuse_tex], False, scene)
                 
-        if glossy_list != []:
-            glossy_reflectance_name = glossy_list[0] + "_inst"
-            if glossy_reflectance_name != diffuse_reflectance_name:
-                if glossy_reflectance_name not in textures_set:
-                    self.__emit_texture(bpy.data.textures[glossy_list[0]], False, scene)
-                    textures_set.add(glossy_reflectance_name)
-            else:
-                pass
+        if layer.ashikhmin_use_gloss_tex:
+            if layer.ashikhmin_gloss_tex != "":
+                glossy_reflectance_name = layer.ashikhmin_gloss_tex + "_inst"
+                if glossy_reflectance_name not in self.textures_set:
+                    self.__emit_texture(bpy.data.textures[layer.ashikhmin_gloss_tex], False, scene)
+                    self.textures_set.add(glossy_reflectance_name)
             
         #Make sure we found some textures. If not, default to material color.
         if diffuse_reflectance_name == "":
-            diffuse_reflectance_name = "{0}_diffuse_reflectance".format(bsdf_name)
+            diffuse_reflectance_name = "{0}_ashikhmin_reflectance".format(bsdf_name)
             self.__emit_solid_linear_rgb_color_element(diffuse_reflectance_name,
-                                                   material.diffuse_color,
-                                                   material.diffuse_intensity)
+                                                   layer.ashikhmin_reflectance,
+                                                   layer.ashikhmin_multiplier)
         if glossy_reflectance_name == "":    
-            glossy_reflectance_name = "{0}_glossy_reflectance".format(bsdf_name)
+            glossy_reflectance_name = "{0}_ashikhmin_glossy_reflectance".format(bsdf_name)
             self.__emit_solid_linear_rgb_color_element(glossy_reflectance_name,
-                                                   material.specular_color,
-                                                   material.specular_intensity * self.specular_mult)
+                                                   layer.ashikhmin_glossy,
+                                                   layer.ashikhmin_glossy_multiplier)
 
         self.__open_element('bsdf name="{0}" model="ashikhmin_brdf"'.format(bsdf_name))
         self.__emit_parameter("diffuse_reflectance", diffuse_reflectance_name)
         self.__emit_parameter("glossy_reflectance", glossy_reflectance_name)
-        self.__emit_parameter("shininess_u", material.shininess_u)
-        self.__emit_parameter("shininess_v", material.shininess_v)
+        self.__emit_parameter("shininess_u", layer.ashikhmin_shininess_u)
+        self.__emit_parameter("shininess_v", layer.ashikhmin_shininess_v)
         self.__close_element("bsdf")
-
-    def __emit_specular_brdf(self, material, bsdf_name):
-        reflectance_name = "{0}_reflectance".format(bsdf_name)
-        self.__emit_solid_linear_rgb_color_element(reflectance_name, material.mirror_color, 1.0)
+    
+    #-----------------------------------------------------
+    
+    def __emit_specular_brdf(self, material, bsdf_name, scene, layer):
+        asr_mat = material.appleseed
+        
+        reflectance_name = ""
+        if layer.specular_use_gloss_tex:
+            if layer.specular_gloss_tex != "":
+                reflectance_name = layer.specular_gloss_tex + "_inst"
+                if reflectance_name not in self.textures_set:
+                    self.textures_set.add(reflectance_name)
+                    self.__emit_texture(bpy.data.textures[layer.specular_gloss_tex], False, scene)
+        if reflectance_name == "":
+            reflectance_name = "{0}_specular_reflectance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(reflectance_name, material.mirror_color, 1.0)
 
         self.__open_element('bsdf name="{0}" model="specular_brdf"'.format(bsdf_name))
         self.__emit_parameter("reflectance", reflectance_name)
         self.__close_element("bsdf")
+    
+    #-------------------------------------------------------
 
-    def __emit_specular_btdf(self, material, bsdf_name, side):
+    def __emit_specular_btdf(self, material, bsdf_name, side, layer):
         assert side == 'front' or side == 'back'
+        
+        asr_mat = material.appleseed
+        
+        reflectance_name = ""
+        transmittance_name = ""
+        
+        if layer.spec_btdf_use_tex:
+            if layer.spec_btdf_tex != "":
+                reflectance_name = layer.spec_btdf_tex + "_inst"
+                if reflectance_name not in self.textures_set:
+                    self.textures_set.add(reflectance_name)
+                    self.__emit_texture(bpy.data.textures[layer.spec_btdf_tex], False, scene)
+        if reflectance_name == "":        
+            reflectance_name = "{0}_transp_reflectance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(reflectance_name, layer.spec_btdf_reflectance, layer.spec_btdf_ref_mult)
+        
+        if layer.spec_btdf_use_trans_tex:
+            if layer.spec_btdf_trans_tex != "":
+                transmittance_name = layer.spec_btdf_trans_tex + "_inst"
+                if transmittance_name not in self.textures_set:
+                    self.textures_set.add(transmittance_name)
+                    self.__emit_texture(bpy.data.textures[layer.spec_btdf_trans_tex], False, scene)
+        
+        if transmittance_name == "":            
+            transmittance_name = "{0}_transp_transmittance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(transmittance_name, layer.spec_btdf_transmittance, layer.spec_btdf_trans_mult)
 
-        reflectance_name = "{0}_reflectance".format(bsdf_name)
-        self.__emit_solid_linear_rgb_color_element(reflectance_name, [ 1.0 ], 1.0)
-
-        transmittance_name = "{0}_transmittance".format(bsdf_name)
-        self.__emit_solid_linear_rgb_color_element(transmittance_name, [ 1.0 ], 1.0)
-
-        if material.transparency_method == 'RAYTRACE':
-            if side == 'front':
-                from_ior = 1.0
-                to_ior = material.raytrace_transparency.ior
-            else:
-                from_ior = material.raytrace_transparency.ior
-                to_ior = 1.0
-        else:
+        if side == 'front':
             from_ior = 1.0
+            to_ior = layer.spec_btdf_to_ior
+        else:
+            from_ior = layer.spec_btdf_from_ior
             to_ior = 1.0
 
         self.__open_element('bsdf name="{0}" model="specular_btdf"'.format(bsdf_name))
@@ -1076,7 +1197,86 @@ class AppleseedExportOperator(bpy.types.Operator):
         self.__emit_parameter("from_ior", from_ior)
         self.__emit_parameter("to_ior", to_ior)
         self.__close_element("bsdf")
-
+    
+    #-------------------------------------------------------------------
+    
+    def __emit_microfacet_brdf(self, material, bsdf_name, scene, layer):
+        asr_mat = material.appleseed
+        reflectance_name = ""
+        mdf_refl = ""
+        
+        if layer.microfacet_use_diff_tex:
+            if layer.microfacet_diff_tex != "":
+                reflectance_name = layer.microfacet_diff_tex + "_inst"
+                if reflectance_name not in self.textures_set:
+                    self.__emit_texture(bpy.data.textures[layer.microfacet_diff_tex], False, scene)
+                    self.textures_set.add(reflectance_name)
+        
+        if reflectance_name == "":
+            reflectance_name = "{0}_microfacet_reflectance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(reflectance_name,
+                                                   layer.microfacet_reflectance,
+                                                   layer.microfacet_multiplier)
+        if layer.microfacet_use_spec_tex:
+            if layer.microfacet_spec_tex != "":
+                mdf_refl = layer.microfacet_spec_tex + "_inst"
+                if mdf_refl not in self.textures_set:
+                    self.__emit_texture(bpy.data.textures[layer.microfacet_spec_tex], False, scene)
+                    self.textures_set.add(mdf_refl)
+        if mdf_refl == "":
+            #This changes to a float, if it's not a texture
+            mdf_refl = layer.microfacet_mdf_parameter
+                       
+        self.__open_element('bsdf name="{0}" model="microfacet_brdf"'.format(bsdf_name))
+        self.__emit_parameter("fresnel_multiplier", layer.microfacet_fresnel)
+        self.__emit_parameter("mdf", layer.microfacet_mdf)
+        self.__emit_parameter("mdf_parameter", mdf_refl)
+        self.__emit_parameter("reflectance", reflectance_name)
+        self.__emit_parameter("reflectance_multiplier", layer.microfacet_multiplier)
+        self.__close_element("bsdf")
+               
+    #---------------------------------------------------------------------
+    
+    def __emit_kelemen_brdf(self, material, bsdf_name, scene, layer):
+        asr_mat = material.appleseed
+        reflectance_name = ""
+        spec_refl_name  = ""
+        
+        if layer.kelemen_use_diff_tex:
+            if layer.kelemen_diff_tex != "":
+                if is_uv_img(bpy.data.textures[layer.kelemen_diff_tex]):
+                    reflectance_name = layer.kelemen_diff_tex + "_inst"
+                    if reflectance_name not in self.textures_set:
+                        self.textures_set.add(reflectance_name)
+                        self.__emit_texture(bpy.data.textures[layer.kelemen_diff_tex], False, scene)
+        
+        if reflectance_name == "":
+            reflectance_name = "{0}_kelemen_reflectance".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(reflectance_name,
+                                                   layer.kelemen_matte_reflectance,
+                                                   layer.kelemen_matte_multiplier)
+        if layer.kelemen_use_spec_tex:
+            if layer.kelemen_spec_tex != "":
+                spec_refl_name = layer.kelemen_spec_tex + "_inst"
+                if spec_refl_name not in self.textures_set:
+                    self.textures_set.add(spec_refl_name)
+                    self.__emit_texture(bpy.data.textures[layer.kelemen_spec_tex], False, scene)
+        if spec_refl_name == "":
+            spec_refl_name = "{0}_kelemen_specular".format(bsdf_name)
+            self.__emit_solid_linear_rgb_color_element(spec_refl_name, 
+                                                    layer.kelemen_specular_reflectance,
+                                                    layer.kelemen_specular_multiplier)
+                                                    
+        self.__open_element('bsdf name="{0}" model="kelemen_brdf"'.format(bsdf_name))
+        self.__emit_parameter("matte_reflectance", reflectance_name)
+        self.__emit_parameter("matte_reflectance_multiplier", layer.kelemen_matte_multiplier)
+        self.__emit_parameter("roughness", layer.kelemen_roughness)
+        self.__emit_parameter("specular_reflectance", spec_refl_name)
+        self.__emit_parameter("specular_reflectance_multiplier", layer.kelemen_specular_multiplier)
+        self.__close_element("bsdf")
+    
+    #---------------------------------------------------------------------    
+    
     def __emit_bsdf_mix(self, bsdf_name, bsdf0_name, bsdf0_weight, bsdf1_name, bsdf1_weight):
         self.__open_element('bsdf name="{0}" model="bsdf_mix"'.format(bsdf_name))
         self.__emit_parameter("bsdf0", bsdf0_name)
@@ -1084,18 +1284,25 @@ class AppleseedExportOperator(bpy.types.Operator):
         self.__emit_parameter("bsdf1", bsdf1_name)
         self.__emit_parameter("weight1", bsdf1_weight)
         self.__close_element("bsdf")
-
-    def __emit_edf(self, material, edf_name):
-        self.__emit_diffuse_edf(material, edf_name)
-
-    def __emit_diffuse_edf(self, material, edf_name):
+    
+    #-----------------------------------------------
+    
+#
+#    def __emit_edf(self, material, edf_name):
+#        self.__emit_diffuse_edf(material, edf_name)
+    
+    #This was called _emit_diffuse_edf
+    def __emit_edf(self, material, edf_name, scene):
+        asr_mat = material.appleseed
         exitance_name = "{0}_exitance".format(edf_name)
-        emit_factor = material.emit if material.emit > 0.0 else 1.0
+        emit_factor = asr_mat.light_emission if asr_mat.light_emission > 0.0 else 1.0
         self.__emit_solid_linear_rgb_color_element(exitance_name,
-                                                   material.diffuse_color,
-                                                   emit_factor * self.light_mats_exitance_mult)
+                                                   asr_mat.light_color,
+                                                   emit_factor * scene.appleseed.light_mats_exitance_mult)
         self.__emit_diffuse_edf_element(edf_name, exitance_name)
-
+    
+    #------------------------
+    
     def __emit_diffuse_edf_element(self, edf_name, exitance_name):
         self.__open_element('edf name="{0}" model="diffuse_edf"'.format(edf_name))
         self.__emit_parameter("exitance", exitance_name)
@@ -1105,9 +1312,9 @@ class AppleseedExportOperator(bpy.types.Operator):
     #Export textures, if any exist on the material
     def __emit_texture(self, tex, bump_bool, scene):        
             #Check that the image texture does not already exist in the folder
-            if tex.image.filepath.split('\\')[-1] not in os.listdir(realpath(scene.appleseed.project_path)):    
-                src_path = os.path.realpath(efutil.filesystem_path(tex.image.filepath))
-                dest_path = realpath(scene.appleseed.project_path) + '\\' + tex.image.filepath.split('\\')[-1]
+            if tex.image.filepath.split(sep)[-1] not in os.listdir(realpath(scene.appleseed.project_path)):    
+                src_path = realpath(tex.image.filepath)
+                dest_path = os.path.join(realpath(scene.appleseed.project_path), tex.image.filepath.split(sep)[-1])
                 #If not, then copy the image
                 copyfile(src_path, dest_path)       
             else:
@@ -1115,10 +1322,12 @@ class AppleseedExportOperator(bpy.types.Operator):
             color_space = 'linear_rgb' if tex.image.colorspace_settings.name == 'Linear' else 'srgb'      
             self.__open_element('texture name="{0}" model="disk_texture_2d"'.format(tex.name if bump_bool == False else tex.name + "_bump"))
             self.__emit_parameter("color_space", color_space)
-            self.__emit_parameter("filename", tex.image.filepath.split('\\')[-1])
+            self.__emit_parameter("filename", tex.image.filepath.split(sep)[-1])
             self.__close_element("texture")
             #Now create texture instance
             self.__emit_texture_instance(tex, bump_bool)
+            
+            print('Emitting texture', tex.name)
 
     def __emit_texture_instance(self, texture, bump_bool):
         texture_name = texture.name if bump_bool == False else texture.name + "_bump"
@@ -1136,48 +1345,51 @@ class AppleseedExportOperator(bpy.types.Operator):
     #----------------------------------------------------------#
     #----------------------------------------------------------#
     def __emit_material_element(self, material_name, bsdf_name, edf_name, surface_shader_name, scene, material):
-        
-        diffuse_list = []
-        glossy_list = []
-        bump_list = []
+        if material != "":
+            asr_mat = material.appleseed
+        bump_map = ""
         sss_shader = ""
         
         #Make sure we're not evaluating the default material.
         if material != "":
             print("\nWriting material element for material: ", material.name, '\n')
             #Check if we're using an SSS surface shader
-            if material.subsurface_scattering.use == True:
+            if asr_mat.sss_use_shader:
                 sss_shader = "fastsss_{0}".format(material.name)
                 self.__emit_sss_shader(sss_shader, material.name, scene)   
                 print("\nCreating SSS shader for material: ", material.name, "sss shader", sss_shader, '\n') 
             
-            for tex in material.texture_slots:
-                if tex:
-                    if tex.use:
-                        if tex.texture.type == 'IMAGE' and tex.uv_layer != '' and tex.texture.image.name != '':
-                            if tex.use_map_color_diffuse:
-                                diffuse_list.append(tex.texture.name)
-                            if tex.use_map_specular:
-                                glossy_list.append(tex.texture.name)   
-                            if tex.use_map_normal:
-                                bump_list.append((tex.texture.name, tex.normal_factor))
-            if bump_list != []:
-                if bump_list[0][0] not in textures_set:
-                    self.__emit_texture(bpy.data.textures[bump_list[0][0]], True, scene)
-                    textures_set.add(bump_list[0][0])
-                    
+            if asr_mat.material_use_bump_tex:
+                if asr_mat.material_bump_tex != "":
+                    if is_uv_img(bpy.data.textures[asr_mat.material_bump_tex]):
+                        bump_map = asr_mat.material_bump_tex + "_bump"
+                                
+            if bump_map != "":
+                if bump_map not in self.textures_set:
+                    self.__emit_texture(bpy.data.textures[asr_mat.material_bump_tex], True, scene)
+                    self.textures_set.add(bump_map)
+
         self.__open_element('material name="{0}" model="generic_material"'.format(material_name))
         if len(bsdf_name) > 0:
             self.__emit_parameter("bsdf", bsdf_name)
         if len(edf_name) > 0:
             self.__emit_parameter("edf", edf_name)
+            
         if material != "":      #In case we're evaluating "__default_material"
-            if bump_list != []:     
-                as_normal_map = bpy.data.textures[bump_list[0][0]].use_normal_map                   
-                self.__emit_parameter("bump_amplitude", bump_list[0][1])
-                self.__emit_parameter("displacement_map", bump_list[0][0] +"_bump_inst")
-                self.__emit_parameter("displacement_method", "normal" if as_normal_map else "bump")
+            #If we're using a bump map on the material
+            if bump_map != "":                        
+                self.__emit_parameter("bump_amplitude", asr_mat.material_bump_amplitude)
+                self.__emit_parameter("displacement_map", bump_map + "_inst")
+                self.__emit_parameter("displacement_method", "normal" if asr_mat.material_use_normalmap else "bump")
                 self.__emit_parameter("normal_map_up", "z")
+            
+            #If we're using an alpha map    
+            if asr_mat.material_use_alpha:
+                if asr_mat.material_alpha_map != "":
+                    self.__emit_parameter("alpha_map", asr_mat.material_alpha_map + "_inst")
+                    if asr_mat.material_alpha_map + "_inst" not in self.textures_set:
+                        self.__emit_texture(bpy.data.textures[asr_mat.material_alpha_map], False, scene)
+                        self.textures_set.add(asr_mat.material_alpha_map + "_inst")
         else:
             pass
         self.__emit_parameter("surface_shader", sss_shader if sss_shader != "" else surface_shader_name)
@@ -1186,30 +1398,45 @@ class AppleseedExportOperator(bpy.types.Operator):
     #-------------------------------------        
     def __emit_sss_shader(self, sss_shader_name, material_name, scene):
         material = bpy.data.materials[material_name]
+        asr_mat = material.appleseed
         
-        if material.sss_albedo_use_tex and material.sss_albedo_tex != '0':
-            #Then assign the name of the texture to albedo_name
-            albedo_name = material.sss_albedo_tex + '_inst'
-            #Make sure the texture isn't the same as any of the others before writing texture instance
-            if material.sss_albedo_tex != material.diffuse_tex:
-                if material.sss_albedo_tex != material.specular_tex:
-                    if material.sss_albedo_tex != material.bump_tex:                    
-                        self.__emit_texture(bpy.data.textures[material.sss_albedo_tex], scene)
+        albedo_list = []
+        
+        #Get color texture, if any exist and we're using an albedo texture
+        if asr_mat.sss_albedo_use_tex:
+            for tex in material.texture_slots:
+                if is_uv_img(tex):
+                    if tex.use_map_color_diffuse:
+                        albedo_list.append(tex.texture.name)
+        
+            if albedo_list != []:
+                albedo_name = albedo_list[0] + "_inst"
+                if albedo_name not in self.textures_set:   
+                    self.__emit_texture(bpy.data.textures[albedo_list[0]], scene)
+                    self.textures_set.add(albedo_name)
+            
+            #If no texture was found        
+            elif albedo_list == []:
+                albedo_name = material_name + "_albedo"
+                self.__emit_solid_linear_rgb_color_element(material_name + "_albedo", material.subsurface_scattering.color, 1.0)
+        
+        #If not using albedo textures        
         else:
             self.__emit_solid_linear_rgb_color_element(material_name + "_albedo", material.subsurface_scattering.color, 1.0)
             albedo_name = material_name + "_albedo"
             
         self.__open_element('surface_shader name="{0}" model="fast_sss_surface_shader"'.format(sss_shader_name))
         self.__emit_parameter("albedo", albedo_name)
-        self.__emit_parameter("ambient_sss", material.sss_ambient)
-        self.__emit_parameter("diffuse", material.sss_diffuse)
-        self.__emit_parameter("distortion", material.sss_distortion)
-        self.__emit_parameter("light_samples", material.sss_light_samples)
-        self.__emit_parameter("occlusion_samples", material.sss_occlusion_samples)
-        self.__emit_parameter("power", material.sss_power)
-        self.__emit_parameter("scale", material.sss_scale)
-        self.__emit_parameter("view_dep_sss", material.sss_view_dep)
+        self.__emit_parameter("ambient_sss", asr_mat.sss_ambient)
+        self.__emit_parameter("diffuse", asr_mat.sss_diffuse)
+        self.__emit_parameter("distortion", asr_mat.sss_distortion)
+        self.__emit_parameter("light_samples", asr_mat.sss_light_samples)
+        self.__emit_parameter("occlusion_samples", asr_mat.sss_occlusion_samples)
+        self.__emit_parameter("power", asr_mat.sss_power)
+        self.__emit_parameter("scale", asr_mat.sss_scale)
+        self.__emit_parameter("view_dep_sss", asr_mat.sss_view_dep)
         self.__close_element("surface_shader")
+        
     #----------------------------------------------------------------------------------------------
     # Lights.
     #----------------------------------------------------------------------------------------------
@@ -1234,6 +1461,9 @@ class AppleseedExportOperator(bpy.types.Operator):
     def __emit_sun_light(self, scene, lamp):
         environment_edf = "environment_edf"
         self.__open_element('light name="{0}" model="sun_light"'.format(lamp.name))
+        if bool(lamp.appleseed_render_layer):
+            render_layer = lamp.appleseed_render_layer
+            self.__emit_parameter("render_layer", render_layer)
         self.__emit_parameter("environment_edf", environment_edf)
         self.__emit_parameter("radiance_multiplier", scene.appleseed_sky.radiance_multiplier)
         self.__emit_parameter("turbidity", 4.0)
@@ -1245,6 +1475,9 @@ class AppleseedExportOperator(bpy.types.Operator):
         self.__emit_solid_linear_rgb_color_element(exitance_name, lamp.data.color, lamp.data.energy * self.point_lights_exitance_mult)
 
         self.__open_element('light name="{0}" model="point_light"'.format(lamp.name))
+        if bool(lamp.appleseed_render_layer):
+            render_layer = lamp.appleseed_render_layer
+            self.__emit_parameter("render_layer", render_layer)
         self.__emit_parameter("exitance", exitance_name)
         self.__emit_transform_element(self.global_matrix * lamp.matrix_world)
         self.__close_element("light")
@@ -1257,6 +1490,9 @@ class AppleseedExportOperator(bpy.types.Operator):
         inner_angle = (1.0 - lamp.data.spot_blend) * outer_angle
 
         self.__open_element('light name="{0}" model="spot_light"'.format(lamp.name))
+        if bool(lamp.appleseed_render_layer):
+            render_layer = lamp.appleseed_render_layer
+            self.__emit_parameter("render_layer", render_layer)
         self.__emit_parameter("exitance", exitance_name)
         self.__emit_parameter("inner_angle", inner_angle)
         self.__emit_parameter("outer_angle", outer_angle)
@@ -1515,7 +1751,7 @@ class AppleseedRenderSettings( bpy.types.PropertyGroup):
         cls.renderer_type = bpy.props.EnumProperty(items = [('CLI', 'Internal', ''), ('GUI', 'External', '')], name = 'Renderer Interface', description = '', default = 'GUI')
                                                     
         cls.appleseed_path = bpy.props.StringProperty(description = "Path to the appleseed executable directory", subtype = 'DIR_PATH')
-        cls.project_path = bpy.props.StringProperty(description = "Where to export project files. Rendered images are saved in .\\render", subtype = 'DIR_PATH')                                              
+        cls.project_path = bpy.props.StringProperty(description = "Where to export project files. Rendered images are saved in .render", subtype = 'DIR_PATH')                                              
         
         # sampling
         cls.decorrelate_pixels = bpy.props.BoolProperty(name = "Decorrelate Pixels", description = '', default = False)
@@ -1607,19 +1843,18 @@ class AppleseedRenderSettings( bpy.types.PropertyGroup):
                                             min = 0,
                                             max = 512)
                                             
-        cls.f_stop = bpy.props.FloatProperty(name = "F-Stop Number",
-                                            description = "Camera F-Stop value",
-                                            default = 1.0)
+
         cls.camera_type = bpy.props.EnumProperty(items = [('pinhole', 'Pinhole', 'Pinhole camera - no DoF'),
                                                 ('thinlens', 'Thin lens', 'Thin lens - enables DoF')],
                                             name = "Camera type",
                                             description = "Camera lens model",
-                                            default = 'thinlens')
+                                            default = 'pinhole')
+                                            
         cls.premult_alpha = bpy.props.BoolProperty(name = "Premultiplied Alpha",
                                             description = "Premultiplied alpha",
                                             default = True)
                                             
-        cls.camera_dof = bpy.props.FloatProperty(name = "F-stop", description = "Thin lens camera f-stop value", default = 7.0, min = 0.0, max = 32.0, step =3, precision = 1)
+        cls.camera_dof = bpy.props.FloatProperty(name = "F-stop", description = "Thin lens camera f-stop value", default = 32.0, min = 0.0, max = 32.0, step =3, precision = 1)
         
         cls.export_emitting_obj_as_lights = bpy.props.BoolProperty(name="Export Emitting Objects As Mesh Lights",
                                                            description="Export object with light-emitting materials as mesh (area) lights",
@@ -1629,7 +1864,16 @@ class AppleseedRenderSettings( bpy.types.PropertyGroup):
         
         cls.quality = bpy.props.FloatProperty(name = "Quality", description = '', default = 3.0, min = 0.0, max = 20.0, precision = 3)
         
-
+        cls.new_build_options = bpy.props.BoolProperty(name = "appleseed.studio options", description = "Enable automatic rendering when appleseed.studio starts -- this requires a build of appleseed.studio that supports automatic loading of .appleseed files", default = False)
+        
+        cls.interactive_mode = bpy.props.BoolProperty(name = "Interactive rendering", description = "appleseed.studio will begin rendering in final render mode.  If left unchecked, appleseed.studio will begin rendering using interactive render mode", default = False)
+        
+        cls.light_mats_exitance_mult = bpy.props.FloatProperty(name="Global Meshlight Energy Multiplier",
+                                                       description="Multiply the exitance of light-emitting materials by this factor",
+                                                       min=0.0,
+                                                       max=100.0,
+                                                       default=1.0)
+        
     @classmethod
     def unregister(cls):
         del bpy.types.Scene.appleseed
@@ -1642,6 +1886,7 @@ class AppleseedSunSkySettings( bpy.types.PropertyGroup):
                 name = "Appleseed Sun Sky",
                 description = "Appleseed Sun Sky Model",
                 type = cls)
+                
         cls.use_sunsky = bpy.props.BoolProperty(name = "", description = 'Use Appleseed Sun/Sky', default = False)
                 
         cls.sun_theta = bpy.props.FloatProperty(name = "Sun theta angle", description = '', default = 0.0, min = -180, max = 180)
@@ -1685,6 +1930,7 @@ properties_scene.SCENE_PT_unit.COMPAT_ENGINES.add( 'APPLESEED')
 properties_scene.SCENE_PT_custom_props.COMPAT_ENGINES.add( 'APPLESEED')
 del properties_scene
 
+
 import bl_ui.properties_world as properties_world
 properties_world.WORLD_PT_context_world.COMPAT_ENGINES.add( 'APPLESEED')
 properties_world.WORLD_PT_world.COMPAT_ENGINES.add('APPLESEED')
@@ -1699,6 +1945,10 @@ del properties_material
         
 import bl_ui.properties_texture as properties_texture
 properties_texture.TEXTURE_PT_preview.COMPAT_ENGINES.add( 'APPLESEED')
+properties_texture.TEXTURE_PT_image.COMPAT_ENGINES.add('APPLESEED')
+properties_texture.TEXTURE_PT_image_mapping.COMPAT_ENGINES.add('APPLESEED')
+properties_texture.TEXTURE_PT_mapping.COMPAT_ENGINES.add('APPLESEED')
+properties_texture.TEXTURE_PT_preview.COMPAT_ENGINES.add('APPLESEED')
 for member in dir(properties_texture):
         subclass = getattr(bl_ui.properties_texture, member)
         try:
@@ -1712,12 +1962,6 @@ properties_data_lamp.DATA_PT_context_lamp.COMPAT_ENGINES.add( 'APPLESEED')
 properties_data_lamp.DATA_PT_spot.COMPAT_ENGINES.add( 'APPLESEED')
 properties_data_lamp.DATA_PT_lamp.COMPAT_ENGINES.add('APPLESEED')
 properties_data_lamp.DATA_PT_sunsky.COMPAT_ENGINES.add('APPLESEED')
-#for member in dir(properties_data_lamp):
-#    subclass = getattr(bl_ui.properties_data_lamp, member)
-#    try:
-#        subclass.COMPAT_ENGINES.add('APPLESEED')
-#    except:
-#        pass
 del properties_data_lamp
 
 
@@ -1763,6 +2007,301 @@ del properties_particle
         
 ######################################################################
 
+class AppleseedMatLayerProps(bpy.types.PropertyGroup):
+    
+    bsdf_type = bpy.props.EnumProperty(items = [
+                                    ("lambertian_brdf", "Lambertian BRDF", ""),
+                                    ("ashikhmin_brdf", "Ashikhmin-Shirley BRDF", ""),
+                                    ("diffuse_btdf", "Diffuse BTDF", ""),
+                                    ("kelemen_brdf", "Kelemen BRDF", ""),
+                                    ("microfacet_brdf", "Microfacet BRDF", ""),
+                                    ("specular_brdf", "Specular BRDF (mirror)", ""),
+                                    ("specular_btdf", "Specular BTDF (glass)", "")],
+                                    name = "BSDF Model", 
+                                    description = "BSDF model for current material layer", 
+                                    default = "lambertian_brdf")
+    #---------------------
+    
+    use_diffuse_btdf = bpy.props.BoolProperty(name = "Diffuse BTDF", description = "Enable blending of diffuse BTDF", default = False)
+        
+    transmission_multiplier = bpy.props.FloatProperty(name = "Transmittance multiplier", description = "Multiplier for material transmission", default = 0.0, min = 0.0, max = 2.0)
+    
+    transmission_color = bpy.props.FloatVectorProperty(name = "Transmittance color", description = "Transmittance color", default = (0.8, 0.8, 0.8), subtype = 'COLOR',min = 0.0, max = 1.0)
+    
+    transmission_use_tex = bpy.props.BoolProperty(name = "", description = "Use texture to influence diffuse color", default = False)
+    
+    transmission_tex = bpy.props.StringProperty(name = "", description = "Texture to influence diffuse color", default = "")
+    
+    transmission_weight = bpy.props.FloatProperty(name = "Diffuse BTDF Blending Weight", description = "Blending weight of Diffuse BTDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0)
+
+    #-----------------------
+
+    
+    use_kelemen = bpy.props.BoolProperty(name = "Kelemen BRDF", description = "Enable blending of Kelemen BRDF", default = False)
+    
+    kelemen_matte_reflectance = bpy.props.FloatVectorProperty(name = "Matte Reflectance", description = "Kelemen matte reflectance", default = (0.8, 0.8, 0.8), subtype = 'COLOR', min = 0.0, max = 1.0)
+    
+    kelemen_use_diff_tex = bpy.props.BoolProperty(name= "", description = "Use texture to influence matte reflectance", default = False)
+    
+    kelemen_diff_tex = bpy.props.StringProperty(name = "", description = "Texture to influence matte reflectance", default = "")
+    
+    kelemen_matte_multiplier = bpy.props.FloatProperty(name = "Matte Reflectance Multiplier", description = "Kelemen matte reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    kelemen_roughness = bpy.props.FloatProperty(name = "Roughness", description = "Kelemen roughness", default = 0.0, min = 0.0, max = 1.0)
+    
+    kelemen_specular_reflectance = bpy.props.FloatVectorProperty(name = "Specular Reflectance", description = "Kelemen specular reflectance", default = (0.8, 0.8, 0.8), subtype = 'COLOR', min = 0.0, max = 1.0)
+    
+    kelemen_use_spec_tex = bpy.props.BoolProperty(name= "", description = "Use texture to influence specular reflectance", default = False)
+    
+    kelemen_spec_tex = bpy.props.StringProperty(name = "", description = "Texture to influence specular reflectance", default = "")
+    
+    kelemen_specular_multiplier = bpy.props.FloatProperty(name = "Specular Reflectance Multiplier", description = "Kelemen specular reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)       
+    
+    kelemen_weight = bpy.props.FloatProperty(name = "Kelemen Blending Weight", description = "Blending weight of Kelemen BRDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0)
+    
+    #-------------------------
+    
+    use_microfacet = bpy.props.BoolProperty(name = "Microfacet BRDF", description = "Enable blending of Microfacet BRDF", default = False)
+    
+    microfacet_fresnel = bpy.props.FloatProperty(name = "Fresnel Multiplier", description = "Microfacet fresnel multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    microfacet_mdf = bpy.props.EnumProperty(items = [
+                                    ("ggx", "GGX", ""),
+                                    ("ward", "Ward", ""),
+                                    ("beckmann", "Beckmann", ""),
+                                    ("blinn", "Blinn", "")],
+                                    name = "Microfacet model", description = "Microfacet distribution function model", default = "beckmann")
+                                    
+    microfacet_mdf_parameter = bpy.props.FloatProperty(name = "Distribution Function", description = "Microfacet distribution function (glossiness: lower values = more glossy)", default = 0.5, min = 0.0, max = 1.0)
+    
+    microfacet_reflectance = bpy.props.FloatVectorProperty(name = "Microfacet Reflectance", description = "Microfacet reflectance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    microfacet_multiplier = bpy.props.FloatProperty(name = "Microfacet Reflectance Multiplier", description = "Microfacet reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    microfacet_use_diff_tex = bpy.props.BoolProperty(name= "", description = "Use texture to influence reflectance", default = False)
+    
+    microfacet_diff_tex = bpy.props.StringProperty(name = "", description = "Texture to influence reflectance", default = "")
+    
+    microfacet_use_spec_tex = bpy.props.BoolProperty(name= "", description = "Use texture to influence distribution function (glossiness)", default = False)
+    
+    microfacet_spec_tex = bpy.props.StringProperty(name = "", description = "Texture to influence distribution function (glossiness)", default = "")
+    
+    microfacet_weight = bpy.props.FloatProperty(name = "Microfacet Blending Weight", description = "Blending weight of Microfacet BRDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0)
+    
+    #------------------------------
+    
+    use_ashikhmin = bpy.props.BoolProperty(name = "Ashikhmin-Shirley BRDF", description = "Enable blending of Ashikhmin-Shirley BRDF", default = False)
+    ashikhmin_reflectance = bpy.props.FloatVectorProperty(name = "Diffuse Reflectance", description = "Ashikhmin-Shirley diffuse reflectance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    ashikhmin_use_diff_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence diffuse reflectance", default = False)
+    
+    ashikhmin_diffuse_tex = bpy.props.StringProperty(name = "", description = "Diffuse reflectance texture", default = "")
+    
+    ashikhmin_multiplier = bpy.props.FloatProperty(name= "Diffuse Reflectance Multiplier", description = "Ashikhmin-Shirley diffuse reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    ashikhmin_fresnel = bpy.props.FloatProperty(name = "Fresnel Multiplier", description = "", default = 1.0, min = 0.0, max = 2.0)
+    ashikhmin_glossy = bpy.props.FloatVectorProperty(name = "Glossy Reflectance", description = "Ashikhmin-Shirley glossy reflectance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    ashikhmin_use_gloss_tex = bpy.props.BoolProperty(name= "", description = "Use a texture to influence gglossy reflectance", default = False)
+    
+    ashikhmin_gloss_tex = bpy.props.StringProperty(name= "", description = "Texture to influence glossy reflectance", default = "")
+    
+    ashikhmin_glossy_multiplier = bpy.props.FloatProperty(name = "Glossy Reflectance Multiplier", description = "Ashikhmin-Shirley glossy reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    ashikhmin_shininess_u = bpy.props.FloatProperty(name = "Shininess U", description = "", default = 200.0, min = 0.0, max = 1000.0)
+    
+    ashikhmin_shininess_v = bpy.props.FloatProperty(name = "Shininess V", description = "", default = 200.0, min = 0.0, max = 1000.0)
+    ashikhmin_weight = bpy.props.FloatProperty(name = "Ashikhmin Blending Weight", description = "Blending weight of Ashikhmin-Shirley BRDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0)
+    
+    #--------------------------------
+    
+    use_lambertian = bpy.props.BoolProperty(name = "Lambertian BRDF", description = "Enable blending of Lambertian BRDF", default = True)
+    
+    lambertian_reflectance = bpy.props.FloatVectorProperty(name = "Lambertian Reflectance", description = "Lambertian diffuse reflectance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    lambertian_multiplier = bpy.props.FloatProperty(name = "Reflectance Multiplier", description = "Lambertian reflectance multiplier", default = 1.0, min = 0.0, max = 2.0)
+    
+    lambertian_weight = bpy.props.FloatProperty(name = "Lambertian Blending Weight", description = "Blending weight of Lambertian BRDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0)
+
+    lambertian_use_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence diffuse color", default = False)
+    
+    lambertian_diffuse_tex = bpy.props.StringProperty(name = "", description = "Diffuse color texture", default = "")
+    
+    #---------------------------------
+    
+    use_specular_brdf = bpy.props.BoolProperty(name = "Specular BRDF", description = "Enable blending of Specular BRDF (mirror)", default = False)
+    
+    specular_reflectance = bpy.props.FloatVectorProperty(name = "Specular Reflectance", description = "Specular BRDF reflectance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    specular_use_gloss_tex = bpy.props.BoolProperty(name= "Use Texture", description = "Use a texture to influence specular reflectance", default = False)
+    
+    specular_gloss_tex = bpy.props.StringProperty(name= "", description = "Texture to influence specular reflectance", default = "")
+    
+    specular_multiplier = bpy.props.FloatProperty(name = "Specular Reflectance Multiplier", description = "Specular BRDF relectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    specular_weight = bpy.props.FloatProperty(name = "Specular Blending Weight", description = "Blending weight of Specular BRDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0) 
+    
+    #---------------------------------
+    
+    use_specular_btdf = bpy.props.BoolProperty(name = "Specular BTDF", description = "Enable blending of Specular BTDF (glass)", default = False)
+    
+    spec_btdf_reflectance = bpy.props.FloatVectorProperty(name = "Specular Reflectance", description = "Specular BTDF reflectance", default = (0.8, 0.8, 0.8), subtype = 'COLOR', min = 0.0, max = 1.0)
+    
+    spec_btdf_use_tex = bpy.props.BoolProperty(name= "Use Texture", description = "Use a texture to influence specular reflectance", default = False)
+    
+    spec_btdf_tex = bpy.props.StringProperty(name= "", description = "Texture to influence specular reflectance", default = "")
+    
+    spec_btdf_ref_mult = bpy.props.FloatProperty(name = "Specular Reflectance Multiplier", description = "Specular BTDF reflectance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    spec_btdf_transmittance = bpy.props.FloatVectorProperty(name = "Specular Transmittance", description = "Specular BTDF transmittance", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    spec_btdf_use_trans_tex = bpy.props.BoolProperty(name= "Use Texture", description = "Use a texture to influence specular transmittance", default = False)
+    
+    spec_btdf_trans_tex = bpy.props.StringProperty(name= "", description = "Texture to influence specular transmittance", default = "")
+    
+    spec_btdf_trans_mult = bpy.props.FloatProperty(name = "Specular Transmittance Multiplier", description = "Specular BTDF transmittance multiplier", default = 1.0, min = 0.0, max = 1.0)
+    
+    spec_btdf_from_ior = bpy.props.FloatProperty(name = "From IOR", description = "From index of refraction", default = 1.0, min = 1.0, max = 4.01)
+    
+    spec_btdf_to_ior = bpy.props.FloatProperty(name = "To IOR", description = "To index of refraction", default = 1.0, min = 1.0, max = 4.01)
+    
+    spec_btdf_weight = bpy.props.FloatProperty(name = "Specular BTDF Blending Weight", description = "Blending weight of Specular BTDF in BSDF mix", default = 1.0, min = 0.0, max = 1.0) 
+    
+
+
+#--------------------------------------------
+
+class AppleseedMatProps(bpy.types.PropertyGroup):
+    
+    #Per layer properties are stored in AppleseedMatLayerProps
+    layers = bpy.props.CollectionProperty(type = AppleseedMatLayerProps, name = "Appleseed Material Layers", description = "")
+    
+    layer_index = bpy.props.IntProperty(name = "Layer Index", description = "", default = 0, min = 0, max = 16)
+    
+    
+    use_light_emission = bpy.props.BoolProperty(name = "Light Emitter", description = "Enable material light emission", default = False)
+    
+    light_emission = bpy.props.FloatProperty(name = "Emission strength", description = "Light emission strength", default = 0.0, min = 0.0, max = 5.0)
+    
+    light_color = bpy.props.FloatVectorProperty(name = "Emission Color", description = "Light emission color", default = (0.8, 0.8, 0.8), subtype = "COLOR", min = 0.0, max = 1.0)
+    
+    sss_use_shader = bpy.props.BoolProperty(name = "FastSSS", description = "Enable Appleseed FastSSS shader (experimental)", default = False)
+    
+    sss_albedo_use_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence SSS color", default = False)
+    
+    sss_ambient = bpy.props.FloatProperty(name = "Ambient SSS", description = "Ambient SSS value", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_diffuse = bpy.props.FloatProperty(name = "Diffuse Lighting", description = "", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_distortion = bpy.props.FloatProperty(name = "Normal Distortion", description = "", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_light_samples = bpy.props.IntProperty(name = "Light Samples", description = "", default = 1, min = 0, max = 100)
+    
+    sss_occlusion_samples = bpy.props.IntProperty(name = "Occlusion Samples", description = "", default = 1, min = 0, max = 100)
+    
+    sss_power = bpy.props.FloatProperty(name = "Power", description = "", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_scale = bpy.props.FloatProperty(name = "Geometric Scale", description = "", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_view_dep = bpy.props.FloatProperty(name = "View-dependent SSS", description = "", default = 1.0, min = 0.0, max = 10.0)
+    
+    sss_albedo_tex = bpy.props.StringProperty(name = '', description = 'Texture to influence SSS albedo', default = "")
+
+    material_use_bump_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence bump / normal", default = False)
+    
+    material_bump_tex = bpy.props.StringProperty(name = "", description = "Bump / normal texture", default = "")
+    
+    material_use_normalmap = bpy.props.BoolProperty(name = "", description = "Use texture as normal map", default = False)
+    
+    material_bump_amplitude  = bpy.props.FloatProperty(name = "Bump Amplitude", description = "Maximum height influence of bump / normal map", default = 1.0, min = 0.0, max = 1.0)
+    
+    material_use_alpha = bpy.props.BoolProperty(name = "", description = "Use a texture to influence alpha", default = False)
+    
+    material_alpha_map = bpy.props.StringProperty(name = "", description = "Alpha texture", default = "")
+    
+    
+#-------------------------------------------------    
+    
+#Operator for adding material layers
+class AppleseedAddMatLayer(bpy.types.Operator):
+    bl_label = "Add Layer"
+    bl_description = "Add new BSDF layer"
+    bl_idname = "appleseed.add_matlayer"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        material = context.object.active_material
+        collection = material.appleseed.layers
+        index = material.appleseed.layer_index
+
+        collection.add()
+        num = collection.__len__()
+        collection[num-1].name = "BSDF Layer " + str(num)
+        
+            
+        return {'FINISHED'}
+    
+#---------------------------------------------
+#Operator for removing material layers
+class AppleseedRemoveMatLayer(bpy.types.Operator):
+    bl_label = "Remove Layer"
+    bl_description = "Remove BSDF layer"
+    bl_idname = "appleseed.remove_matlayer"
+        
+    def invoke(self, context, event):
+        scene = context.scene
+        material = context.object.active_material
+        collection = material.appleseed.layers
+        index = material.appleseed.layer_index
+
+        collection.remove(index)
+        num = collection.__len__()
+        if index >= num:
+            index = num -1
+        if index < 0:
+            index = 0
+        material.appleseed.layer_index = index
+            
+        return {'FINISHED'}    
+#-------------------------------------------------    
+    
+#Operator for adding render layers
+class AppleseedAddRenderLayer(bpy.types.Operator):
+    bl_label = "Add Layer"
+    bl_idname = "appleseed.add_renderlayer"
+    
+    def invoke(self, context, event):
+        scene = context.scene
+        collection = scene.appleseed_layers.layers
+        index = scene.appleseed_layers.layer_index
+
+        collection.add()
+        num = collection.__len__()
+        collection[num-1].name = "Render Layer " + str(num)
+            
+        return {'FINISHED'}
+
+#---------------------------------------------
+#Operator for removing render layers
+class AppleseedRemoveRenderLayer(bpy.types.Operator):
+    bl_label = "Remove Layer"
+    bl_idname = "appleseed.remove_renderlayer"
+        
+    def invoke(self, context, event):
+        scene = context.scene
+        collection = scene.appleseed_layers.layers
+        index = scene.appleseed_layers.layer_index
+
+        collection.remove(index)
+        num = collection.__len__()
+        if index >= num:
+            index = num -1
+        if index < 0:
+            index = 0
+        scene.appleseed_layers.layer_index = index
+            
+        return {'FINISHED'}
+    
+                        
+#---------------------------------------
+#Render Panels                    
 class AppleseedRenderPanelBase( object):
     bl_context = "render"
     bl_space_type = "PROPERTIES"
@@ -1773,6 +2312,203 @@ class AppleseedRenderPanelBase( object):
         renderer = context.scene.render
         return renderer.engine == 'APPLESEED'
 
+
+#----------------------------------    
+#A class for Render buttons panel
+class AppleseedRenderButtons(bpy.types.Panel, AppleseedRenderPanelBase):
+    bl_label = "Appleseed Render"
+    COMPAT_ENGINES = {'APPLESEED'}
+    
+    def draw( self, context):
+        layout = self.layout
+        scene = context.scene
+        asr_scene_props = scene.appleseed
+        
+        row = layout.row(align=True)
+        row.operator("render.render", text = "Render", icon = "RENDER_STILL")
+#        row.operator("render.render_animation", text = "Render Animation") 
+        row.operator("appleseed.export", text = "Export Only", icon = 'EXPORT')
+    
+#---------------------------------------------------------------------------    
+#Add the dimensions panel
+from bl_ui import properties_render
+properties_render.RENDER_PT_dimensions.COMPAT_ENGINES.add( 'APPLESEED')
+del properties_render
+
+#---------------------------------------------------------------------------    
+
+class AppleseedRenderSettingsPanel( bpy.types.Panel, AppleseedRenderPanelBase):
+    bl_label = "Appleseed Render Settings"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw( self, context):
+        layout = self.layout
+        scene = context.scene
+        asr_scene_props = scene.appleseed
+        
+        layout.prop(asr_scene_props, "renderer_type")
+        if asr_scene_props.renderer_type == "GUI":
+            layout.prop(asr_scene_props, "new_build_options")
+            if asr_scene_props.new_build_options:    
+                layout.prop(asr_scene_props, "interactive_mode")
+        layout.prop(asr_scene_props, "appleseed_path", text = "Path to Appleseed")
+        layout.prop(asr_scene_props, "project_path", text = "Project path")
+        layout.prop(asr_scene_props, "generate_mesh_files")
+        
+        layout.prop(scene.render.image_settings, "file_format")
+    
+#---------------------------------------------------------------------    
+class AppleseedSamplesPanel( bpy.types.Panel, AppleseedRenderPanelBase):
+    bl_label = "Appleseed Samples"
+    COMPAT_ENGINES = {'APPLESEED'}
+
+    def draw( self, context):
+        layout = self.layout
+        scene = context.scene
+        asr_scene_props = scene.appleseed
+
+        col = layout.column()
+        row = col.row( align=True)
+        row.prop( asr_scene_props, "pixel_filter")
+        row.prop( asr_scene_props, "filter_size")
+
+        col.separator()
+        col.prop( asr_scene_props, "pixel_sampler")
+
+        if asr_scene_props.pixel_sampler == 'adaptive':
+            col.prop( asr_scene_props, "sampler_min_samples")
+            col.prop( asr_scene_props, "sampler_max_samples")
+            col.prop( asr_scene_props, "sampler_max_contrast")
+            col.prop( asr_scene_props, "sampler_max_variation")
+        else:
+            col.prop(asr_scene_props, "decorrelate_pixels")
+            col.prop( asr_scene_props, "sampler_max_samples")
+                        
+        col.prop(asr_scene_props, "rr_start")
+        
+        
+        
+#--------------------------------------------------------------------------        
+class AppleseedLightingPanel( bpy.types.Panel, AppleseedRenderPanelBase):
+    bl_label = "Appleseed Lighting"
+    COMPAT_ENGINES = {'APPLESEED'}
+
+    def draw( self, context):
+        layout = self.layout
+        scene = context.scene
+        asr_scene_props = scene.appleseed
+
+        col = layout.column()
+        col.prop( asr_scene_props, "lighting_engine")
+        split = layout.split()
+
+        col.prop(asr_scene_props, "export_emitting_obj_as_lights")     
+        col.prop(asr_scene_props, "light_mats_exitance_mult")   
+        if asr_scene_props.lighting_engine == 'pt':
+            col = split.column()
+            col.prop(asr_scene_props, "caustics_enable")
+            col.prop(asr_scene_props, "next_event_est")
+            col = split.column()
+            col.prop(asr_scene_props, "enable_diagnostics")
+            col.prop(asr_scene_props, "quality")
+            if asr_scene_props.next_event_est == True:
+                row = layout.row()
+                row.prop( asr_scene_props, "ibl_enable")
+                if asr_scene_props.ibl_enable == True:
+                    row.prop(asr_scene_props, "ibl_env_samples")
+                row = layout.row()
+                row.prop(asr_scene_props, "direct_lighting")
+                if asr_scene_props.direct_lighting == True:
+                    row.prop(asr_scene_props, "dl_light_samples")
+            col = layout.column()
+          
+        else:
+            row = layout.row()
+            row.prop(asr_scene_props, "ibl_enable")
+            if asr_scene_props.ibl_enable == True:
+                row.prop(asr_scene_props, "ibl_env_samples")
+            layout.prop(asr_scene_props, "decorrelate_pixels")
+        col = layout.column()
+        col.prop(asr_scene_props, "max_bounces")  
+
+#-------------------------------------------
+
+class AppleseedRenderLayers(bpy.types.PropertyGroup):
+    pass
+
+#---------------------------------------------------
+
+class AppleseedRenderLayerProps(bpy.types.PropertyGroup):
+    layers = bpy.props.CollectionProperty(type = AppleseedRenderLayers, name = "Appleseed Render Layers", description = "")
+    layer_index = bpy.props.IntProperty(name = "Layer Index", description = "", default = 0, min = 0, max = 16)
+
+#-------------------------------------------------
+#Render layers panel 
+class AppleseedRenderLayers(bpy.types.Panel):
+    bl_label = "Appleseed Render Layers"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "render_layer"    
+    COMPAT_ENGINES = {'APPLESEED'}
+    
+    @classmethod
+    def poll( cls, context):
+        renderer = context.scene.render
+        return renderer.engine == 'APPLESEED'
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        appleseed_layers = scene.appleseed_layers
+        
+        layout.label("Render Layers:", icon = 'RENDERLAYERS')
+       
+        row = layout.row()
+        row.template_list("UI_UL_list", "appleseed_render_layers", appleseed_layers, "layers", appleseed_layers, "layer_index")
+        
+        row = layout.row(align=True)
+        row.operator("appleseed.add_renderlayer", icon = "ZOOMIN")
+        row.operator("appleseed.remove_renderlayer", icon = "ZOOMOUT")
+                
+        if appleseed_layers.layers:
+            current_layer = appleseed_layers.layers[appleseed_layers.layer_index]   
+            layout.prop(current_layer, "name", text = "Layer Name")
+        
+#--------------------------------------------------
+class AppleseedObjRenderLayerPanel(bpy.types.Panel):
+    bl_label = "Appleseed Render Layers"
+    COMPAT_ENGINES = {'APPLESEED'}
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+
+    @classmethod
+    def poll( cls, context):
+        renderer = context.scene.render
+        return renderer.engine == 'APPLESEED' and context.object is not None and context.object.type != 'CAMERA'
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        object = context.object
+        appleseed_layers = scene.appleseed_layers
+        
+        layout.label("Appleseed Render Layers:", icon = 'RENDERLAYERS')
+       
+        row = layout.row()
+        row.template_list("UI_UL_list", "appleseed_render_layers", appleseed_layers, "layers", appleseed_layers, "layer_index")
+
+        row = layout.row(align=True)
+        row.operator("appleseed.add_renderlayer", icon = "ZOOMIN")
+        row.operator("appleseed.remove_renderlayer", icon = "ZOOMOUT")
+                
+        if appleseed_layers.layers:
+            current_layer = appleseed_layers.layers[appleseed_layers.layer_index]   
+            layout.prop(current_layer, "name", text = "Layer name")
+        
+        layout.label("Constrain object to render layer:", icon = 'OBJECT_DATA')
+        layout.prop_search(object, "appleseed_render_layer", appleseed_layers, "layers", text = "")        
+             
 #-----------------------------------
 #A class for camera DoF
 class AppleseedCameraDoF(bpy.types.Panel):
@@ -1852,121 +2588,17 @@ class AppleseedWorldPanel(bpy.types.Panel):
         layout.prop(asr_sky_props, "horiz_shift")
         if asr_sky_props.sun_model == "hosek_environment_edf":
             layout.prop(asr_sky_props, "ground_albedo")
-            
-#----------------------------------    
-#A class for Render buttons panel
-class AppleseedRenderButtons(bpy.types.Panel, AppleseedRenderPanelBase):
-    bl_label = "Appleseed Render"
-    COMPAT_ENGINES = {'APPLESEED'}
-    
-    def draw( self, context):
-        layout = self.layout
-        scene = context.scene
-        asr_scene_props = scene.appleseed
-        
-        row = layout.row(align=True)
-        row.operator("render.render", text = "Render", icon = "RENDER_STILL")
-#        row.operator("render.render_animation", text = "Render Animation") 
-        row.operator("appleseed.export", text = "Export Only", icon = 'EXPORT')
-    
-#---------------------------------------------------------------------------    
-#Add the dimensions panel
-from bl_ui import properties_render
-properties_render.RENDER_PT_dimensions.COMPAT_ENGINES.add( 'APPLESEED')
-del properties_render
 
-#---------------------------------------------------------------------------    
 
-class AppleseedRenderSettingsPanel( bpy.types.Panel, AppleseedRenderPanelBase):
-    bl_label = "Appleseed Render Settings"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw( self, context):
-        layout = self.layout
-        scene = context.scene
-        asr_scene_props = scene.appleseed
-        
-        layout.prop(asr_scene_props, "renderer_type")
-        layout.prop(asr_scene_props, "appleseed_path", text = "Path to Appleseed")
-        layout.prop(asr_scene_props, "project_path", text = "Project path")
-        layout.prop(asr_scene_props, "generate_mesh_files")
-        
-        layout.prop(scene.render.image_settings, "file_format")
-    
-#---------------------------------------------------------------------    
-class AppleseedSamplesPanel( bpy.types.Panel, AppleseedRenderPanelBase):
-    bl_label = "Appleseed Samples"
-    COMPAT_ENGINES = {'APPLESEED'}
-
-    def draw( self, context):
-        layout = self.layout
-        scene = context.scene
-        asr_scene_props = scene.appleseed
-
-        col = layout.column()
-        row = col.row( align=True)
-        row.prop( asr_scene_props, "pixel_filter")
-        row.prop( asr_scene_props, "filter_size")
-
-        col.separator()
-        col.prop( asr_scene_props, "pixel_sampler")
-
-        if asr_scene_props.pixel_sampler == 'adaptive':
-            col.prop( asr_scene_props, "sampler_min_samples")
-            col.prop( asr_scene_props, "sampler_max_samples")
-            col.prop( asr_scene_props, "sampler_max_contrast")
-            col.prop( asr_scene_props, "sampler_max_variation")
-        else:
-            col.prop(asr_scene_props, "decorrelate_pixels")
-            col.prop( asr_scene_props, "sampler_max_samples")
-                        
-        col.prop(asr_scene_props, "rr_start")
-        
-        
-        
-#--------------------------------------------------------------------------        
-class AppleseedLightingPanel( bpy.types.Panel, AppleseedRenderPanelBase):
-    bl_label = "Appleseed Lighting"
-    COMPAT_ENGINES = {'APPLESEED'}
-
-    def draw( self, context):
-        layout = self.layout
-        scene = context.scene
-        asr_scene_props = scene.appleseed
-
-        col = layout.column()
-        col.prop( asr_scene_props, "lighting_engine")
-        split = layout.split()
-
-        col.prop(asr_scene_props, "export_emitting_obj_as_lights")        
-        if asr_scene_props.lighting_engine == 'pt':
-            col = split.column()
-            col.prop(asr_scene_props, "caustics_enable")
-            col.prop(asr_scene_props, "next_event_est")
-            col = split.column()
-            col.prop(asr_scene_props, "enable_diagnostics")
-            col.prop(asr_scene_props, "quality")
-            if asr_scene_props.next_event_est == True:
-                row = layout.row()
-                row.prop( asr_scene_props, "ibl_enable")
-                if asr_scene_props.ibl_enable == True:
-                    row.prop(asr_scene_props, "ibl_env_samples")
-                row = layout.row()
-                row.prop(asr_scene_props, "direct_lighting")
-                if asr_scene_props.direct_lighting == True:
-                    row.prop(asr_scene_props, "dl_light_samples")
-            col = layout.column()
-          
-        else:
-            row = layout.row()
-            row.prop(asr_scene_props, "ibl_enable")
-            if asr_scene_props.ibl_enable == True:
-                row.prop(asr_scene_props, "ibl_env_samples")
-            layout.prop(asr_scene_props, "decorrelate_pixels")
-        col = layout.column()
-        col.prop(asr_scene_props, "max_bounces")  
-        
-#-------------------------            
+#---------------------------------------------
+class MATERIAL_UL_BSDF_slots(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        BSDF = item
+        bsdf_type = BSDF.bsdf_type
+        bsdf_type_name = bsdf_type[0].upper() + bsdf_type[1:-5] + " " + bsdf_type[-4:].upper()
+        if 'DEFAULT' in self.layout_type:            
+            layout.label(text = BSDF.name + "  |  " + bsdf_type_name, translate=False, icon_value=icon)
+#---------------------------------------------
 class AppleseedMaterialShading(bpy.types.Panel):
     bl_label = 'Appleseed Surface Shading'
     bl_space_type = "PROPERTIES"
@@ -1984,180 +2616,247 @@ class AppleseedMaterialShading(bpy.types.Panel):
         layout = self.layout
         object = context.object
         material = object.active_material
+        asr_mat = material.appleseed
         
-        split = layout.split(percentage = 0.65)
-        col = split.column()
-        layout.label("Diffuse Color:")
-        layout.prop(material, "diffuse_color", text = "")    
-        layout.prop(material, "diffuse_intensity", "Intensity")
+        layout.label("BSDF Layers:", icon = 'MATERIAL')
+
+       
+        row = layout.row()
+        row.template_list("MATERIAL_UL_BSDF_slots", "appleseed_material_layers", asr_mat, "layers", asr_mat, "layer_index", maxrows = 16, type = "DEFAULT")
         
-        layout.separator()    
-        split = layout.split(percentage = 0.65)    
+        row = layout.row(align=True)
+        row.operator("appleseed.add_matlayer", icon = "ZOOMIN")
+        row.operator("appleseed.remove_matlayer", icon = "ZOOMOUT")
+                
+        if asr_mat.layers:
+            current_layer = asr_mat.layers[asr_mat.layer_index]   
+            layout.prop(current_layer, "bsdf_type")
+#            layout.prop(current_layer, "name", text = "Layer Name")
+            
+            #Draw the layout if the current type is Lambertian
+            if current_layer.bsdf_type == "lambertian_brdf":
+                layout.prop(current_layer, "lambertian_weight")
+                layout.label("Lambertian Reflectance:")
+                
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "lambertian_reflectance", text = "")
+                if current_layer.lambertian_use_tex:    
+                    col.prop_search(current_layer, "lambertian_diffuse_tex", material, "texture_slots")
+                
+                col = split.column()
+                col.prop(current_layer, "lambertian_use_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "lambertian_multiplier")
+                
+            elif current_layer.bsdf_type == "ashikhmin_brdf":
+                layout.prop(current_layer, "ashikhmin_weight")
+                
+                layout.label("Diffuse Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "ashikhmin_reflectance", text = "")
+                if current_layer.ashikhmin_use_diff_tex:
+                    col.prop_search(current_layer, "ashikhmin_diffuse_tex", material, "texture_slots", text = "")
+                
+                col = split.column()
+                col.prop(current_layer, "ashikhmin_use_diff_tex", text = "Use Texture", toggle = True)    
+                row = layout.row()
+                row.prop(current_layer, "ashikhmin_multiplier")
+                
+                layout.label("Glossy Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()    
+                col.prop(current_layer, "ashikhmin_glossy", text = "")
+                if current_layer.ashikhmin_use_gloss_tex:
+                    col.prop_search(current_layer, "ashikhmin_gloss_tex", material, "texture_slots", text = "")
+                
+                col = split.column()
+                col.prop(current_layer, "ashikhmin_use_gloss_tex", text = "Use Texture", toggle = True)
+                row = layout.row()
+                row.prop(current_layer, "ashikhmin_glossy_multiplier")
+                
+                col = layout.column()
+                col.prop(current_layer, "ashikhmin_fresnel")
+                row = layout.row(align=True)
+                row.prop(current_layer, "ashikhmin_shininess_u")
+                row.prop(current_layer, "ashikhmin_shininess_v")
+            
+            elif current_layer.bsdf_type == "diffuse_btdf":
+                layout.prop(current_layer, "transmission_weight")
+                
+                layout.label("Transmittance Color:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "transmission_color", text = "")
+                if current_layer.transmission_use_tex:    
+                    col.prop_search(current_layer, "transmission_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "transmission_use_tex", text = "Use Texture", toggle = True)            
+                row = layout.row()
+                row.prop(current_layer, "transmission_multiplier", text = "Transmittance Multiplier")
+            elif current_layer.bsdf_type == "kelemen_brdf":
+                layout.prop(current_layer, "kelemen_weight")
+                layout.label("Matte Reflectance:")
+                
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "kelemen_matte_reflectance", text = "")
+                if current_layer.kelemen_use_diff_tex:
+                    col.prop_search(current_layer, "kelemen_diff_tex", material, "texture_slots", text = "")
+                
+                col = split.column()
+                col.prop(current_layer, "kelemen_use_diff_tex", text = "Use Texture", toggle = True)            
+                row = layout.row()
+                row.prop(current_layer, "kelemen_matte_multiplier")
+                
+                layout.label("Specular Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "kelemen_specular_reflectance", text = "")    
+                if current_layer.kelemen_use_spec_tex:
+                    col.prop_search(current_layer, "kelemen_spec_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "kelemen_use_spec_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "kelemen_specular_multiplier")
+                layout.prop(current_layer, "kelemen_roughness")
+            
+            elif current_layer.bsdf_type == "microfacet_brdf":
+                layout.prop(current_layer, "microfacet_weight")
+                layout.prop(current_layer, "microfacet_mdf")
+                layout.label("Microfacet Reflectance:")
+                
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "microfacet_reflectance", text = "")
+                if current_layer.microfacet_use_diff_tex:
+                    col.prop_search(current_layer, "microfacet_diff_tex", material, "texture_slots", text = "")
+                
+                col = split.column()
+                col.prop(current_layer, "microfacet_use_diff_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "microfacet_multiplier")
+                
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "microfacet_mdf_parameter")
+                if current_layer.microfacet_use_spec_tex:
+                    col.prop_search(current_layer, "microfacet_spec_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "microfacet_use_spec_tex", text = "Use Texture", toggle = True)
+                    
+                layout.prop(current_layer, "microfacet_fresnel")
+            
+            elif current_layer.bsdf_type == "specular_brdf":
+                layout.prop(current_layer, "specular_weight")
+                layout.label("Specular Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "specular_reflectance", text = "")
+                if current_layer.specular_use_gloss_tex:
+                    col.prop_search(current_layer, "specular_gloss_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "specular_use_gloss_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "specular_multiplier")
+                
+            elif current_layer.bsdf_type == "specular_btdf":
+                layout.prop(current_layer, "spec_btdf_weight")
+                layout.label("Specular Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "spec_btdf_reflectance", text = "")
+                if current_layer.spec_btdf_use_tex:
+                    col.prop_search(current_layer, "spec_btdf_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "spec_btdf_use_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "spec_btdf_ref_mult")
+                
+                layout.label("Transmittance Reflectance:")
+                split = layout.split(percentage = 0.65)
+                col = split.column()
+                col.prop(current_layer, "spec_btdf_transmittance", text = "")
+                if current_layer.spec_btdf_use_trans_tex:
+                    col.prop_search(current_layer, "spec_btdf_trans_tex", material, "texture_slots", text = "")
+                col = split.column()
+                col.prop(current_layer, "spec_btdf_use_trans_tex", text = "Use Texture", toggle = True)
+                layout.prop(current_layer, "spec_btdf_trans_mult")
+                
+                row = layout.row(align= True)
+                row.prop(current_layer, "spec_btdf_from_ior")
+                row.prop(current_layer, "spec_btdf_to_ior")
+        
+        #Per material alpha/bump
+        layout.separator()
+        layout.label("Per-material Alpha / Bump Mapping", icon = "TEXTURE_SHADED")
+        box = layout.box()
+        split = box.split(percentage = 0.65)
         col = split.column()
-        layout.label("Specular Color:")
-        layout.prop(material, "specular_color", text = "")
-        row = layout.row(align = True)
-        row.prop(material, "shininess_u", "Shininess U", slider=True)
-        row.prop(material, "shininess_v", "Shininess V", slider = True)
+        col.prop(asr_mat, "material_use_bump_tex", text = "Use Bump Texture", toggle= True)
+        col = split.column()
+        if asr_mat.material_use_bump_tex:
+            col.prop(asr_mat, "material_use_normalmap", text = "Normal Map", toggle = True)
+        if asr_mat.material_use_bump_tex:
+            box.prop_search(asr_mat, "material_bump_tex", material, "texture_slots", text = "")
+            box.prop(asr_mat, "material_bump_amplitude")
+            
+        split = box.split(percentage = 0.65)
+        col = split.column()
+        col.prop(asr_mat, "material_use_alpha", text = "Use Alpha Texture", toggle = True)
+        col = split.column()
+        if asr_mat.material_use_alpha:    
+            col.prop_search(asr_mat, "material_alpha_map", material, "texture_slots", text = "")
+        
+                     
+        #Light emission properties                  
+        layout.separator()
+        layout.label("Appleseed Material Light Emission", icon = "LAMP_AREA")
+        box = layout.box()
+        box.prop(asr_mat, "use_light_emission", "Use Light Emission")
+        row = box.row()
+        row.active = asr_mat.use_light_emission
+        row.prop(asr_mat, "light_emission", text = "Emission Strength")
+        row = box.row()
+        row.prop(asr_mat, "light_color", text = "Light Color")
         
         layout.separator()
-        layout.label("Light emission:")
-        layout.prop(material, "emit", text = "Emission strength", slider = True)
         
-#----------------------------------------------        
-class AppleseedMaterialMirror(bpy.types.Panel):
-    bl_label = 'Appleseed Specular Mirror'
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
-    COMPAT_ENGINES = {'APPLESEED'}
-    
-    @classmethod
-    def poll( cls, context):
-        renderer = context.scene.render
-        return renderer.engine == 'APPLESEED' and context.object is not None and context.object.type == 'MESH' and context.object.active_material is not None
-    
-    def draw_header(self, context):
-        material = context.object.active_material
-        header = self.layout
-        header.scale_y = 1.0
-        header.prop(material.raytrace_mirror, "use", text = "")
-    
-    def draw(self, context):
-        layout = self.layout
-        object = context.object
-        material = object.active_material
+        layout.prop(asr_mat, "sss_use_shader", text = "Appleseed FastSSS Shading")
+        box = layout.box()
+        box.active = asr_mat.sss_use_shader
         
-        layout.active = material.raytrace_mirror.use
+        row = box.row(align=True)
+        row.prop(asr_mat, "sss_power", text = "SSS Power")
+        row.prop(asr_mat, "sss_scale")
         
-        split= layout.split()
-        col = split.column()
-        col.prop(material.raytrace_mirror, "reflect_factor")
-        col.prop(material, "mirror_color", text = "")
+        box.label("Albedo Color:")
+        row = box.row()
+        row.prop(material.subsurface_scattering, "color", text = "")
+        row.prop(asr_mat, "sss_albedo_use_tex", text = "Use Texture", toggle = True)
+        if asr_mat.sss_albedo_use_tex:
+            box.prop_search(asr_mat, "sss_albedo_tex", material, "texture_slots", text = "")
         
-        col = split.column()
-        col.prop(material.raytrace_mirror, "fresnel")
-        col.prop(material.raytrace_mirror, "fresnel_factor")
+        box.separator()
+        
+        row = box.row(align=True)
+        row.prop(asr_mat, "sss_ambient")  
+        row.prop(asr_mat, "sss_view_dep")  
+        
+        row = box.row(align=True)
+        row.prop(asr_mat, "sss_diffuse")    
+        row.prop(asr_mat, "sss_distortion")
+        
+        row = box.row(align=True)
+        row.prop(asr_mat, "sss_light_samples")
+        row.prop(asr_mat, "sss_occlusion_samples")
 
-#----------------------------------------------------
-class AppleseedMaterialTransparency(bpy.types.Panel):
-    bl_label = 'Appleseed Transparency'
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
-    COMPAT_ENGINES = {'APPLESEED'}
-        
-    @classmethod
-    def poll( cls, context):
-        renderer = context.scene.render
-        return renderer.engine == 'APPLESEED' and context.object is not None and context.object.type == 'MESH' and context.object.active_material is not None
-    
-    
-    def draw_header(self, context):
-        material = context.object.active_material
-        header = self.layout
-        header.scale_y = 1.0
-        header.prop(material, "use_transparency", text = "")
-    
-    def draw(self, context):
-        layout = self.layout
-        object = context.object
-        material = object.active_material    
-        
-        layout.active = material.use_transparency
-        
-        row = layout.row()
-        row.prop(material, "transparency_method", expand = True)
-        if material.transparency_method == 'MASK':
-            layout.label("Mask transparency is not supported. Using Z Transparency.")
-        elif material.transparency_method == 'Z_TRANSPARENCY':
-            layout.label("Using alpha transparency: IOR = 1.0")
-            layout.prop(material, "alpha")
-        elif material.transparency_method == 'RAYTRACE':
-            row = layout.row()
-            row.prop(material, "alpha")
-            row.prop(material.raytrace_transparency, "fresnel")
-            layout.prop(material.raytrace_transparency, "ior")
-        
-#-------------------------------------------------------
-class AppleseedFastSSSPanel(bpy.types.Panel):
-    bl_label = "Appleseed Fast Subsurface Scattering"
-    COMPAT_ENGINES = {'APPLESEED'}
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
-
-    @classmethod
-    def poll( cls, context):
-        renderer = context.scene.render
-        return renderer.engine == 'APPLESEED' and context.object is not None and context.object.type == 'MESH' and context.object.active_material is not None        
-    
-    def draw_header(self, context):
-        material = context.object.active_material
-        header = self.layout
-        header.scale_y = 1.0
-        header.prop(material.subsurface_scattering, "use", text = "")
-        
-    def draw(self, context):
-        layout = self.layout
-        material = context.object.active_material
-        layout.active = material.subsurface_scattering.use
-        
-        split = layout.split()
-        col = split.column()
-        
-        col.prop(material, "sss_power", text = "SSS Power")
-
-        layout.prop(material.subsurface_scattering, "color", text = "Albedo Color")
-        
-        col = split.column()
-        col.prop(material, "sss_scale")
-#        col.label("")
-#        col.prop(material, "sss_albedo_use_tex", toggle = True, text = "Use Albedo Texture")
-#        if material.sss_albedo_use_tex:
-#            if texture_list(self, context) != [('0', '', '')]:
-#                layout.prop(material, "sss_albedo_tex", text = "Albedo Color Texture")
-#            else:
-#                col.label("No UV image textures.")
-        
-
-        
-        split = layout.split()
-        col = split.column()
-        col.prop(material, "sss_ambient")    
-        col.prop(material, "sss_diffuse")    
-        col.prop(material, "sss_light_samples")
-        
-        col = split.column()
-        col.prop(material, "sss_view_dep")
-        col.prop(material, "sss_distortion")
-        col.prop(material, "sss_occlusion_samples")
-        
-        
+                
+#-------------------        
 #Register the script
 #-------------------
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.Material.diffuse_tex = bpy.props.EnumProperty(items = texture_list, name = '', description = '')
-    bpy.types.Material.specular_tex = bpy.props.EnumProperty(items = texture_list, name = '', description = '')
-    bpy.types.Material.bump_tex = bpy.props.EnumProperty(items = texture_list, name = '', description = '')
-    bpy.types.Material.use_diffuse_tex = bpy.props.BoolProperty(name = "", description = "Use a texture influence diffuse color", default = False)
-    bpy.types.Material.use_specular_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence specular values", default = False)
-    bpy.types.Material.use_bump_tex = bpy.props.BoolProperty(name = "", description = "Use a texture to influence bump / normal", default = False)
-    bpy.types.Material.use_normalmap = bpy.props.BoolProperty(name = "", description = "Use as normal map", default = False)
-    bpy.types.Material.bump_amplitude  = bpy.props.FloatProperty(name = "Bump Amplitude", description = "Maximum height influence of bump / normal map", default = 1.0, min = 0.0, max = 1.0)
-    bpy.types.Material.sss_albedo_tex = bpy.props.EnumProperty(items = texture_list, name = '', description = '')
-    bpy.types.Material.sss_albedo_use_tex = bpy.props.BoolProperty(name = "", description = "Use a texture influence SSS color", default = False)
-    bpy.types.Material.sss_ambient = bpy.props.FloatProperty(name = "Ambient SSS", description = "Ambient SSS value", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.sss_diffuse = bpy.props.FloatProperty(name = "Diffuse Lighting", description = "", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.sss_distortion = bpy.props.FloatProperty(name = "Normal Distortion", description = "", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.sss_light_samples = bpy.props.IntProperty(name = "Light Samples", description = "", default = 1, min = 0, max = 100)
-    bpy.types.Material.sss_occlusion_samples = bpy.props.IntProperty(name = "Occlusion Samples", description = "", default = 1, min = 0, max = 100)
-    bpy.types.Material.sss_power = bpy.props.FloatProperty(name = "Power", description = "", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.sss_scale = bpy.props.FloatProperty(name = "Geometric Scale", description = "", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.sss_view_dep = bpy.props.FloatProperty(name = "View-dependent SSS", description = "", default = 1.0, min = 0.0, max = 10.0)
-    bpy.types.Material.shininess_u = bpy.props.FloatProperty(name = "Shininess U", description = "", default = 200.0, min = 0.0, max = 1000.0)
-    bpy.types.Material.shininess_v = bpy.props.FloatProperty(name = "Shininess V", description = "", default = 200.0, min = 0.0, max = 1000.0)
+        
+    bpy.types.Object.appleseed_render_layer = bpy.props.StringProperty(name = "Render Layer", description = "The object's contribution to the scene lighting will be constrained to this render layer", default = '')    
+    bpy.types.Scene.appleseed_layers = bpy.props.PointerProperty(type=AppleseedRenderLayerProps)
+    bpy.types.Material.appleseed = bpy.props.PointerProperty(type = AppleseedMatProps)
     
 def unregister():
     bpy.utils.unregister_module(__name__)

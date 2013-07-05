@@ -1,12 +1,12 @@
 bl_info = {
     "name": "Bullet Viewport Constraints Tool",
     "author": "bashi",
-    "version": (0, 3, 7, 4),
-    "blender": (2, 6, 6),
+    "version": (0, 3, 7, 3),
+    "blender": (2, 6, 5),
     "location": "View3D > Toolbar",
     "description": "Tools to generate/edit Constraints",
     "warning": "work in progress",
-    "wiki_url": "12",
+    "wiki_url": "",
     "tracker_url": "",
     "category": "Object"}
 
@@ -23,264 +23,251 @@ class Bullet_Tools(bpy.types.Panel):
         layout = self.layout
         scene = context.window_manager.bullet_tool
         object = context.object
-        
-        #UI       
-        row = layout.row()
-        row.operator("bullet.x_connect", icon="MOD_SKIN")
-        row.operator("bullet.make_constraints", icon="MOD_BUILD")
-                    
-        row=layout.row()
-        row.prop(scene, "bullet_tool_neighbours")
-        row.prop(scene, "bullet_tool_search_radius")
-                    
-        row = layout.row()
-        row.operator("bullet.from_to_constraint", icon="MOD_BUILD")
-        row.operator("bullet.update", icon="FILE_REFRESH")
-        
-        row = layout.row()
-        row.prop(scene, "bullet_tool_gpencil_mode")
-        row.prop(scene, "bullet_tool_gpencil_dis")
-        row.operator("bullet.gpencil", icon='GREASEPENCIL')
-        
-        #Show Object Settings
-        row = layout.row()
-        row.prop(scene, "bullet_tool_show_fric")
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_fric == True:
-            row.active = True
-        row.prop(scene, "bullet_tool_friction")
-        row.prop(scene, "bullet_tool_use_margin")
-        
-        row = layout.row()
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_fric == True:
-            row.active = True
-        row.prop(scene, "bullet_tool_bounciness")
-        row.prop(scene, "bullet_tool_collmargin")
-        
-        row = layout.row() 
-        row.prop(scene, "bullet_tool_show_deac")
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_deac == True:
-            row.active = True
-        row.prop(scene, "bullet_tool_enable_deactivation")
-        row.prop(scene, "bullet_tool_start_deactivated")
-        row = layout.row()
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_deac == True:
-            row.active = True
-        row.prop(scene, "bullet_tool_lin_velocity")
-        row.prop(scene, "bullet_tool_ang_velocity")
-        
-        #Show Constraint Settings
-        row = layout.row()
-        row.prop(scene, "bullet_tool_show_con")
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_con == True:
-            row.active = True    
-        row.prop(scene, "bullet_tool_Constraint_type")
-        #Show Break Options
-        row = layout.row()
-        row.prop(scene, "bullet_tool_show_break")
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_break == True:
-            row.active = True 
-        row.prop(scene, "bullet_tool_breakable")            
-        row.prop(scene, "bullet_tool_break_threshold")                
-        if scene.bullet_tool_multiplier == False:
-           row.prop(scene, "bullet_tool_absolut_mass")
-        if scene.bullet_tool_absolut_mass == False:
-           row.prop(scene, "bullet_tool_multiplier")
-        #Show Iterations Options
-        row = layout.row()
-        row.prop(scene, "bullet_tool_show_it")
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_it == True:
-            row.active = True            
-        row.prop(scene, "bullet_tool_over_iteration") 
-        row.prop(scene, "bullet_tool_iteration")           
-        #For Constraint Types           
-        
-        #Show Iterations Options
-        row = layout.row()
-        row.prop(scene, "bullet_tool_show_lim")
-        ac = False
-        row.active = False
-        if context.window_manager.bullet_tool.bullet_tool_show_lim == True:
-            ac = True
-            row.active = True 
-        
-        if context.window_manager.bullet_tool.bullet_tool_Constraint_type == 'HINGE':
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
-            col.label("Limits:")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_ang_z", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
-            sub.prop(scene, "bullet_tool_limit_ang_z_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_ang_z_upper", text="Upper")
-        
-        elif context.window_manager.bullet_tool.bullet_tool_Constraint_type == 'SLIDER':
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
-            col.label("Limits:")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_lin_x",text = 'X Axis', toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
-            sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
-
-        elif context.window_manager.bullet_tool.bullet_tool_Constraint_type  == 'PISTON':
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
-            col.label("Limits:")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_lin_x", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_x
-            sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
-
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
-                
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_ang_x", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_x
-            sub.prop(scene, "bullet_tool_limit_ang_x_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_ang_x_upper", text="Upper")
-
-        elif context.window_manager.bullet_tool.bullet_tool_Constraint_type  in {'GENERIC', 'GENERIC_SPRING'}:
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
-            col.label("Limits:")
-
-            row = col.row()
+          
+        if object.type == 'MESH' or 'EMPTY':
             
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_lin_x", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_x
-            sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_lin_y", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_y
-            sub.prop(scene, "bullet_tool_limit_lin_y_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_lin_y_upper", text="Upper")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_lin_z", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_z
-            sub.prop(scene, "bullet_tool_limit_lin_z_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_lin_z_upper", text="Upper")
-
-            col = layout.column(align=True)
-            col.active = False
-            if ac == True:
-                col.active = True
+            row = layout.row()
+            row.operator("bullet.make_constraints", icon="MOD_BUILD")
+            row.operator("bullet.x_connect", icon="MOD_SKIN")
             
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_ang_x", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_x
-            sub.prop(scene, "bullet_tool_limit_ang_x_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_ang_x_upper", text="Upper")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_ang_y", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_y
-            sub.prop(scene, "bullet_tool_limit_ang_y_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_ang_y_upper", text="Upper")
-
-            row = col.row()
-            sub = row.row()
-            sub.scale_x = 0.5
-            sub.prop(scene, "bullet_tool_use_limit_ang_z", toggle=True)
-            sub = row.row()
-            sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
-            sub.prop(scene, "bullet_tool_limit_ang_z_lower", text="Lower")
-            sub.prop(scene, "bullet_tool_limit_ang_z_upper", text="Upper")
+            row=layout.row()
+            row.prop(scene, "bullet_tool_neighbours")
+            row.prop(scene, "bullet_tool_search_radius")
+                        
+            row = layout.row()
+            row.operator("bullet.from_to_constraint", icon="MOD_BUILD")
+            row.operator("bullet.update", icon="FILE_REFRESH")
             
-            if context.window_manager.bullet_tool.bullet_tool_Constraint_type  == 'GENERIC_SPRING':                  
+            row = layout.row()
+            row.prop(scene, "bullet_tool_gpencil_mode")
+            row.prop(scene, "bullet_tool_gpencil_dis")
+            row.operator("bullet.gpencil", icon='GREASEPENCIL')
+            
+            #Show Object Settings
+            row = layout.row()
+            row.prop(scene, "bullet_tool_show_obj")
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_obj == True:
+                row.active = True
+            row.prop(scene, "bullet_tool_friction")
+            row.prop(scene, "bullet_tool_use_margin")
+            
+            row = layout.row()
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_obj == True:
+                row.active = True
+            row.prop(scene, "bullet_tool_bounciness")
+            row.prop(scene, "bullet_tool_collmargin")
+            
+            #Show Constraint Settings
+            row = layout.row()
+            row.prop(scene, "bullet_tool_show_con")
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_con == True:
+                row.active = True    
+            row.prop(scene, "bullet_tool_Constraint_type")
+            #Show Break Options
+            row = layout.row()
+            row.prop(scene, "bullet_tool_show_break")
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_break == True:
+                row.active = True 
+            row.prop(scene, "bullet_tool_breakable")            
+            row.prop(scene, "bullet_tool_break_threshold")                
+            if scene.bullet_tool_multiplier == False:
+               row.prop(scene, "bullet_tool_absolut_mass")
+            if scene.bullet_tool_absolut_mass == False:
+               row.prop(scene, "bullet_tool_multiplier")
+            #Show Iterations Options
+            row = layout.row()
+            row.prop(scene, "bullet_tool_show_it")
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_it == True:
+                row.active = True            
+            row.prop(scene, "bullet_tool_over_iteration") 
+            row.prop(scene, "bullet_tool_iteration")           
+            #For Constraint Types           
+            
+            #Show Iterations Options
+            row = layout.row()
+            row.prop(scene, "bullet_tool_show_lim")
+            ac = False
+            row.active = False
+            if context.window_manager.bullet_tool.bullet_tool_show_lim == True:
+                ac = True
+                row.active = True 
+            
+            if context.window_manager.bullet_tool.bullet_tool_Constraint_type == 'HINGE':
                 col = layout.column(align=True)
                 col.active = False
                 if ac == True:
                     col.active = True
-                col.label("Springs:")
-                
+                col.label("Limits:")
+
                 row = col.row()
                 sub = row.row()
-                sub.scale_x = 0.1
-                sub.prop(scene, "bullet_tool_use_spring_x", toggle=True, text="X")
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_ang_z", toggle=True)
                 sub = row.row()
-                sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_x
-                sub.prop(scene, "bullet_tool_spring_stiffness_x")
-                sub.prop(scene, "bullet_tool_spring_damping_x")
-                
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
+                sub.prop(scene, "bullet_tool_limit_ang_z_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_ang_z_upper", text="Upper")
+            
+            elif context.window_manager.bullet_tool.bullet_tool_Constraint_type == 'SLIDER':
+                col = layout.column(align=True)
+                col.active = False
+                if ac == True:
+                    col.active = True
+                col.label("Limits:")
+
                 row = col.row()
                 sub = row.row()
-                sub.scale_x = 0.1
-                sub.prop(scene, "bullet_tool_use_spring_y", toggle=True, text="Y")
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_lin_x",text = 'X Axis', toggle=True)
                 sub = row.row()
-                sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_y
-                sub.prop(scene, "bullet_tool_spring_stiffness_y")
-                sub.prop(scene, "bullet_tool_spring_damping_y")
-                
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
+                sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
+
+            elif context.window_manager.bullet_tool.bullet_tool_Constraint_type  == 'PISTON':
+                col = layout.column(align=True)
+                col.active = False
+                if ac == True:
+                    col.active = True
+                col.label("Limits:")
+
                 row = col.row()
                 sub = row.row()
-                sub.scale_x = 0.1
-                sub.prop(scene, "bullet_tool_use_spring_z", toggle=True, text="Z")
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_lin_x", toggle=True)
                 sub = row.row()
-                sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_z
-                sub.prop(scene, "bullet_tool_spring_stiffness_z")
-                sub.prop(scene, "bullet_tool_spring_damping_z")
-        
-        
-        
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_x
+                sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
+
+                col = layout.column(align=True)
+                col.active = False
+                if ac == True:
+                    col.active = True
                     
-        layout.operator("bullet.ground_connect", icon = 'UV_VERTEXSEL')
-        
-        row = layout.row()
-        
-        row.operator("bullet.remove_constraints", icon="X")
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_ang_x", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_x
+                sub.prop(scene, "bullet_tool_limit_ang_x_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_ang_x_upper", text="Upper")
+
+            elif context.window_manager.bullet_tool.bullet_tool_Constraint_type  in {'GENERIC', 'GENERIC_SPRING'}:
+                col = layout.column(align=True)
+                col.active = False
+                if ac == True:
+                    col.active = True
+                col.label("Limits:")
+
+                row = col.row()
+                
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_lin_x", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_x
+                sub.prop(scene, "bullet_tool_limit_lin_x_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_lin_x_upper", text="Upper")
+
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_lin_y", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_y
+                sub.prop(scene, "bullet_tool_limit_lin_y_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_lin_y_upper", text="Upper")
+
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_lin_z", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_lin_z
+                sub.prop(scene, "bullet_tool_limit_lin_z_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_lin_z_upper", text="Upper")
+
+                col = layout.column(align=True)
+                col.active = False
+                if ac == True:
+                    col.active = True
+                
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_ang_x", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_x
+                sub.prop(scene, "bullet_tool_limit_ang_x_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_ang_x_upper", text="Upper")
+
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_ang_y", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_y
+                sub.prop(scene, "bullet_tool_limit_ang_y_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_ang_y_upper", text="Upper")
+
+                row = col.row()
+                sub = row.row()
+                sub.scale_x = 0.5
+                sub.prop(scene, "bullet_tool_use_limit_ang_z", toggle=True)
+                sub = row.row()
+                sub.active = context.window_manager.bullet_tool.bullet_tool_use_limit_ang_z
+                sub.prop(scene, "bullet_tool_limit_ang_z_lower", text="Lower")
+                sub.prop(scene, "bullet_tool_limit_ang_z_upper", text="Upper")
+                
+                if context.window_manager.bullet_tool.bullet_tool_Constraint_type  == 'GENERIC_SPRING':                  
+                    col = layout.column(align=True)
+                    col.active = False
+                    if ac == True:
+                        col.active = True
+                    col.label("Springs:")
+                    
+                    row = col.row()
+                    sub = row.row()
+                    sub.scale_x = 0.1
+                    sub.prop(scene, "bullet_tool_use_spring_x", toggle=True, text="X")
+                    sub = row.row()
+                    sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_x
+                    sub.prop(scene, "bullet_tool_spring_stiffness_x")
+                    sub.prop(scene, "bullet_tool_spring_damping_x")
+                    
+                    row = col.row()
+                    sub = row.row()
+                    sub.scale_x = 0.1
+                    sub.prop(scene, "bullet_tool_use_spring_y", toggle=True, text="Y")
+                    sub = row.row()
+                    sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_y
+                    sub.prop(scene, "bullet_tool_spring_stiffness_y")
+                    sub.prop(scene, "bullet_tool_spring_damping_y")
+                    
+                    row = col.row()
+                    sub = row.row()
+                    sub.scale_x = 0.1
+                    sub.prop(scene, "bullet_tool_use_spring_z", toggle=True, text="Z")
+                    sub = row.row()
+                    sub.active = context.window_manager.bullet_tool.bullet_tool_use_spring_z
+                    sub.prop(scene, "bullet_tool_spring_stiffness_z")
+                    sub.prop(scene, "bullet_tool_spring_damping_z")
+            
+            
+            
+                        
+            layout.operator("bullet.ground_connect", icon = 'UV_VERTEXSEL')
+            
+            row = layout.row()
+            
+            row.operator("bullet.remove_constraints", icon="X")
             
         
         
@@ -755,18 +742,13 @@ def update(objs):
         obj.rigid_body.use_deactivation = False
         orb = obj.rigid_body    
                 
-        if wm.bullet_tool.bullet_tool_show_fric == True:
+        if wm.bullet_tool.bullet_tool_show_obj == True:
             orb.use_margin = wm.bullet_tool.bullet_tool_use_margin
             orb.collision_margin = wm.bullet_tool.bullet_tool_collmargin
             orb.restitution = wm.bullet_tool.bullet_tool_bounciness
             orb.friction = wm.bullet_tool.bullet_tool_friction
     
-        if wm.bullet_tool.bullet_tool_show_deac == True:
-            orb.use_deactivation = wm.bullet_tool.bullet_tool_enable_deactivation
-            orb.start_deactivated = wm.bullet_tool.bullet_tool_start_deactivated
-            orb.deactivate_linear_velocity = wm.bullet_tool.bullet_tool_lin_velocity
-            orb.deactivate_angular_velocity = wm.bullet_tool.bullet_tool_ang_velocity
-            
+    
     def up_rigid_constraint():
         orbc = obj.rigid_body_constraint
         if wm.bullet_tool.bullet_tool_show_break == True:
@@ -1080,8 +1062,7 @@ class BulletToolProps(bpy.types.PropertyGroup):
     float = bpy.props.FloatProperty
     int = bpy.props.IntProperty
     
-    bullet_tool_show_fric = bool(name="", default=False, description='Enable Friction/Bounciness/Margin Settings Update')
-    bullet_tool_show_deac = bool(name="", default=False, description='Enable Deactivation Settings Update')
+    bullet_tool_show_obj = bool(name="", default=False, description='Enable Object Settings Update')
     bullet_tool_show_con = bool(name="", default=False, description='Enable Type Settings Update')
     bullet_tool_show_break = bool(name="", default=False, description='Enable Break Threshold Update')
     bullet_tool_show_it = bool(name="", default=False, description='Enable Override Iterations Update')
@@ -1092,24 +1073,18 @@ class BulletToolProps(bpy.types.PropertyGroup):
     bullet_tool_bounciness = float(name = "Bounciness",default = 0.0, min=0.0, max=10000,  description="Bounciness")
     bullet_tool_friction = float(name = "Friction",default = 0.5, min=0.0, max=100,  description="Friction")
     bullet_tool_iteration = int(name = "Iterations",default = 60, min=1, max=1000)
-    
-    bullet_tool_enable_deactivation = bool(name="Enable Deactivation", default=False, description='Enable Deactivation')
-    bullet_tool_start_deactivated = bool(name="Start Deactivated", default=False, description='Start Deactivated')
-    bullet_tool_lin_velocity = float(name="Linear Velocity", default=0.4, description='')    
-    bullet_tool_ang_velocity = float(name="Angular Velocity", default=0.5, description='')  
-    
     bullet_tool_over_iteration = bool(name = "Override Iterations", default = False, description='Override Iterations')
     bullet_tool_breakable = bool(name = "Breakable", default = False, description='Enable breakable Constraints')
     bullet_tool_break_threshold = float(name = "Break Threshold",default = 10, min=0.0, max=10000, description="Break Threshold. Strength of Object. Break Threshold = Mass * Threshold")
     bullet_tool_absolut_mass = bool(name="Absolut", default=False, description='Break Threshold = Break Threshold')
     bullet_tool_multiplier = bool(name="Multiply", default=False, description='Break Threshold = Break Threshold * Multiplier')
-    bullet_tool_search_radius = float(name = "Search Radius",default = 1.0, min=0.0, max=100,  description="Neighbour Search radius. Set as low as possible, but high enough, depending on Objects distances.")
+    bullet_tool_search_radius = float(name = "Search Radius",default = 3.0, min=0.0, max=10000,  description="Near Search radius")
     
-    bullet_tool_neighbours = int(name = "Neighbour Limit",default = 3, min=1, max=10, description="Number of Neighbour to Check. More = Slower but more Stable")
+    bullet_tool_neighbours = int(name = "Neighbour Limit",default = 3, min=1, max=60, description="Number of Neighbour to Check. More = Slower")
     
     #for GPencil
-    bullet_tool_gpencil_mode = bool(name="GPencil Mode", default=False, description='Disabled =  Edit selected Constraints, Enabled = Edit and Generate Constraints')
-    bullet_tool_gpencil_dis = float(name = "GPencil Distance",default = 1.0, min=0.0, max=100,  description="Distance for GPencil to take effect on selected Constraints.")
+    bullet_tool_gpencil_mode = bool(name="GPencil Mode", default=False, description='Disabled =  Edit constraints, Enabled = Edit and Generate Constraints')
+    bullet_tool_gpencil_dis = float(name = "GPencil Distance",default = 1.0, min=0.0, max=100,  description="Distance for GPencil")
     
     #props for Constraints
     bullet_tool_use_limit_ang_x = bool(name="X Angle", default=False)

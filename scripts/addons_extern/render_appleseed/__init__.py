@@ -4,7 +4,7 @@
 #
 # This software is released under the MIT license.
 #
-# Copyright (c) 2012 Esteban Tovagliari.
+# Copyright (c) 2013 Franz Beaune, Joel Daniels, Esteban Tovagliari.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,11 @@
 
 bl_info = {
     "name": "Appleseed",
-    "author": "Joel Daniels",
+    "author": "Franz Beaune, Joel Daniels, Esteban Tovagliari",
     "version": (0, 2, 0),
     "blender": (2, 6, 7),
     "location": "Info Header (engine dropdown)",
-    "description": "Appleseed integration - this is an unofficial fork of Esteban Tovagliari's addon",
+    "description": "Appleseed integration",
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
@@ -44,11 +44,6 @@ from shutil import copyfile
 from datetime import datetime
 import os, subprocess, time
 from extensions_framework import util as efutil
-from bpy_extras.io_utils import ExportHelper, ImportHelper
-
-
-#A global list for keeping track of exported textures
-#textures_set = set()
 
 #Path separator for the current platform
 sep = os.path.sep
@@ -108,16 +103,6 @@ def sun_enumerator(self, context):
                 sun.append((object.name, object.name, ""))
     return sun
                 
-        
-def texture_list(self, context):
-    tex_list = [('0', '', '')]      #0 is a default, so there are no RNA warnings 
-    for tex in context.object.active_material.texture_slots:
-        if tex:
-            if tex.use:
-                if tex.texture.type == 'IMAGE' and tex.uv_layer != '' and tex.texture_coords == 'UV' and tex.texture.image.name != '':
-                    tex_list.append((tex.name, tex.name, ''))
-    return tex_list    
-
 def is_uv_img(tex):
     if tex and tex.type == 'IMAGE' and tex.image:
         return True
@@ -125,7 +110,6 @@ def is_uv_img(tex):
         return False
 
             
-
 def update_start(engine, data, scene):
     if engine.is_preview:
         update_preview( engine, data, scene)
@@ -153,8 +137,8 @@ def update_scene( engine, data, scene):
         proj_name = None
     else:
         proj_name = (scene.appleseed.project_path).split(sep)[-1]
-    
-    
+
+
 #Scene render function
 #------------------------------    
 def render_scene(engine, scene):
@@ -994,7 +978,7 @@ class AppleseedExportOperator(bpy.types.Operator):
                 self.__emit_lambertian_brdf(material, default_bsdf_name, scene, layer)
                 bsdfs.append([default_bsdf_name, 1.0])
                   
-            return self.__emit_bsdf_blend(bsdfs)
+        return self.__emit_bsdf_blend(bsdfs)
     
     #------------------------------------------------------------------------
     
@@ -1052,8 +1036,8 @@ class AppleseedExportOperator(bpy.types.Operator):
         reflectance_name = ""
         diffuse_list = []
                     
-        if layer.lambertian_use_tex:
-            if layer.lambertian_diffuse_tex != '':
+        if layer.lambertian_use_tex and layer.lambertian_diffuse_tex != '':
+            if is_uv_img(bpy.data.textures[layer.lambertian_diffuse_tex]):
                 reflectance_name = layer.lambertian_diffuse_tex + "_inst"
                 if reflectance_name not in self.textures_set:
                     self.__emit_texture(bpy.data.textures[layer.lambertian_diffuse_tex], False, scene)
@@ -1075,8 +1059,8 @@ class AppleseedExportOperator(bpy.types.Operator):
         
         transmittance_name = ""
         
-        if layer.transmission_use_tex:
-            if layer.transmission_tex != "":
+        if layer.transmission_use_tex and layer.transmission_tex != "":
+            if is_uv_img(bpy.data.textures[layer.transmission_tex]):    
                 transmittance_name = layer.transmission_tex + "_inst"
                 if transmittance_name not in self.textures_set:
                     self.textures_set.add(transmittance_name)
@@ -1090,7 +1074,7 @@ class AppleseedExportOperator(bpy.types.Operator):
                                                     
         self.__open_element('bsdf name="{0}" model="diffuse_btdf"'.format(bsdf_name))
         self.__emit_parameter("transmittance", transmittance_name)
-        self.__emit_parameter("transmission_multiplier", layer.transmission_multiplier)
+        self.__emit_parameter("transmittance_multiplier", layer.transmission_multiplier)
         self.__close_element("bsdf")
         
     #----------------------------------------------------------
@@ -1100,15 +1084,15 @@ class AppleseedExportOperator(bpy.types.Operator):
         diffuse_reflectance_name = ""
         glossy_reflectance_name = ""
         
-        if layer.ashikhmin_use_diff_tex:
-            if layer.ashikhmin_diffuse_tex != "":
+        if layer.ashikhmin_use_diff_tex and layer.ashikhmin_diffuse_tex != "":
+            if is_uv_img(bpy.data.textures[layer.ashikhmin_diffuse_tex]):    
                 diffuse_reflectance_name = layer.ashikhmin_diffuse_tex + "_inst"
                 if diffuse_reflectance_name not in self.textures_set:
                     self.textures_set.add(diffuse_reflectance_name)
                     self.__emit_texture(bpy.data.textures[layer.ashikhmin_diffuse_tex], False, scene)
                 
-        if layer.ashikhmin_use_gloss_tex:
-            if layer.ashikhmin_gloss_tex != "":
+        if layer.ashikhmin_use_gloss_tex and layer.ashikhmin_gloss_tex != "":
+            if is_uv_img(bpy.data.textures[layer.ashikhmin_gloss_tex]):    
                 glossy_reflectance_name = layer.ashikhmin_gloss_tex + "_inst"
                 if glossy_reflectance_name not in self.textures_set:
                     self.__emit_texture(bpy.data.textures[layer.ashikhmin_gloss_tex], False, scene)
@@ -1139,8 +1123,8 @@ class AppleseedExportOperator(bpy.types.Operator):
         asr_mat = material.appleseed
         
         reflectance_name = ""
-        if layer.specular_use_gloss_tex:
-            if layer.specular_gloss_tex != "":
+        if layer.specular_use_gloss_tex and layer.specular_gloss_tex != "":
+            if is_uv_img(bpy.data.textures[layer.specular_gloss_tex]):    
                 reflectance_name = layer.specular_gloss_tex + "_inst"
                 if reflectance_name not in self.textures_set:
                     self.textures_set.add(reflectance_name)
@@ -1163,8 +1147,8 @@ class AppleseedExportOperator(bpy.types.Operator):
         reflectance_name = ""
         transmittance_name = ""
         
-        if layer.spec_btdf_use_tex:
-            if layer.spec_btdf_tex != "":
+        if layer.spec_btdf_use_tex and layer.spec_btdf_tex != "":
+            if is_uv_img(bpy.data.textures[layer.spec_btdf_tex]):    
                 reflectance_name = layer.spec_btdf_tex + "_inst"
                 if reflectance_name not in self.textures_set:
                     self.textures_set.add(reflectance_name)
@@ -1173,8 +1157,8 @@ class AppleseedExportOperator(bpy.types.Operator):
             reflectance_name = "{0}_transp_reflectance".format(bsdf_name)
             self.__emit_solid_linear_rgb_color_element(reflectance_name, layer.spec_btdf_reflectance, layer.spec_btdf_ref_mult)
         
-        if layer.spec_btdf_use_trans_tex:
-            if layer.spec_btdf_trans_tex != "":
+        if layer.spec_btdf_use_trans_tex and layer.spec_btdf_trans_tex != "":
+            if is_uv_img(bpy.data.textures[layer.spec_btdf_trans_tex]):    
                 transmittance_name = layer.spec_btdf_trans_tex + "_inst"
                 if transmittance_name not in self.textures_set:
                     self.textures_set.add(transmittance_name)
@@ -1205,8 +1189,8 @@ class AppleseedExportOperator(bpy.types.Operator):
         reflectance_name = ""
         mdf_refl = ""
         
-        if layer.microfacet_use_diff_tex:
-            if layer.microfacet_diff_tex != "":
+        if layer.microfacet_use_diff_tex and layer.microfacet_diff_tex != "":
+            if is_uv_img(bpy.data.textures[layer.microfacet_diff_tex]):
                 reflectance_name = layer.microfacet_diff_tex + "_inst"
                 if reflectance_name not in self.textures_set:
                     self.__emit_texture(bpy.data.textures[layer.microfacet_diff_tex], False, scene)
@@ -1217,8 +1201,8 @@ class AppleseedExportOperator(bpy.types.Operator):
             self.__emit_solid_linear_rgb_color_element(reflectance_name,
                                                    layer.microfacet_reflectance,
                                                    layer.microfacet_multiplier)
-        if layer.microfacet_use_spec_tex:
-            if layer.microfacet_spec_tex != "":
+        if layer.microfacet_use_spec_tex and layer.microfacet_spec_tex != "":
+            if is_uv_img(bpy.data.textures[layer.microfacet_spec_tex]):    
                 mdf_refl = layer.microfacet_spec_tex + "_inst"
                 if mdf_refl not in self.textures_set:
                     self.__emit_texture(bpy.data.textures[layer.microfacet_spec_tex], False, scene)
@@ -1255,8 +1239,8 @@ class AppleseedExportOperator(bpy.types.Operator):
             self.__emit_solid_linear_rgb_color_element(reflectance_name,
                                                    layer.kelemen_matte_reflectance,
                                                    layer.kelemen_matte_multiplier)
-        if layer.kelemen_use_spec_tex:
-            if layer.kelemen_spec_tex != "":
+        if layer.kelemen_use_spec_tex and layer.kelemen_spec_tex != "":
+            if is_uv_img(bpy.data.textures[layer.kelemen_spec_tex]):    
                 spec_refl_name = layer.kelemen_spec_tex + "_inst"
                 if spec_refl_name not in self.textures_set:
                     self.textures_set.add(spec_refl_name)
@@ -1403,14 +1387,9 @@ class AppleseedExportOperator(bpy.types.Operator):
         albedo_list = []
         
         #Get color texture, if any exist and we're using an albedo texture
-        if asr_mat.sss_albedo_use_tex:
-            for tex in material.texture_slots:
-                if is_uv_img(tex):
-                    if tex.use_map_color_diffuse:
-                        albedo_list.append(tex.texture.name)
-        
-            if albedo_list != []:
-                albedo_name = albedo_list[0] + "_inst"
+        if asr_mat.sss_albedo_use_tex and not asr_mat.sss_albedo_tex != "":
+            if is_uv_img(bpy.data.textures[asr_mat.sss_albedo_tex]):
+                albedo_name = asr_mat.sss_albedo_tex + "_inst"
                 if albedo_name not in self.textures_set:   
                     self.__emit_texture(bpy.data.textures[albedo_list[0]], scene)
                     self.textures_set.add(albedo_name)
@@ -1455,17 +1434,22 @@ class AppleseedExportOperator(bpy.types.Operator):
             self.__emit_sun_light(scene, object)
         elif light_type == 'SUN' and not scene.appleseed_sky.use_sunsky:
             self.__warning("Sun lamp '{0}' exists in the scene, but sun/sky is not enabled".format(object.name))
+            self.__emit_sun_light(scene, object)
         else:
             self.__warning("While exporting light '{0}': unsupported light type '{1}', skipping this light.".format(object.name, light_type))
 
     def __emit_sun_light(self, scene, lamp):
+        sunsky = scene.appleseed_sky
+        use_sunsky = sunsky.use_sunsky
         environment_edf = "environment_edf"
+        
         self.__open_element('light name="{0}" model="sun_light"'.format(lamp.name))
         if bool(lamp.appleseed_render_layer):
             render_layer = lamp.appleseed_render_layer
             self.__emit_parameter("render_layer", render_layer)
-        self.__emit_parameter("environment_edf", environment_edf)
-        self.__emit_parameter("radiance_multiplier", scene.appleseed_sky.radiance_multiplier)
+        if use_sunsky:    
+            self.__emit_parameter("environment_edf", environment_edf)
+        self.__emit_parameter("radiance_multiplier", sunsky.radiance_multiplier if use_sunsky else 0.04)
         self.__emit_parameter("turbidity", 4.0)
         self.__emit_transform_element(self.global_matrix * lamp.matrix_world)
         self.__close_element("light")
@@ -1961,7 +1945,6 @@ import bl_ui.properties_data_lamp as properties_data_lamp
 properties_data_lamp.DATA_PT_context_lamp.COMPAT_ENGINES.add( 'APPLESEED')
 properties_data_lamp.DATA_PT_spot.COMPAT_ENGINES.add( 'APPLESEED')
 properties_data_lamp.DATA_PT_lamp.COMPAT_ENGINES.add('APPLESEED')
-properties_data_lamp.DATA_PT_sunsky.COMPAT_ENGINES.add('APPLESEED')
 del properties_data_lamp
 
 
@@ -2166,8 +2149,21 @@ class AppleseedMatLayerProps(bpy.types.PropertyGroup):
     
 
 
-#--------------------------------------------
+#--------------------------------------------------
 
+class AppleseedWorldProps(bpy.types.PropertyGroup):    
+    env_type = bpy.props.EnumProperty(items = [
+                    ("gradient", "Gradient", "Use sky color gradient"),
+                    ("constant", "Constant", "Use constant color for sky"),
+                    ("constant_hemisphere", "Per-Hemisphere Constant", "Use constant color per hemisphere"),
+                    ("latlong_map", "Latitude-Longitude Map", "Use latlong map texture"), 
+                    ("mirrorball_map", "Mirror Ball Map", "Use mirror ball texture")], 
+                    name = "Environment Type", description = "Select environment type", default = "gradient")
+                    
+    env_tex = bpy.props.StringProperty(name = "Environment Texture", description = "Texture to influence environment", default = "")
+    
+#------------------------------------------------    
+    
 class AppleseedMatProps(bpy.types.PropertyGroup):
     
     #Per layer properties are stored in AppleseedMatLayerProps
@@ -2857,9 +2853,8 @@ def register():
     bpy.types.Object.appleseed_render_layer = bpy.props.StringProperty(name = "Render Layer", description = "The object's contribution to the scene lighting will be constrained to this render layer", default = '')    
     bpy.types.Scene.appleseed_layers = bpy.props.PointerProperty(type=AppleseedRenderLayerProps)
     bpy.types.Material.appleseed = bpy.props.PointerProperty(type = AppleseedMatProps)
+    bpy.types.World.appleseed = bpy.props.PointerProperty(type = AppleseedWorldProps)
     
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-if __name__ == "__main__":
-    register()

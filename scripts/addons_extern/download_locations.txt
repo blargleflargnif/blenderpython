@@ -13,7 +13,7 @@ meshlint -- by rking
 	https://raw.github.com/ryanjosephking/meshlint/master/meshlint.py
 	http://blenderartists.org/forum/showthread.php?252575
 	
-mineblend (io_import_minecraft) -- by acro
+mineblend (io_import_minecraft) -- by acro *ARCHIVED*
 	https://sites.google.com/site/mineblend/
 	http://blenderartists.org/forum/showthread.php?237105#post2156456
 

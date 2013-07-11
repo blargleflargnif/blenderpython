@@ -1,6 +1,3 @@
-
-<!-- saved from url=(0049)https://raw.github.com/gist/4364512/ies2cycles.py -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css"></style></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;"># ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -18,14 +15,14 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# &lt;pep8 compliant&gt;
+# <pep8 compliant>
 
 bl_info = {
     "name": "IES to Cycles",
     "author": "Lockal S.",
     "version": (0, 8),
     "blender": (2, 6, 6),
-    "location": "File &gt; Import &gt; IES Lamp Data (.ies)",
+    "location": "File > Import > IES Lamp Data (.ies)",
     "description": "Import IES lamp data to cycles",
     "warning": "",
     "wiki_url": "",
@@ -42,9 +39,9 @@ from math import pi
 from operator import add, truediv
       
 def clamp(x, min, max):
-    if x &lt; min:
+    if x < min:
         return min
-    elif x &gt; max:
+    elif x > max:
         return max
     return x
 
@@ -52,7 +49,7 @@ def clamp(x, min, max):
 # OSL version:
 # http://blenderartists.org/forum/showthread.php?270332&amp;p=2268693#post2268693
 def t2rgb(t):
-    if t &lt;= 6500:
+    if t <= 6500:
         a = [0, -2902.1955373783176, -8257.7997278925690]
         b = [0, 1669.5803561666639, 2575.2827530017594]
         c = [1, 1.3302673723350029, 1.8993753891711275]
@@ -70,7 +67,7 @@ def simple_interp(k, x, y):
     for i in range(len(x)):
         if k == x[i]:
             return y[i]
-        elif k &lt; x[i]:
+        elif k < x[i]:
             return y[i] + (k - x[i]) * (y[i - 1] - y[i]) / (x[i - 1] - x[i])
 
 
@@ -290,8 +287,8 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     v_d = [v_angs[i] - v_angs[i - 1] for i in range(1, len(v_angs))]
     h_d = [h_angs[i] - h_angs[i - 1] for i in range(1, len(h_angs))]
 
-    v_same = all(abs(v_d[i] - v_d[i - 1]) &lt; 0.001 for i in range(1, len(v_d)))
-    h_same = all(abs(h_d[i] - h_d[i - 1]) &lt; 0.001 for i in range(1, len(h_d)))
+    v_same = all(abs(v_d[i] - v_d[i - 1]) < 0.001 for i in range(1, len(v_d)))
+    h_same = all(abs(h_d[i] - h_d[i - 1]) < 0.001 for i in range(1, len(h_d)))
 
     if not v_same:
         vmin, vmax = v_angs[0], v_angs[-1]
@@ -321,7 +318,7 @@ def read_lamp_data(log, filename, generate_rig, multiplier, image_format, color_
     # add extra left and right rows to bypass cycles repeat of uv coordinates
     candela_2d = [[line[0]] + list(line) + [line[-1]] for line in candela_2d]
     
-    if len(candela_2d) &gt; 1:
+    if len(candela_2d) > 1:
         candela_2d = [candela_2d[0]] + candela_2d + [candela_2d[-1]]
 
     # flatten 2d array to 1d
@@ -501,14 +498,14 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
         else:
             nt.links.new(ni.outputs[0], nt_combine.inputs[0])
         
-        if img.size[1] &gt; 1:
+        if img.size[1] > 1:
             add_h_angles(nt, n0.outputs[0], n0.outputs[1], nt_combine.inputs[1], lamp_h_type)
         
         nt_data = nt.nodes.new('ShaderNodeTexImage')
         nt_data.image = img
         nt_data.color_space = 'NONE'
         
-        if img.size[1] &gt; 1:
+        if img.size[1] > 1:
             add_uv_mapping_node(nt, nt_combine.outputs[0], nt_data.inputs[0], img.size)
         else:
             nt.links.new(nt_combine.outputs[0], nt_data.inputs[0])
@@ -581,14 +578,14 @@ def add_img(name, intensity, lamp_cone_type, lamp_h_type, image_format,
         
         rig_object.ies_settings.color = t2rgb(color_temperature)[0:3]
         
-        # add factor -&gt; intensity driver
+        # add factor -> intensity driver
         strength_fc = lnt.driver_add(lnt_grp.inputs[1].path_from_id("default_value"))
         strength_fc.driver.type = 'SUM'
         strength_var = strength_fc.driver.variables.new()
         strength_var.targets[0].id = rig_object
         strength_var.targets[0].data_path = '["ies_settings"]["strength_mult"]'
         
-        # add size -&gt; intensity driver
+        # add size -> intensity driver
         strength_fc = lnt.driver_add(lnt_grp.inputs[2].path_from_id("default_value"))
         strength_fc.driver.type = 'SUM'
         strength_var = strength_fc.driver.variables.new()

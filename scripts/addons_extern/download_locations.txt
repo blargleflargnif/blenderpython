@@ -251,3 +251,6 @@ Appleseed Render -- Joel Daniels
 	https://bitbucket.org/ohsnapitsjoel/render_appleseed
 	http://www.blenderartists.org/forum/showthread.php?297703-Addon-Appleseed-Render-Exporter
 	
+Marker Jumping -- Greg Zaal
+	https://www.dropbox.com/s/jvzlcnobfw6hebc/marker_jumping.py 
+	Dropbox is the only available link at this time. 

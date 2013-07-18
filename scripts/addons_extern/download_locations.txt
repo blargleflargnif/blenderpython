@@ -192,7 +192,7 @@ Quick prefs (space_view3d_quickPrefs.py) -- by Sean Olson (LiquidApe)
 Unicode helper (unicode_helper.py) -- by ramunas
 	http://blender.lt/?page_id=417
 	
-Stereoscopic camera rig (stereoscopic_camera_1_6_7.py) -- by Sebastian Schneider
+Stereoscopic camera rig (stereoscopic_camera_1_6_8.py) -- by Sebastian Schneider
 	http://www.noeol.de/s3d/
 	
 Face bones (rig_face_bone_tool.py) -- by khuuyj

@@ -1,6 +1,4 @@
-
-<!-- saved from url=(0040)http://allblue.pl/file_browser_search.py -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><style type="text/css"></style></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;"># file_brower_search.py Copyright (C) 2012, Jakub Zolcik
+# file_brower_search.py Copyright (C) 2012, Jakub Zolcik
 #
 # Relaxes selected vertices while retaining the shape as much as possible
 #
@@ -14,7 +12,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -33,7 +31,7 @@ bl_info = {
     "description": "Allows You to find files in File Browser by name.",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/User:Sftd/Extensions:2.6/Py/Scripts/Import-Export/File_Browser_Search",
-    "tracker_url": "http://projects.blender.org/tracker/?func=detail&amp;aid=30386&amp;group_id=153&amp;atid=467",
+    "tracker_url": "http://projects.blender.org/tracker/?func=detail&aid=30386&group_id=153&atid=467",
     "category": "Import-Export"}
 
 """
@@ -68,10 +66,20 @@ def fileSearch(self, context):
         return None
     
     pattern = ""
-    if(len(filter) &lt; 3):
-        pattern = (filter.lower() + r".*\..*")
+    
+    special = ('\\', '.', '^', '$', '*', '+', '?', '{', '}', '[', ']', '|', '(', ')')
+        
+    for c in special:
+        filter = filter.replace(c, '\\'+c)
+    
+    if ('*' in filter):
+        filter = filter.replace('\*', '.*')
+        pattern = ('^' + filter.lower() + '$')
     else:
-        pattern = (r".*" + filter.lower() + r".*\..*")
+        if(len(filter) < 3):
+            pattern = ('^' + filter.lower() + r".*\..*" + '$')
+        else:
+            pattern = ('^' + r".*" + filter.lower() + r".*\..*" + '$')
     prog = re.compile(pattern)    
 
 
@@ -85,7 +93,7 @@ def fileSearch(self, context):
     if context.window_manager.file_searchtree:
         for path, dirs, files in os.walk(directory):
             cd += 1
-            if cd &gt; maxd:
+            if cd > maxd:
                 break
             for filename in files:
                 filename = (os.path.join(path, filename))[dlen:]
@@ -96,13 +104,13 @@ def fileSearch(self, context):
                     p.name = filename
                     if context.blend_data.scenes[0].file_hideextensions:
                         ind = filename.rfind(".")
-                        if ind &gt; -1:
+                        if ind > -1:
                             filename = filename[0:ind]
                     p.dname = filename
                     cf+=1
-                if(cf&gt;=maxf):
+                if(cf>=maxf):
                     break
-            if(cf&gt;=maxf):
+            if(cf>=maxf):
                 break;
             
     else:
@@ -113,7 +121,7 @@ def fileSearch(self, context):
                 p.name = filename
                 if context.blend_data.scenes[0].file_hideextensions:
                     ind = filename.rfind(".")
-                    if ind &gt; -1:
+                    if ind > -1:
                         filename = filename[0:ind]
                 p.dname = filename
     
@@ -211,7 +219,7 @@ def notFileSearch(self, context):
     data = blendDataFromFile(file, part)
     
     pattern = ""
-    if(len(filter) &lt; 3):
+    if(len(filter) < 3):
         pattern = (filter.lower() + r".*")
     else:
         pattern = (r".*" + filter.lower() + r".*")
@@ -292,14 +300,14 @@ class FilteredSearchPanel(bpy.types.Panel):
             op.fname = f.name
             op.fexec = context.blend_data.scenes[0].file_autoexecute
             it+=1
-            if tr &lt; r:
+            if tr < r:
                 if it % (incolumn + 1) == 0:
                     tr+=1
-                    if(it&lt;length):
+                    if(it<length):
                         col = row.column()
             else:
                 if (it - tr) % incolumn == 0:
-                    if(it&lt;length):
+                    if(it<length):
                         col = row.column()
 
         layout.prop(context.blend_data.scenes[0], "file_autoexecute")
@@ -337,4 +345,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-</pre></body></html>

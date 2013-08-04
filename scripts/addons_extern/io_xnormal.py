@@ -19,7 +19,7 @@
 bl_info = {
     "name": "xNormal applink",
     "author": "Joel Daniels",
-    "version": (0, 6),
+    "version": (0, 7),
     "blender": (2, 67, 1),
     "location": "Properties > Scene",
     "description": "Export to and from xNormal 3.18.1",
@@ -32,10 +32,13 @@ bl_info = {
 import bpy
 from bpy.props import *
 from subprocess import Popen
-import os, sys
+import os
 from extensions_framework import util as efutil
     
+def realpath(path):
+    return os.path.realpath(efutil.filesystem_path(path))
 
+sep = os.path.sep
 #-------------------------------------------------------------------------------------
 
 class PROPERTIES_OT_Export(bpy.types.Operator):
@@ -47,36 +50,36 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         obj = bpy.context.object
-        realpath = os.path.realpath
                         
         #Find the output directory from xN_output
-        temp = scene.xN_output.split('\\')[:-1]
-        export_path = ('\\').join(temp)
+        export_path = realpath(scene.xN_output)
+        if not os.path.exists(export_path):
+            os.mkdir(export_path)
+            
+        img_export_path = os.path.join(export_path, "images")
+        if not os.path.exists(img_export_path):
+            os.mkdir(img_export_path)
+        
         #Clean up the directory first, if file overwriting is not enabled.
         if scene.xN_file_overwrite == True:    
             for item in os.listdir(export_path):            
-                if item != 'screenshots':                
+                if item[-4:] == '.ply':                
                     os.remove(export_path + '\\' + item)
-        elif scene.xN_file_overwrite == False:
-            for item in os.listdir(export_path):
-                if '.ply' in item:
-                    pass
-                elif 'screenshots' in item:
-                    pass
-                else:
-                    os.remove(export_path + '\\' + item)
+        
             
         #xNormal executable path.
-        xN_exe = scene.xN_exec_path
+        xN_exe = os.path.join(realpath(scene.xN_exec_path), 'xNormal.exe')
 
         #Get a file name for the .xml file, using last part of 'output file' string.
-        xml_filePath =  scene.xN_output + '.xml'
+        xml_filePath =  os.path.join(realpath(scene.xN_output), scene.xN_proj_name) + '.xml' if scene.xN_proj_name else os.path.join(realpath(scene.xN_output), 'default.xml')
         #Open the file.
         the_xml_file = open(xml_filePath, 'w+')
         
         
         #Functions to write the contents of the .xml file.
         def writeXML(file):
+            nonlocal img_export_path
+            
             file.write(r"""<?xml version="1.0" encoding="UTF-8"?>
 <Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="3.18.1">""")
             file.write('\n')
@@ -89,9 +92,24 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
             type = '.ply'
             lowpoly = export_path + '\\' + scene.xN_lowpoly + type
             hipoly = export_path + '\\' + scene.xN_hipoly + type
-            
+            cage_obj = ""
+            if scene.xN_lowpoly_use_cage:
+                if scene.xN_cage_external and scene.xN_cage_file != "":
+                    cage_obj = realpath(scene.xN_cage_file)
+                elif scene.xN_cage_external and scene.xN_cage_file == "":
+                    #Dealbreaker, ladies!
+                    self.report({'INFO'}, "Lowpoly cage option is enabled, but no cage file exists.")
+                    return {'CANCELLED'}
+                
+                elif not scene.xN_cage_external and scene.xN_cage_obj is not None:
+                    cage_obj = (export_path + '\\' + scene.xN_cage_obj + type)
+                elif scene.xN_cage_external == False and scene.xN_cage_obj is None:
+                    #Another dealbreaker, ladies!
+                    self.report({'INFO'}, "Lowpoly cage option is enabled, but no cage object is selected.")
+                    return {'CANCELLED'}
+                
             #Add the image format to the file name.
-            image_output = scene.xN_output + scene.xN_img_format
+            image_output = os.path.join(realpath(img_export_path), scene.xN_proj_name) + scene.xN_img_format if scene.xN_proj_name else os.path.join(realpath(img_export_path), 'default') + scene.xN_img_format
             
             bools = [scene.xN_render_AO, scene.xN_render_Normal, scene.xN_render_Height, scene.xN_render_Base, scene.xN_discard_BF, scene.xN_closest_hit, scene.xN_AO_limit_ray, scene.xN_normal_tangent_space, scene.xN_AO_jitter, scene.xN_AO_ignore_bf, scene.xN_AO_allow_full, scene.xN_render_Bent, scene.xN_bent_limit_ray, scene.xN_bent_jitter, scene.xN_bent_tanspace, scene.xN_render_PRT, scene.xN_prt_limit_ray, scene.xN_prt_col_normalize, scene.xN_render_convexity, scene.xN_render_thickness, scene.xN_render_proximity, scene.xN_prox_limit_ray, scene.xN_render_cavity, scene.xN_cavity_jitter, scene.xN_render_wireframe_rayfails, scene.xN_wire_render_wire, scene.xN_wire_render_rf, scene.xN_render_direction, scene.xN_direction_tanspace, scene.xN_render_radiosity, scene.xN_radiosity_occl, scene.xN_radiosity_limit_ray, scene.xN_radiosity_pure_occl, scene.xN_render_vcolors, scene.xN_render_curvature, scene.xN_curvature_jitter, scene.xN_curvature_smoothing, scene.xN_render_derivative, scene.xN_hipoly_visible, scene.xN_hipoly_ignore_vcolor, scene.xN_lowpoly_visible, scene.xN_lowpoly_use_cage, scene.xN_lowpoly_batch, scene.xN_lowpoly_normals_override, scene.xN_lowpoly_match_uvs]
             
@@ -111,7 +129,7 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
   </HighPolyModel>
   <LowPolyModel DefaultMeshScale="1.000000">
     <Mesh Visible="{5}" File="{6}" AverageNormals="{7}" MaxRayDistanceFront="{8}" MaxRayDistanceBack="{9}" UseCage="{10}" NormapMapType="Tangent-space" UsePerVertexColors="true" UseFresnel="false" FresnelRefractiveIndex="1.330000" ReflectHDRMult="1.000000" VectorDisplacementTS="false" VDMSwizzleX="X+" VDMSwizzleY="Y+" VDMSwizzleZ="Z+" BatchProtect="{11}" CastShadows="true" ReceiveShadows="true" BackfaceCull="true" NMSwizzleX="X+" NMSwizzleY="Y+" NMSwizzleZ="Z+" CageFile="{17}" HighpolyNormalsOverrideTangentSpace="{12}" TransparencyMode="None" AlphaTestValue="127" Matte="false" Scale="{13}" MatchUVs="{14}" UOffset="{15}" VOffset="{16}"/>
-  </LowPolyModel>""".format(bools[40], scene.xN_hipoly_mesh_scale, bools[39], scene.xN_hipoly_normalsmoothing, hipoly, bools[40], lowpoly, scene.xN_lowpoly_normalsmoothing, scene.xN_lowpoly_max_front_ray, scene.xN_lowpoly_max_rear_ray, bools[41], bools[42], bools[43], scene.xN_lowpoly_mesh_scale, bools[44], UOffset, VOffset, realpath(efutil.filesystem_path(scene.xN_cage_file))))
+  </LowPolyModel>""".format(bools[40], scene.xN_hipoly_mesh_scale, bools[39], scene.xN_hipoly_normalsmoothing, hipoly, bools[40], lowpoly, scene.xN_lowpoly_normalsmoothing, scene.xN_lowpoly_max_front_ray, scene.xN_lowpoly_max_rear_ray, bools[41], bools[42], bools[43], scene.xN_lowpoly_mesh_scale, bools[44], UOffset, VOffset, cage_obj))
             file.write('\n')
             
             height_min = 'true' if scene.xN_height_manual_min else 'false'
@@ -121,7 +139,7 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
             
             
             #Write the map generation details.
-            file.write(r"""  <GenerateMaps GenNormals="{0}" Width="{1}" Height="{2}" EdgePadding="{3}" BucketSize="{4}" TangentSpace="{5}" ClosestIfFails="{6}" DiscardRayBackFacesHits="{7}" File="{8}" SwizzleX="{9}" SwizzleY="{10}" SwizzleZ="{11}" AA="{12}" BakeHighpolyBaseTex="{13}" BakeHighpolyBaseTextureDrawObjectIDIfNoTexture="false" GenHeights="{14}" HeightTonemap="{15}" HeightTonemapMin="{16}" HeightTonemapMax="{17}" GenAO="{18}" AORaysPerSample="{19}" AODistribution="{20}" AOConeAngle="{21}" AOBias="{22}" AOAllowPureOccluded="{23}" AOLimitRayDistance="{24}" AOAttenConstant="{25}" AOAttenLinear="{26}" AOAttenCuadratic="{27}" AOJitter="{28}" AOIgnoreBackfaceHits="{29}" GenBent="{30}" BentRaysPerSample="{31}" BentConeAngle="{32}" BentBias="{33}" BentTangentSpace="{34}" BentLimitRayDistance="{35}" BentJitter="{36}" BentDistribution="{37}" BentSwizzleX="{38}" BentSwizzleY="{39}" BentSwizzleZ="{40}" GenPRT="{41}" PRTRaysPerSample="{42}" PRTConeAngle="{43}" PRTBias="{44}" PRTLimitRayDistance="{45}" PRTJitter="true" PRTNormalize="{46}" PRTThreshold="{47}" GenProximity="{48}" ProximityRaysPerSample="{49}" ProximityConeAngle="{50}" ProximityLimitRayDistance="{51}" GenConvexity="{52}" ConvexityScale="{53}" GenThickness="{54}" GenCavity="{55}" CavityRaysPerSample="{56}" CavityJitter="{57}" CavitySearchRadius="{58}" CavityContrast="{59}" CavitySteps="{60}" GenWireRays="{61}" RenderRayFails="{62}" RenderWireframe="{63}" GenDirections="{64}" DirectionsTS="{65}" DirectionsSwizzleX="{66}" DirectionsSwizzleY="{67}" DirectionsSwizzleZ="{68}" DirectionsTonemap="{69}" DirectionsTonemapMin="{70}" DirectionsTonemapMax="{71}" GenRadiosityNormals="{72}" RadiosityNormalsRaysPerSample="{73}" RadiosityNormalsDistribution="{74}" RadiosityNormalsConeAngle="{75}" RadiosityNormalsBias="{76}" RadiosityNormalsLimitRayDistance="{76}" RadiosityNormalsAttenConstant="{78}" RadiosityNormalsAttenLinear="{79}" RadiosityNormalsAttenCuadratic="{80}" RadiosityNormalsJitter="true" RadiosityNormalsContrast="{81}" RadiosityNormalsEncodeAO="{82}" RadiosityNormalsCoordSys="{83}" RadiosityNormalsAllowPureOcclusion="{84}" BakeHighpolyVCols="{85}" GenCurv="{86}" CurvRaysPerSample="{87}" CurvBias="{88}" CurvConeAngle="{89}" CurvJitter="{90}" CurvSearchDistance="{91}" CurvTonemap="{92}" CurvDistribution="{93}" CurvAlgorithm="{94}" CurvSmoothing="{95}" GenDerivNM="{96}">""".format(bools[1], scene.xN_dimensions_X, scene.xN_dimensions_Y, scene.xN_edge_padding, scene.xN_bucket_size, bools[7], bools[5], bools[4], (scene.xN_output + scene.xN_img_format), scene.xN_normal_swizzle1, scene.xN_normal_swizzle2, scene.xN_normal_swizzle3, scene.xN_AA_setting, bools[3], bools[2], scene.xN_height_normalization, height_min, height_max, bools[0], scene.xN_AO_rays, scene.xN_AO_distribution, scene.xN_AO_spread_angle, scene.xN_AO_bias, bools[10], bools[6], scene.xN_AO_atten1, scene.xN_AO_atten2, scene.xN_AO_atten3, bools[8], bools[9], bools[11], scene.xN_bent_rays, scene.xN_bent_spread, scene.xN_bent_bias, bools[14], bools[12], bools[13], scene.xN_bent_distribution, scene.xN_bent_swizzle1, scene.xN_bent_swizzle2, scene.xN_bent_swizzle3, bools[15], scene.xN_prt_rays, scene.xN_prt_spread, scene.xN_prt_bias, bools[16], bools[17], scene.xN_prt_threshold, bools[20], scene.xN_prox_rays, scene.xN_prox_spread, bools[21], bools[18], scene.xN_convexity_scale, bools[19], bools[22], scene.xN_cavity_rays, bools[23], scene.xN_cavity_radius, scene.xN_cavity_contrast, scene.xN_cavity_steps, bools[24], bools[26], bools[25], bools[27], bools[28], scene.xN_direction_swizzle1, scene.xN_direction_swizzle2, scene.xN_direction_swizzle3, scene.xN_direction_normalization, direction_min, direction_max, bools[29], scene.xN_radiosity_rays, scene.xN_radiosity_distribution, scene.xN_radiosity_spread, scene.xN_radiosity_bias, bools[31], scene.xN_radiosity_atten1, scene.xN_radiosity_atten2, scene.xN_radiosity_atten3, scene.xN_radiosity_contrast, bools[30], scene.xN_radiosity_coord, bools[32], bools[33], bools[34], scene.xN_curvature_rays, scene.xN_curvature_bias, scene.xN_curvature_spread, bools[35], scene.xN_curvature_search, scene.xN_curvature_tonemap, scene.xN_curvature_distribution, scene.xN_curvature_algorithm, bools[36], bools[37]))
+            file.write(r"""  <GenerateMaps GenNormals="{0}" Width="{1}" Height="{2}" EdgePadding="{3}" BucketSize="{4}" TangentSpace="{5}" ClosestIfFails="{6}" DiscardRayBackFacesHits="{7}" File="{8}" SwizzleX="{9}" SwizzleY="{10}" SwizzleZ="{11}" AA="{12}" BakeHighpolyBaseTex="{13}" BakeHighpolyBaseTextureDrawObjectIDIfNoTexture="false" GenHeights="{14}" HeightTonemap="{15}" HeightTonemapMin="{16}" HeightTonemapMax="{17}" GenAO="{18}" AORaysPerSample="{19}" AODistribution="{20}" AOConeAngle="{21}" AOBias="{22}" AOAllowPureOccluded="{23}" AOLimitRayDistance="{24}" AOAttenConstant="{25}" AOAttenLinear="{26}" AOAttenCuadratic="{27}" AOJitter="{28}" AOIgnoreBackfaceHits="{29}" GenBent="{30}" BentRaysPerSample="{31}" BentConeAngle="{32}" BentBias="{33}" BentTangentSpace="{34}" BentLimitRayDistance="{35}" BentJitter="{36}" BentDistribution="{37}" BentSwizzleX="{38}" BentSwizzleY="{39}" BentSwizzleZ="{40}" GenPRT="{41}" PRTRaysPerSample="{42}" PRTConeAngle="{43}" PRTBias="{44}" PRTLimitRayDistance="{45}" PRTJitter="true" PRTNormalize="{46}" PRTThreshold="{47}" GenProximity="{48}" ProximityRaysPerSample="{49}" ProximityConeAngle="{50}" ProximityLimitRayDistance="{51}" GenConvexity="{52}" ConvexityScale="{53}" GenThickness="{54}" GenCavity="{55}" CavityRaysPerSample="{56}" CavityJitter="{57}" CavitySearchRadius="{58}" CavityContrast="{59}" CavitySteps="{60}" GenWireRays="{61}" RenderRayFails="{62}" RenderWireframe="{63}" GenDirections="{64}" DirectionsTS="{65}" DirectionsSwizzleX="{66}" DirectionsSwizzleY="{67}" DirectionsSwizzleZ="{68}" DirectionsTonemap="{69}" DirectionsTonemapMin="{70}" DirectionsTonemapMax="{71}" GenRadiosityNormals="{72}" RadiosityNormalsRaysPerSample="{73}" RadiosityNormalsDistribution="{74}" RadiosityNormalsConeAngle="{75}" RadiosityNormalsBias="{76}" RadiosityNormalsLimitRayDistance="{76}" RadiosityNormalsAttenConstant="{78}" RadiosityNormalsAttenLinear="{79}" RadiosityNormalsAttenCuadratic="{80}" RadiosityNormalsJitter="true" RadiosityNormalsContrast="{81}" RadiosityNormalsEncodeAO="{82}" RadiosityNormalsCoordSys="{83}" RadiosityNormalsAllowPureOcclusion="{84}" BakeHighpolyVCols="{85}" GenCurv="{86}" CurvRaysPerSample="{87}" CurvBias="{88}" CurvConeAngle="{89}" CurvJitter="{90}" CurvSearchDistance="{91}" CurvTonemap="{92}" CurvDistribution="{93}" CurvAlgorithm="{94}" CurvSmoothing="{95}" GenDerivNM="{96}">""".format(bools[1], scene.xN_dimensions_X, scene.xN_dimensions_Y, scene.xN_edge_padding, scene.xN_bucket_size, bools[7], bools[5], bools[4], (image_output), scene.xN_normal_swizzle1, scene.xN_normal_swizzle2, scene.xN_normal_swizzle3, scene.xN_AA_setting, bools[3], bools[2], scene.xN_height_normalization, height_min, height_max, bools[0], scene.xN_AO_rays, scene.xN_AO_distribution, scene.xN_AO_spread_angle, scene.xN_AO_bias, bools[10], bools[6], scene.xN_AO_atten1, scene.xN_AO_atten2, scene.xN_AO_atten3, bools[8], bools[9], bools[11], scene.xN_bent_rays, scene.xN_bent_spread, scene.xN_bent_bias, bools[14], bools[12], bools[13], scene.xN_bent_distribution, scene.xN_bent_swizzle1, scene.xN_bent_swizzle2, scene.xN_bent_swizzle3, bools[15], scene.xN_prt_rays, scene.xN_prt_spread, scene.xN_prt_bias, bools[16], bools[17], scene.xN_prt_threshold, bools[20], scene.xN_prox_rays, scene.xN_prox_spread, bools[21], bools[18], scene.xN_convexity_scale, bools[19], bools[22], scene.xN_cavity_rays, bools[23], scene.xN_cavity_radius, scene.xN_cavity_contrast, scene.xN_cavity_steps, bools[24], bools[26], bools[25], bools[27], bools[28], scene.xN_direction_swizzle1, scene.xN_direction_swizzle2, scene.xN_direction_swizzle3, scene.xN_direction_normalization, direction_min, direction_max, bools[29], scene.xN_radiosity_rays, scene.xN_radiosity_distribution, scene.xN_radiosity_spread, scene.xN_radiosity_bias, bools[31], scene.xN_radiosity_atten1, scene.xN_radiosity_atten2, scene.xN_radiosity_atten3, scene.xN_radiosity_contrast, bools[30], scene.xN_radiosity_coord, bools[32], bools[33], bools[34], scene.xN_curvature_rays, scene.xN_curvature_bias, scene.xN_curvature_spread, bools[35], scene.xN_curvature_search, scene.xN_curvature_tonemap, scene.xN_curvature_distribution, scene.xN_curvature_algorithm, bools[36], bools[37]))
             file.write('\n')
             
             file.write(r"""    <NMBackgroundColor R="{0}" G="{1}" B="{2}"/>
@@ -225,7 +243,10 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
         the_xml_file.close()
 
         #Export the .obj files. Store the names of the objects in the scene in a list...
-        objs_to_export = [bpy.data.objects[scene.xN_hipoly], bpy.data.objects[scene.xN_lowpoly]]
+        if scene.xN_lowpoly_use_cage and scene.xN_cage_external == False and scene.xN_cage_obj is not None: 
+            objs_to_export = [bpy.data.objects[scene.xN_hipoly], bpy.data.objects[scene.xN_lowpoly], bpy.data.objects[scene.xN_cage_obj]]
+        else:
+            objs_to_export = [bpy.data.objects[scene.xN_hipoly], bpy.data.objects[scene.xN_lowpoly]]
         
         #############################################
         #Figure this out later. Leave disabled for now.
@@ -287,7 +308,7 @@ class PROPERTIES_OT_Export(bpy.types.Operator):
         try:
             Popen(args, bufsize=-1, cwd=export_path, shell=False)
         except PermissionError:
-            print("Darn. Couldn't open xNormal. Gotta get those permissions.")
+            print("Darn. Couldn't open xNormal. Check permissions and/or xNormal path.")
             pass
                
         return {'FINISHED'}
@@ -306,11 +327,10 @@ class PROPERTIES_OT_Import(bpy.types.Operator):
         scene = context.scene
         engine = scene.render.engine 
         lowpoly = scene.xN_lowpoly
-        material_name = scene.xN_output.split('\\')[-1]
+        material_name = scene.xN_proj_name if scene.xN_proj_name else 'default'
         object = scene.objects[lowpoly]
         
-        temp = scene.xN_output.split('\\')[:-1]
-        import_path = ('\\').join(temp)
+        import_path = os.path.join(realpath(scene.xN_output), 'images')
         
         import_imgs = []
         for item in os.listdir(import_path):
@@ -405,10 +425,9 @@ class PROPERTIES_OT_Launch_xNormal(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         
-        temp = scene.xN_output.split('\\')[:-1]
-        export_path = ('\\').join(temp)
+        export_path = realpath(scene.xN_output)
         
-        xN_exe = scene.xN_exec_path
+        xN_exe = os.path.join(realpath(scene.xN_exec_path), 'xNormal.exe')
         Popen(xN_exe, bufsize=-1, cwd=export_path, shell=False)
         
         return {'FINISHED'}
@@ -452,7 +471,11 @@ class PROPERTIES_PT_xN_MeshesPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene, 'xN_lowpoly_use_cage')
             if scene.xN_lowpoly_use_cage:
-                row.prop(scene, 'xN_cage_file', text = "Cage file")
+                row.prop(scene, 'xN_cage_external', text = "Use external cage file")
+                if scene.xN_cage_external:
+                    box.prop(scene, 'xN_cage_file', text = "Cage file")
+                else:
+                    box.prop(scene, 'xN_cage_obj')
             
             row = box.row()
             row.prop(scene, 'xN_lowpoly_max_front_ray')
@@ -687,40 +710,6 @@ class PROPERTIES_PT_xN_MapsPanel(bpy.types.Panel):
             box.prop(scene, 'xN_wire_bgcolor')
             
 #----------------------------------------------------
-#An operator for getting the xNormal exe filepath
-from bpy_extras.io_utils import ImportHelper
-
-class PROPERTIES_OT_xN_GetExecPath(bpy.types.Operator, ImportHelper):
-    bl_idname = 'xnormal.exec_browse'
-    bl_label = 'Set Path'
-    bl_description = 'Open file browser'
-    
-    filename_ext = ".exe"
-
-    filter_glob = StringProperty(
-            default="*.exe",
-            options={'HIDDEN'},
-            )
-    
-    def get_exe_path(self, context, filepath):
-        context.scene.xN_exec_path = filepath
-        return {'FINISHED'}
-    
-    def execute(self, context):
-        return self.get_exe_path(context, self.filepath)
-#----------------------------------------------------------    
-class PROPERTIES_OT_xN_GetOutputPath(bpy.types.Operator, ImportHelper):
-    bl_idname = 'xnormal.output_browse'
-    bl_label = 'Set Path'
-    bl_description = 'Open file browser'
-    
-    def get_output_path(self, context, filepath):
-        context.scene.xN_output = filepath
-        return {'FINISHED'}
-    
-    def execute(self, context):
-        return self.get_output_path(context, self.filepath)
-#----------------------------------------------------
 class PROPERTIES_PT_xN_ExportPanel(bpy.types.Panel):
     bl_label = "xNormal Import / Export"
     bl_space_type = "PROPERTIES"
@@ -735,7 +724,7 @@ class PROPERTIES_PT_xN_ExportPanel(bpy.types.Panel):
         #layout.prop(scene, 'xN_render_Base')   
         row = layout.row()     
         row.prop(scene, 'xN_discard_BF')
-        row.prop(scene, 'xN_file_overwrite', text = 'Allow file overwrite')
+        row.prop(scene, 'xN_file_overwrite', text = 'Allow mesh overwrite')
         layout.prop(scene, 'xN_closest_hit')
         layout.prop(scene, 'xN_dimensions_X')
         layout.prop(scene, 'xN_dimensions_Y')
@@ -744,13 +733,9 @@ class PROPERTIES_PT_xN_ExportPanel(bpy.types.Panel):
         layout.prop(scene, 'xN_AA_setting')
         layout.prop(scene, 'xN_img_format')
 #        layout.prop(scene, 'xN_export_type')
-        row = layout.row(align = True)
-        row.prop(scene, 'xN_output')
-        row.operator('xnormal.output_browse', text = '', icon = 'FILESEL')
-        row = layout.row(align = True)
-        row.prop(scene, 'xN_exec_path')
-        row.operator('xnormal.exec_browse', text = '', icon = 'FILESEL')
-      
+        layout.prop(scene, 'xN_output')
+        layout.prop(scene, 'xN_exec_path')
+        layout.prop(scene, 'xN_proj_name')
         layout.separator()
         
         row = layout.row()
@@ -812,16 +797,11 @@ tonemapping = [
 
     
 def register():
-    bpy.utils.register_class(PROPERTIES_OT_Export)
-    bpy.utils.register_class(PROPERTIES_PT_xN_MeshesPanel)
-    bpy.utils.register_class(PROPERTIES_PT_xN_MapsPanel)
-    bpy.utils.register_class(PROPERTIES_PT_xN_ExportPanel)
-    bpy.utils.register_class(PROPERTIES_OT_Import)
-    bpy.utils.register_class(PROPERTIES_OT_Launch_xNormal)
-    bpy.utils.register_class(PROPERTIES_OT_xN_GetExecPath)
-    bpy.utils.register_class(PROPERTIES_OT_xN_GetOutputPath)
-    bpy.types.Scene.xN_hipoly = EnumProperty(items = get_objects, name = "Hi-poly object:")
-    bpy.types.Scene.xN_lowpoly = EnumProperty(items = get_objects, name = "Low-poly object:")
+    bpy.utils.register_module(__name__)
+    bpy.types.Scene.xN_hipoly = EnumProperty(items = get_objects, name = "Hi-poly object")
+    bpy.types.Scene.xN_lowpoly = EnumProperty(items = get_objects, name = "Low-poly object")
+    bpy.types.Scene.xN_cage_obj = EnumProperty(items = get_objects, name = "Cage object")
+    bpy.types.Scene.xN_cage_external = BoolProperty(name = "Use external file", description = "Use external file for cage object", default = False)
     bpy.types.Scene.xN_render_AO = BoolProperty(
     name = "Render Ambient Occlusion Map",
     description = "xNormal will generate AO map.",
@@ -929,10 +909,16 @@ def register():
     #--------------
     
     bpy.types.Scene.xN_output = StringProperty(
-    name = "Output File",
-    description = "File location and file name to use for exporting .obj and saving maps",
-    default = '')
+    name = "Export path",
+    description = "File location for exporting .obj and saving maps",
+    default = '',
+    subtype = 'DIR_PATH')
     
+    #---------------
+    bpy.types.Scene.xN_proj_name = StringProperty(
+    name = "Project name",
+    description = "Generic name to use for baked images",
+    default = '')
     #---------------
     
     bpy.types.Scene.xN_img_format = EnumProperty(
@@ -947,7 +933,8 @@ def register():
     bpy.types.Scene.xN_exec_path = StringProperty(
     name = "Path to xNormal",
     description = "Path to the xNormal .exe",
-    default = '')
+    default = '',
+    subtype = 'DIR_PATH')
     
     #----------------   
     
@@ -1148,15 +1135,9 @@ def register():
     bpy.types.Scene.xN_cage_file = StringProperty(subtype='FILE_PATH')
     bpy.types.Scene.xN_file_overwrite = BoolProperty(name = "Allow file overwrite", description = "If enabled, meshes will always be exported. Otherwise, they will only be exported if they do not currently exist in the output directory", default = True)
     
+    
 def unregister():
-    bpy.utils.unregister_class(PROPERTIES_OT_Export)
-    bpy.utils.unregister_class(PROPERTIES_PT_xN_MeshesPanel)
-    bpy.utils.unregister_class(PROPERTIES_PT_xN_MapsPanel)
-    bpy.utils.unregister_class(PROPERTIES_PT_xN_ExportPanel)
-    bpy.utils.unregister_class(PROPERTIES_OT_Import)
-    bpy.utils.unregister_class(PROPERTIES_OT_Launch_xNormal)
-    bpy.utils.unregister_class(PROPERTIES_OT_xN_GetExecPath)
-    bpy.utils.unregister_class(PROPERTIES_OT_xN_GetOutputPath)
+    bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
     register()

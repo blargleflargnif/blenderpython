@@ -31,6 +31,8 @@ from ..export.geometry import GeometryExporter
 from ..export.materials import ExportedTextures, convert_texture, get_material_volume_defs, get_preview_flip, get_preview_zoom
 from ..outputs import LuxLog, LuxManager
 from ..outputs.pure_api import LUXRENDER_VERSION
+from ..properties import find_node
+from ..properties.node_material import luxrender_texture_maker
 
 def export_preview_texture(lux_context, texture):
 	texture_name = texture.name
@@ -101,6 +103,7 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 		.add_bool('write_resume_flm', False) \
 		.add_integer('displayinterval', 300) \
 		.add_float('haltthreshold', 0.005) \
+		.add_integer('halttime', 30) \
 		.add_string('tonemapkernel', 'linear') \
 		.add_string('ldr_clamp_method', 'hue') \
 		.add_integer('tilecount', 2) \
@@ -109,14 +112,8 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 	if tex != None:
 		film_params.add_float('haltthreshold', 0.999)	# testcommit to reduce texture flat rendertimes
 
-	# workaround for too dark texture preview
-	# remove when solved in blender colormanagement
-	if tex != None and bpy.app.version > (2, 64, 4) and bpy.app.version < (2, 65, 8):
-		film_params.add_float('gamma', 2.2)
-	else:
-		film_params.add_float('gamma', 1.0)
-	if bpy.app.version > (2, 64, 8):
-		film_params.add_float('linear_exposure', 1.25)
+	film_params.add_float('gamma', 1.0)
+	film_params.add_float('linear_exposure', 1.25)
 
 	film_params \
 		.add_bool('write_exr', False) \
@@ -145,7 +142,9 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 		.add_string('lightstrategy', 'all') \
 		.add_string('lightpathstrategy', 'all') \
 		.add_integer('eyedepth', 12) \
-		.add_integer('lightdepth', 8)
+		.add_integer('lightdepth', 8) \
+		.add_integer('lightraycount', 1) \
+		.add_integer('shadowraycount', 1)
 	lux_context.surfaceIntegrator('bidirectional', surfaceintegrator_params)
 	
 	# Volume Integrator
@@ -162,7 +161,11 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 	for scn in bpy.data.scenes:
 		LuxManager.SetCurrentScene(scn)
 		for volume in scn.luxrender_volumes.volumes:
-			lux_context.makeNamedVolume( volume.name, *volume.api_output(lux_context) )
+			if volume.type == 'heterogeneous':
+				vol_param =  ParamSet().add_color('sigma_s', (1.0, 1.0, 1.0))
+				lux_context.makeNamedVolume( volume.name, 'heterogeneous',vol_param)  
+			else:
+				lux_context.makeNamedVolume( volume.name, *volume.api_output(lux_context) )
 	
 	LuxManager.SetCurrentScene(scene) # for preview context
 	
@@ -414,22 +417,7 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 		
 		lux_context.concatTransform(pv_transform)
 		
-		int_v, ext_v = get_material_volume_defs(mat)
-		if int_v != '' or ext_v != '':
-			if int_v != '': lux_context.interior(int_v)
-			if ext_v != '': lux_context.exterior(ext_v)
-		
-		if int_v == '' and bl_scene.luxrender_world.default_interior_volume != '':
-			lux_context.interior(bl_scene.luxrender_world.default_interior_volume)
-		if ext_v == '' and bl_scene.luxrender_world.default_exterior_volume != '':
-			lux_context.exterior(bl_scene.luxrender_world.default_exterior_volume)
-		
-		object_is_emitter = hasattr(mat, 'luxrender_emission') and mat.luxrender_emission.use_emission
-		if object_is_emitter:
-			# lux_context.lightGroup(mat.luxrender_emission.lightgroup, [])
-			lux_context.areaLightSource( *mat.luxrender_emission.api_output(obj) )
-		
-		if pv_export_shape:
+		if pv_export_shape: #Any material, texture, light, or volume definitions created from the node editor do not exist before this conditional!
 			GE = GeometryExporter(lux_context, scene)
 			GE.is_preview = True
 			GE.geometry_scene = scene
@@ -443,10 +431,38 @@ def preview_scene(scene, lux_context, obj=None, mat=None, tex=None):
 					lux_context.material('matte', ParamSet().add_texture('Kd', texture_name))
 				else:
 					mat.luxrender_material.export(scene, lux_context, mat, mode='direct')
+					int_v, ext_v = get_material_volume_defs(mat)
+					if int_v != '' or ext_v != '':
+						if int_v != '': lux_context.interior(int_v)
+						if ext_v != '': lux_context.exterior(ext_v)
+
+					if int_v == '' and bl_scene.luxrender_world.default_interior_volume != '':
+						lux_context.interior(bl_scene.luxrender_world.default_interior_volume)
+					if ext_v == '' and bl_scene.luxrender_world.default_exterior_volume != '':
+						lux_context.exterior(bl_scene.luxrender_world.default_exterior_volume)
 					
+					output_node = find_node(mat, 'luxrender_material_output_node')
+					if mat.luxrender_material.nodetree:
+						object_is_emitter = False
+						if output_node != None:
+							light_socket = output_node.inputs[3]
+							if light_socket.is_linked:
+								light_node = light_socket.links[0].from_node
+								object_is_emitter = light_socket.is_linked
+					else:
+						object_is_emitter = hasattr(mat, 'luxrender_emission') and mat.luxrender_emission.use_emission
+					if object_is_emitter:
+						if not mat.luxrender_material.nodetree:
+						# lux_context.lightGroup(mat.luxrender_emission.lightgroup, [])
+							lux_context.areaLightSource( *mat.luxrender_emission.api_output(obj) )
+						else:
+							tex_maker = luxrender_texture_maker(lux_context, mat.luxrender_material.nodetree)
+							lux_context.areaLightSource( *light_node.export(tex_maker.make_texture) )
+
 				lux_context.shape(mesh_type, mesh_params)
 		else:
 			lux_context.shape('sphere', ParamSet().add_float('radius', 1.0))
+
 		lux_context.attributeEnd()
 		
 	# Default 'Camera' Exterior, just before WorldEnd

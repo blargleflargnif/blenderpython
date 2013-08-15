@@ -60,14 +60,6 @@ def check_renderer_settings(context):
 		lri.alert['surfaceintegrator'] = { 'surfaceintegrator': LO({'!=':'sppm'}) }
 		return
 
-def find_luxrender_path():
-	return os.getenv(
-		# Use the env var path, if set ...
-		'LUXRENDER_ROOT',
-		# .. or load the last path from CFG file
-		efutil.find_config_value('luxrender', 'defaults', 'install_path', '')
-	)
-
 def find_apis():
 	apis = [
 		('EXT', 'External', 'EXT'),
@@ -97,22 +89,22 @@ class luxrender_testing(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'clay_render',
-			'name': 'Clay render',
+			'name': 'Clay Render',
 			'description': 'Export all non-glass materials as default "clay"',
 			'default': False
 		},
 		{
 			'type': 'bool',
 			'attr': 'object_analysis',
-			'name': 'Debug: print object analysis',
+			'name': 'Debug: Print Object Analysis',
 			'description': 'Show extra output as objects are processed',
 			'default': False
 		},
 		{
 			'type': 'bool',
 			'attr': 're_raise',
-			'name': 'Debug: show full trace on export error',
-			'description': 'Flash export error messages in UI',
+			'name': 'Debug: Show Error Traceback Messages',
+			'description': 'Show export error messages in the UI as well as the console',
 			'default': False
 		},
 	]
@@ -126,13 +118,11 @@ class luxrender_engine(declarative_property_group):
 	ef_attach_to = ['Scene']
 	
 	controls = [
-# 		'export_type',
+# 		'export_type', #Drawn in core/init
 # 		'binary_name',
 # 		'write_files',
-# 		'install_path',
-		['write_lxv',
-		'embed_filedata'],
-		
+		'export_hair',
+		'embed_filedata',
 		'mesh_type',
 		'partial_ply',
 		['render', 'monitor_external'],
@@ -143,14 +133,12 @@ class luxrender_engine(declarative_property_group):
 		
 	visibility = {
 		'write_files':				{ 'export_type': 'INT' },
-		#'write_lxv':				O([ {'export_type':'EXT'}, A([ {'export_type':'INT'}, {'write_files': True} ]) ]),
 		'embed_filedata':			O([ {'export_type':'EXT'}, A([ {'export_type':'INT'}, {'write_files': True} ]) ]),
 		'mesh_type':				O([ {'export_type':'EXT'}, A([ {'export_type':'INT'}, {'write_files': True} ]) ]),
 		'binary_name':				{ 'export_type': 'EXT' },
 		'render':					O([{'write_files': True}, { 'export_type': 'EXT' }]), #We need run renderer unless we are set for internal-pipe mode, which is the only time both of these are false
 		'monitor_external':			{'export_type': 'EXT', 'binary_name': 'luxrender', 'render': True },
 		'partial_ply':				O([ {'export_type':'EXT'}, A([ {'export_type':'INT'}, {'write_files': True} ]) ]),
-		'install_path':				{ 'export_type': 'EXT' },
 		'threads_auto':				O([A([{'write_files': False}, { 'export_type': 'INT' }]), A([O([{'write_files': True}, { 'export_type': 'EXT' }]), { 'render': True }])]), #The flag options must be present for any condition where run renderer is present and checked, as well as internal-pipe mode
 		'threads':					O([A([{'write_files': False}, { 'export_type': 'INT' }, {'threads_auto': False}]), A([O([{'write_files': True}, { 'export_type': 'EXT' }]), { 'render': True }, {'threads_auto': False}])]), #Longest logic test in the whole plugin! threads-auto is in both sides, since we must check that it is false for either internal-pipe mode, or when using run-renderer.
 		'fixed_seed':				O([A([{'write_files': False}, { 'export_type': 'INT' }]), A([O([{'write_files': True}, { 'export_type': 'EXT' }]), { 'render': True }])]),
@@ -198,7 +186,7 @@ class luxrender_engine(declarative_property_group):
 			'type': 'bool',
 			'attr': 'render',
 			'name': 'Run Renderer',
-			'description': 'Run Renderer after export',
+			'description': 'Run renderer after export',
 			'default': efutil.find_config_value('luxrender', 'defaults', 'auto_start', True),
 		},
 		{
@@ -221,21 +209,14 @@ class luxrender_engine(declarative_property_group):
 			'type': 'enum',
 			'attr': 'binary_name',
 			'name': 'External Type',
-			'description': 'Choose full GUI or console renderer',
+			'description': 'Choose full GUI, console renderer or real-time rendering',
 			'default': 'luxrender',
 			'items': [
-				('luxrender', 'LuxRender GUI', 'luxrender'),
-				('luxconsole', 'LuxConsole', 'luxconsole'),
+				('luxrender', 'LuxRender GUI', 'Render with the LuxRender GUI application'),
+				('luxconsole', 'LuxConsole', 'Render with LuxConsole and feed the result to the UV/Image Editor'),
+				('luxvr', 'LuxVR', 'Render with the LuxVR realtime preview tool'),
 			],
 			'save_in_preset': True
-		},
-		{
-			'type': 'string',
-			'subtype': 'DIR_PATH',
-			'attr': 'install_path',
-			'name': 'Path to LuxRender Installation',
-			'description': 'Path to LuxRender install directory',
-			'default': find_luxrender_path()
 		},
 		{
 			'type': 'bool',
@@ -247,11 +228,10 @@ class luxrender_engine(declarative_property_group):
 		},
 		{
 			'type': 'bool',
-			'attr': 'write_lxv',
-			'name': 'Export Smoke',
-			'description': 'Process and export smoke simulations',
-			'default': True,
-			'save_in_preset': True
+			'attr': 'export_hair',
+			'name': 'Export Hair',
+			'description': 'Export particle hair systems',
+			'default': True
 		},
 		{
 			'type': 'bool',
@@ -271,8 +251,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'enum',
 			'attr': 'mesh_type',
-			'name': 'Default mesh format',
-			'description': 'Sets whether to export scene geometry as PLY files or directly in the LXO file. PLY is faster and recommended',
+			'name': 'Mesh Format',
+			'description': 'Sets whether to export scene geometry as PLY files or directly in the LXO file, PLY is faster and recommended. This can be overridden per mesh from the mesh properties panel',
 			'items': [
 				('native', 'LuxRender mesh', 'native'),
 				('binary_ply', 'Binary PLY', 'binary_ply')
@@ -283,8 +263,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'enum',
 			'attr': 'log_verbosity',
-			'name': 'Log verbosity',
-			'description': 'Logging verbosity',
+			'name': 'Log Verbosity',
+			'description': 'Logging verbosity level',
 			'default': 'default',
 			'items': [
 				('verbose', 'Verbose', 'verbose'),
@@ -297,8 +277,8 @@ class luxrender_engine(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'fixed_seed',
-			'name': 'Use fixed seeds',
-			'description': 'Use fixed seeds for threads. Helps with keeping noise even for animations',
+			'name': 'Use Fixed Seeds',
+			'description': 'Use fixed seeds for render threads. Helps with keeping noise even for animations',
 			'default': False,
 			'save_in_preset': True
 		},

@@ -27,8 +27,53 @@
 import bpy
 
 from ... import LuxRenderAddon
+from ...properties import (find_node, find_node_input)
 from ...ui.materials import luxrender_material_base
 from ...operators.lrmdb import lrmdb_state
+
+
+def cycles_panel_node_draw(layout, id_data, output_type, input_name):
+	if not id_data.use_nodes:
+		layout.prop(id_data, "use_nodes", icon='NODETREE')
+		return False
+
+	ntree = id_data.node_tree
+
+	node = find_node(id_data, output_type)
+	if not node:
+		layout.label(text="No output node")
+	else:
+		input = find_node_input(node, input_name)
+		layout.template_node_view(ntree, node, input)
+
+	return True
+
+def node_tree_selector_draw(layout, id_data, output_type):
+	#layout.prop_search(mat.luxrender_material, "nodetree", bpy.data, "node_groups")
+	try:
+		layout.prop_search(id_data.luxrender_material, "nodetree", bpy.data, "node_groups")
+	except:
+		return False
+	
+	node = find_node(id_data, output_type)
+	if not node:
+		if id_data.luxrender_material.nodetree == '':
+			layout.operator('luxrender.add_material_nodetree', icon='NODETREE')
+			return False
+	return True
+
+def panel_node_draw(layout, id_data, output_type, input_name):
+	node = find_node(id_data, output_type)
+	if not node:
+		return False
+	else:
+		if id_data.luxrender_material.nodetree != '':
+			ntree = bpy.data.node_groups[id_data.luxrender_material.nodetree]
+			input = find_node_input(node, input_name)
+			layout.template_node_view(ntree, node, input)
+	
+	return True
+
 
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_header(luxrender_material_base):
@@ -59,10 +104,7 @@ class ui_luxrender_material_header(luxrender_material_base):
 		if ob:
 			row = layout.row()
 
-			if bpy.app.version < (2, 65, 3 ):
-				row.template_list(ob, "material_slots", ob, "active_material_index", rows=2)
-			else:
-				row.template_list("MATERIAL_UL_matslots", "", ob, "material_slots", ob, "active_material_index", rows=2)
+			row.template_list("MATERIAL_UL_matslots", "", ob, "material_slots", ob, "active_material_index", rows=2)
 
 			col = row.column(align=True)
 			col.operator("object.material_slot_add", icon='ZOOMIN', text="")
@@ -81,7 +123,7 @@ class ui_luxrender_material_header(luxrender_material_base):
 		if ob:
 			split.template_ID(ob, "active_material", new="material.new")
 			row = split.row()
-
+			
 			if slot:
 				row.prop(slot, "link", text="")
 			else:
@@ -89,12 +131,15 @@ class ui_luxrender_material_header(luxrender_material_base):
 		elif mat:
 			split.template_ID(space, "pin_id")
 			split.separator()
-
-		row = self.layout.row(align=True)
-		if slot:
-			row.label("Material type")
-			row.menu('MATERIAL_MT_luxrender_type', text=context.material.luxrender_material.type_label)
-		super().draw(context)
+					
+		
+		node_tree_selector_draw(layout, mat, 'luxrender_material_output_node')
+		if not panel_node_draw(layout, mat, 'luxrender_material_output_node', 'Surface'):
+			row = self.layout.row(align=True)
+			if slot:
+				row.label("Material type")
+				row.menu('MATERIAL_MT_luxrender_type', text=context.material.luxrender_material.type_label)
+				super().draw(context)
 
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_db(luxrender_material_base):
@@ -112,6 +157,15 @@ class ui_luxrender_material_db(luxrender_material_base):
 					self.layout.label(text=action.label)
 				else:
 					self.layout.operator('luxrender.lrmdb', text=action.label).invoke_action_id = action.aid
+
+	@classmethod
+	def poll(cls, context):
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return context.material.luxrender_material.nodetree == ''
+		except:
+			return False
 
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_utils(luxrender_material_base):
@@ -133,6 +187,15 @@ class ui_luxrender_material_utils(luxrender_material_base):
 		#row = self.layout.row(align=True)
 		#row.operator("luxrender.material_reset", icon='SOLID')
 
+	@classmethod
+	def poll(cls, context):
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return context.material.luxrender_material.nodetree == ''
+		except:
+			return False
+
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_emission(luxrender_material_base):
 	'''
@@ -148,6 +211,15 @@ class ui_luxrender_material_emission(luxrender_material_base):
 	
 	def draw_header(self, context):
 		self.layout.prop(context.material.luxrender_emission, "use_emission", text="")
+
+	@classmethod
+	def poll(cls, context):
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return context.material.luxrender_material.nodetree == ''
+		except:
+			return False
 
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_transparency(luxrender_material_base):
@@ -169,8 +241,12 @@ class ui_luxrender_material_transparency(luxrender_material_base):
 	def poll(cls, context):
 		if not hasattr(context.material, 'luxrender_transparency'):
 			return False
-		return super().poll(context) and context.material.luxrender_material.type != 'null'
-
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return super().poll(context) and context.material.luxrender_material.type != 'null' and context.material.luxrender_material.nodetree == ''
+		except:
+			return super().poll(context)
 
 @LuxRenderAddon.addon_register_class
 class ui_luxrender_material_coating(luxrender_material_base):
@@ -209,4 +285,46 @@ class ui_luxrender_material_coating(luxrender_material_base):
 	def poll(cls, context):
 		if not hasattr(context.material, 'luxrender_coating'):
 			return False
-		return super().poll(context)
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return super().poll(context) and context.material.luxrender_material.nodetree == ''
+		except:
+			return super().poll(context)
+
+@LuxRenderAddon.addon_register_class
+class ui_luxrender_material_node_volume(luxrender_material_base):
+	bl_label	= 'Volumes'
+	
+	def draw(self, context):
+		layout = self.layout
+		mat = context.material
+		panel_node_draw(layout, mat, 'luxrender_material_output_node', 'Interior Volume')
+		panel_node_draw(layout, mat, 'luxrender_material_output_node', 'Exterior Volume')
+	
+	@classmethod
+	def poll(cls, context):
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return context.material.luxrender_material.nodetree != ''
+		except:
+			return False
+
+@LuxRenderAddon.addon_register_class
+class ui_luxrender_material_node_emit(luxrender_material_base):
+	bl_label	= 'Light Emission'
+	
+	def draw(self, context):
+		layout = self.layout
+		mat = context.material
+		panel_node_draw(layout, mat, 'luxrender_material_output_node', 'Emission')
+	
+	@classmethod
+	def poll(cls, context):
+		if context.scene.render.engine != 'LUXRENDER_RENDER':
+			return False
+		try:
+			return context.material.luxrender_material.nodetree != ''
+		except:
+			return False

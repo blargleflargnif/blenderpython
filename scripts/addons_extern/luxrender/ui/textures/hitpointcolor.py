@@ -28,13 +28,11 @@ from ... import LuxRenderAddon
 from ...ui.textures import luxrender_texture_base
 
 @LuxRenderAddon.addon_register_class
-class ui_texture_transform(luxrender_texture_base):
-	bl_label = 'LuxRender 3D Texture Transform'
-	bl_options = {'DEFAULT_CLOSED'}
+class ui_texture_hitpointcolor(luxrender_texture_base):
+	bl_label = 'LuxRender Vertex Color (hitpointcolor) Texture'
 	
-	LUX_COMPAT	= {'BLENDER', 'brick', 'checkerboard', 'densitygrid', 'fbm', 'marble', 'windy', 'wrinkled'}
-	BL_COMPAT	= {'BLEND','CLOUDS','DISTORTED_NOISE','MAGIC','MARBLE','MUSGRAVE','STUCCI','VORONOI','WOOD'}
+	LUX_COMPAT = {'hitpointcolor'}
 	
 	display_property_groups = [
-		( ('texture', 'luxrender_texture'), 'luxrender_tex_transform' )
+		( ('texture', 'luxrender_texture'), 'luxrender_tex_hitpointcolor' )
 	]

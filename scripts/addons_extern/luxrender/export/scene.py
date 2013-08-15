@@ -180,15 +180,9 @@ class SceneExporter(object):
 			
 			if self.properties.api_type == 'FILE':
 				
-				if self.properties.write_all_files:
-					LXV = True
-				else:
-					LXV = scene.luxrender_engine.write_lxv
-				
 				lux_context.set_filename(
 					scene,
 					lxs_filename,
-					LXV = LXV
 				)
 			
 			if lux_context == False:
@@ -245,11 +239,6 @@ class SceneExporter(object):
 				s = s.background_set
 				geom_scenes.append(s)
 			
-			if scene.luxrender_engine.write_lxv:
-				if self.properties.api_type == 'FILE':
-					lux_context.set_output_file(Files.VOLM)
-				export_volumes.export_smoke(lux_context, scene)
-			
 			# Make sure lamp textures go back into main file, not geom file
 			if self.properties.api_type in ['FILE']:
 				lux_context.set_output_file(Files.MAIN)
@@ -296,5 +285,7 @@ class SceneExporter(object):
 		
 		except Exception as err:
 			self.report({'ERROR'}, 'Export aborted: %s' % err)
+			import traceback
+			traceback.print_exc()
 			if scene.luxrender_testing.re_raise: raise err
 			return {'CANCELLED'}

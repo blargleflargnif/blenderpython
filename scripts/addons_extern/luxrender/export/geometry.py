@@ -7,7 +7,7 @@
 # --------------------------------------------------------------------------
 #
 # Authors:
-# Doug Hammond, Daniel Genrich
+# Doug Hammond, Daniel Genrich, Michael Klemm
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -39,6 +39,8 @@ from ..export import fix_matrix_order
 from ..export.materials import get_material_volume_defs
 from ..export import LuxManager
 from ..export import is_obj_visible
+from ..properties import find_node
+from ..properties.node_material import luxrender_texture_maker
 
 class InvalidGeometryException(Exception):
 	pass
@@ -134,8 +136,9 @@ class GeometryExporter(object):
 					ext_params.add_float('zmax', obj.luxrender_object.zmax)
 				if obj.luxrender_object.proxy_type == 'cylinder':
 					ext_params.add_float('zmin', obj.luxrender_object.zmin)
-				
-				mesh_definition = (ext_mesh_name, obj.active_material.name, obj.luxrender_object.proxy_type, ext_params)
+					
+				proxy_material = obj.active_material.name if obj.active_material else ""
+				mesh_definition = (ext_mesh_name, proxy_material, obj.luxrender_object.proxy_type, ext_params)
 				mesh_definitions.append( mesh_definition )
 				
 				# Only export objectBegin..objectEnd and cache this mesh_definition if we plan to use instancing
@@ -174,7 +177,7 @@ class GeometryExporter(object):
 			
 			# collate faces by mat index
 			ffaces_mats = {}
-			mesh_faces = mesh.tessfaces if bpy.app.version > (2, 62, 1 ) else mesh.faces # bmesh
+			mesh_faces = mesh.tessfaces
 			for f in mesh_faces:
 				mi = f.material_index
 				if mi not in ffaces_mats.keys(): ffaces_mats[mi] = []
@@ -224,12 +227,18 @@ class GeometryExporter(object):
 						
 						GeometryExporter.NewExportedObjects.add(obj)
 						
-						uv_textures = mesh.tessface_uv_textures if bpy.app.version > (2, 62, 0 ) else mesh.uv_textures # bmesh
+						uv_textures = mesh.tessface_uv_textures
 						if len(uv_textures) > 0:
 							if mesh.uv_textures.active and uv_textures.active.data:
 								uv_layer = uv_textures.active.data
 						else:
 							uv_layer = None
+
+						vertex_color = 	mesh.tessface_vertex_colors.active
+						if vertex_color:
+							vertex_color_layer = vertex_color.data
+						else:
+							vertex_color_layer = None
 						
 						# Here we work out exactly which vert+normal combinations
 						# we need to export. This is done first, and the export
@@ -238,7 +247,7 @@ class GeometryExporter(object):
 						# and that number is not known before this is done.
 						
 						# Export data
-						co_no_uv_cache = []
+						co_no_uv_vc_cache = []
 						face_vert_indices = {}		# mapping of face index to list of exported vert indices for that face
 						
 						# Caches
@@ -246,40 +255,77 @@ class GeometryExporter(object):
 						vert_use_vno = set()		# Set of vert indices that use vert normals
 						
 						vert_index = 0				# exported vert index
-						for face in ffaces_mats[i]:
+						for fidx,face in enumerate(ffaces_mats[i]):
 							fvi = []
+							if vertex_color_layer:
+								c1 = vertex_color_layer[fidx].color1
+								c2 = vertex_color_layer[fidx].color2
+								c3 = vertex_color_layer[fidx].color3
+								c4 = vertex_color_layer[fidx].color4
+
 							for j, vertex in enumerate(face.vertices):
 								v = mesh.vertices[vertex]
 								
+								if vertex_color_layer:
+									if j == 0:
+										vert_col = c1
+									elif j == 1:
+										vert_col = c2
+									elif j == 2:
+										vert_col = c3
+									elif j == 3:
+										vert_col = c4
+								
 								if face.use_smooth:
-									
 									if uv_layer:
-										vert_data = (v.co[:], v.normal[:], uv_layer[face.index].uv[j][:])
+										if vertex_color_layer:                                                                                        
+											vert_data = (v.co[:], v.normal[:], uv_layer[face.index].uv[j][:],
+												     (int(255*vert_col[0]),
+												      int(255*vert_col[1]),
+												      int(255*vert_col[2]))[:])
+										else:
+											vert_data = (v.co[:], v.normal[:], uv_layer[face.index].uv[j][:])
 									else:
-										vert_data = (v.co[:], v.normal[:])
+										if vertex_color_layer:                                                                                    
+											vert_data = (v.co[:], v.normal[:],
+												     (int(255*vert_col[0]),
+												      int(255*vert_col[1]),
+												      int(255*vert_col[2]))[:])
+										else:
+											vert_data = (v.co[:], v.normal[:])
 									
 									if vert_data not in vert_use_vno:
 										vert_use_vno.add( vert_data )
 										
-										co_no_uv_cache.append( vert_data )
+										co_no_uv_vc_cache.append( vert_data )
 										
 										vert_vno_indices[vert_data] = vert_index
 										fvi.append(vert_index)
 										
 										vert_index += 1
 									else:
-										fvi.append(vert_vno_indices[vert_data])
-									
+										fvi.append(vert_vno_indices[vert_data])									
 								else:
-									
 									if uv_layer:
-										vert_data = (v.co[:], face.normal[:], uv_layer[face.index].uv[j][:])
+										if vertex_color_layer:                                                                                    
+											vert_data = (v.co[:], face.normal[:], uv_layer[face.index].uv[j][:],
+												     (int(255*vert_col[0]),
+												      int(255*vert_col[1]),
+												      int(255*vert_col[2]))[:])
+										else:
+											vert_data = (v.co[:], face.normal[:], uv_layer[face.index].uv[j][:])
 									else:
-										vert_data = (v.co[:], face.normal[:])
-									
+										if vertex_color_layer:                                                                                    
+											vert_data = (v.co[:], face.normal[:],
+												     (int(255*vert_col[0]),
+												      int(255*vert_col[1]),
+												      int(255*vert_col[2]))[:])
+										else:
+											vert_data = (v.co[:], face.normal[:])
+
 									# All face-vert-co-no are unique, we cannot
 									# cache them
-									co_no_uv_cache.append( vert_data )
+									co_no_uv_vc_cache.append( vert_data )
 									
 									fvi.append(vert_index)
 									
@@ -309,29 +355,47 @@ class GeometryExporter(object):
 								ply.write(b'property float s\n')
 								ply.write(b'property float t\n')
 							
+							if vertex_color_layer:
+								ply.write(b'property uchar red\n')
+								ply.write(b'property uchar green\n')
+								ply.write(b'property uchar blue\n')
+
 							ply.write( ('element face %d\n' % len(ffaces_mats[i])).encode() )
 							ply.write(b'property list uchar uint vertex_indices\n')
 							
 							ply.write(b'end_header\n')
 							
-							# dump cached co/no/uv
+							# dump cached co/no/uv/vc
 							if uv_layer:
-								for co,no,uv in co_no_uv_cache:
-									ply.write( struct.pack('<3f', *co) )
-									ply.write( struct.pack('<3f', *no) )
-									ply.write( struct.pack('<2f', *uv) )
+								if vertex_color_layer:
+									for co,no,uv,vc in co_no_uv_vc_cache:
+										ply.write( struct.pack('<3f', *co) )
+										ply.write( struct.pack('<3f', *no) )
+										ply.write( struct.pack('<2f', *uv) )
+										ply.write( struct.pack('<3B', *vc) )
+								else:
+									for co,no,uv in co_no_uv_vc_cache:
+										ply.write( struct.pack('<3f', *co) )
+										ply.write( struct.pack('<3f', *no) )
+										ply.write( struct.pack('<2f', *uv) )
 							else:
-								for co,no in co_no_uv_cache:
-									ply.write( struct.pack('<3f', *co) )
-									ply.write( struct.pack('<3f', *no) )
-							
+								if vertex_color_layer:
+									for co,no,vc in co_no_uv_vc_cache:
+										ply.write( struct.pack('<3f', *co) )
+										ply.write( struct.pack('<3f', *no) )
+										ply.write( struct.pack('<3B', *vc) )
+								else:							
+									for co,no in co_no_uv_vc_cache:
+										ply.write( struct.pack('<3f', *co) )
+										ply.write( struct.pack('<3f', *no) )
+										
 							# dump face vert indices
 							for face in ffaces_mats[i]:
 								lfvi = len(face_vert_indices[face.index])
 								ply.write( struct.pack('<B', lfvi) )
 								ply.write( struct.pack('<%dI'%lfvi, *face_vert_indices[face.index]) )
 							
-							del co_no_uv_cache
+							del co_no_uv_vc_cache
 							del face_vert_indices
 						
 						LuxLog('Binary PLY file written: %s' % (ply_path))
@@ -388,7 +452,7 @@ class GeometryExporter(object):
 			
 			# collate faces by mat index
 			ffaces_mats = {}
-			mesh_faces = mesh.tessfaces if bpy.app.version > (2, 62, 1 ) else mesh.faces # bmesh
+			mesh_faces = mesh.tessfaces
 			for f in mesh_faces:
 				mi = f.material_index
 				if mi not in ffaces_mats.keys(): ffaces_mats[mi] = []
@@ -418,7 +482,7 @@ class GeometryExporter(object):
 					if self.visibility_scene.luxrender_testing.object_analysis: print('  -> Material index: %d' % i)
 					if self.visibility_scene.luxrender_testing.object_analysis: print('  -> derived mesh name: %s' % mesh_name)
 					
-					uv_textures = mesh.tessface_uv_textures if bpy.app.version > (2, 62, 0 ) else mesh.uv_textures # bmesh
+					uv_textures = mesh.tessface_uv_textures
 					if len(uv_textures) > 0:
 						if uv_textures.active and uv_textures.active.data:
 							uv_layer = uv_textures.active.data
@@ -528,11 +592,7 @@ class GeometryExporter(object):
 	
 	is_preview = False
 	
-	def allow_instancing(self, obj):
-		# Some situations require full geometry export
-		if self.visibility_scene.luxrender_rendermode.renderer == 'hybrid':
-			return False
-		
+	def allow_instancing(self, obj):		
 		# Portals are always instances
 		if obj.type == 'MESH' and obj.data.luxrender_mesh.portal:
 			return True
@@ -561,13 +621,14 @@ class GeometryExporter(object):
 		else:
 			return not self.is_preview
 	
-	def exportShapeDefinition(self, obj, mesh_definition):
+	def exportShapeDefinition(self, obj, mesh_definition, parent=None):
 		"""
 		If the mesh is valid and instancing is allowed for this object, export
 		an objectBegin..objectEnd block containing the Shape definition.
 		"""
 		
 		me_name = mesh_definition[0]
+		me_mat_index = mesh_definition[1]
 		me_shape_type, me_shape_params = mesh_definition[2:4]
 		
 		if len(me_shape_params) == 0: return
@@ -581,9 +642,46 @@ class GeometryExporter(object):
 		if obj.type == 'MESH' and obj.data.luxrender_mesh.portal:
 			self.lux_context.transform( matrix_to_list(obj.matrix_world, apply_worldscale=True) )
 		me_shape_params.add_string('name', obj.name)
+
+		if parent != None:
+			mat_object = parent
+		else:
+			mat_object = obj
+		try:
+			ob_mat = mat_object.material_slots[me_mat_index].material
+		except IndexError:
+			ob_mat = None
+			LuxLog('WARNING: material slot %d on object "%s" is unassigned!' %(me_mat_index+1, mat_object.name))
+
+		#Emission check
+		if ob_mat != None:
+			output_node = find_node(ob_mat, 'luxrender_material_output_node')
+			if ob_mat.luxrender_material.nodetree:
+				object_is_emitter = False
+			if output_node != None:
+				light_socket = output_node.inputs[3]
+				if light_socket.is_linked:
+					light_node = light_socket.links[0].from_node
+					object_is_emitter = light_socket.is_linked
+			else: #no node tree, so check the classic mat editor
+				object_is_emitter = ob_mat.luxrender_emission.use_emission
+			
+			if object_is_emitter:
+				# Only add the AreaLightSource if this object's emission lightgroup is enabled
+				if self.visibility_scene.luxrender_lightgroups.is_enabled(ob_mat.luxrender_emission.lightgroup):
+					if not self.visibility_scene.luxrender_lightgroups.ignore:
+						self.lux_context.lightGroup(ob_mat.luxrender_emission.lightgroup, [])
+					if not ob_mat.luxrender_material.nodetree:
+						self.lux_context.areaLightSource( *ob_mat.luxrender_emission.api_output(ob_mat) )
+					else:
+						# texture exporting
+						tex_maker = luxrender_texture_maker(self.lux_context, ob_mat.luxrender_material.nodetree)
+						self.lux_context.areaLightSource( *light_node.export(tex_maker.make_texture) )
+
 		self.lux_context.shape(me_shape_type, me_shape_params)
+
 		self.lux_context.objectEnd()
-		
+
 		LuxLog('Mesh definition exported: %s' % me_name)
 	
 	def is_object_animated(self, obj, matrix=None):
@@ -669,7 +767,7 @@ class GeometryExporter(object):
 			
 			if ob_mat is not None:
 				
-				# Export material definition && check for emission
+				# Export material definition
 				if self.lux_context.API_TYPE == 'FILE':
 					self.lux_context.set_output_file(Files.MATS)
 					mat_export_result = ob_mat.luxrender_material.export(self.visibility_scene, self.lux_context, ob_mat, mode='indirect')
@@ -679,14 +777,29 @@ class GeometryExporter(object):
 				elif self.lux_context.API_TYPE == 'PURE':
 					mat_export_result = ob_mat.luxrender_material.export(self.visibility_scene, self.lux_context, ob_mat, mode='direct')
 				
-				object_is_emitter = ob_mat.luxrender_emission.use_emission
+				#We need to check the material's output node for a light-emission connection
+				output_node = find_node(ob_mat, 'luxrender_material_output_node')
+				if ob_mat.luxrender_material.nodetree:
+					object_is_emitter = False
+				if output_node != None:
+					light_socket = output_node.inputs[3]
+					if light_socket.is_linked:
+						light_node = light_socket.links[0].from_node
+						object_is_emitter = light_socket.is_linked
+				else: #no node tree, so check the classic mat editor
+					object_is_emitter = ob_mat.luxrender_emission.use_emission
 				
-				if object_is_emitter:
+				if object_is_emitter and not self.allow_instancing(mat_object): #If exporting an instance, we need to set emission in the ObjectBegin/End block
 					# Only add the AreaLightSource if this object's emission lightgroup is enabled
 					if self.visibility_scene.luxrender_lightgroups.is_enabled(ob_mat.luxrender_emission.lightgroup):
 						if not self.visibility_scene.luxrender_lightgroups.ignore:
 							self.lux_context.lightGroup(ob_mat.luxrender_emission.lightgroup, [])
-						self.lux_context.areaLightSource( *ob_mat.luxrender_emission.api_output(ob_mat) )
+						if not ob_mat.luxrender_material.nodetree:
+							self.lux_context.areaLightSource( *ob_mat.luxrender_emission.api_output(ob_mat) )
+						else:
+							# texture exporting
+							tex_maker = luxrender_texture_maker(self.lux_context, ob_mat.luxrender_material.nodetree)
+							self.lux_context.areaLightSource( *light_node.export(tex_maker.make_texture) )
 					else:
 						object_is_emitter = False
 				
@@ -705,8 +818,8 @@ class GeometryExporter(object):
 			
 			self.have_emitting_object |= object_is_emitter
 			
-			# If the object emits, don't export instance or motioninstance, just the Shape
-			if (not self.allow_instancing(mat_object)) or object_is_emitter:
+			# If instancing is forbidden, just export the Shape
+			if not self.allow_instancing(mat_object):
 				self.lux_context.shape(me_shape_type, me_shape_params)
 			# motionInstance for motion blur
 			#elif is_object_animated:
@@ -766,109 +879,302 @@ class GeometryExporter(object):
 		if not psys.settings.type == 'HAIR':
 			LuxLog('ERROR: handler_Duplis_PATH can only handle Hair particle systems ("%s")' % psys.name)
 			return
+	
+		if bpy.context.scene.luxrender_engine.export_hair == False:
+			return
 			
 		for mod in obj.modifiers:
-			if mod.type == 'PARTICLE_SYSTEM' and mod.show_render == False:
-				return
-		
-		# This should force the strand/junction objects to be instanced
-		self.objects_used_as_duplis.add(obj)
-		
+			if mod.type == 'PARTICLE_SYSTEM':
+				if mod.particle_system.name == psys.name:
+					break;
+
+		if not (mod.type == 'PARTICLE_SYSTEM'):
+			return
+		elif not mod.particle_system.name == psys.name or mod.show_render == False:
+			return
+				
 		LuxLog('Exporting Hair system "%s"...' % psys.name)
+
+		size = psys.settings.luxrender_hair.hair_size / 2.0
+		psys.set_resolution(self.geometry_scene, obj, 'RENDER')
+		steps = 2**psys.settings.render_step
+		num_parents = len(psys.particles)
+		num_children = len(psys.child_particles)
+		if num_children == 0:
+			start = 0
+		else:
+			# Number of virtual parents reduces the number of exported children
+			num_virtual_parents = math.trunc(0.3 * psys.settings.virtual_parents * psys.settings.child_nbr * num_parents)
+			start = num_parents + num_virtual_parents
 		
-		size = psys.settings.particle_size / 2.0 / 1000.0 # XXX divide by 2 twice ? Also throw in /1000.0 to scale down to millimeters
-		hair_Junction = (
-			(
-				'HAIR_Junction_%s'%psys.name,
-				psys.settings.material - 1,
-				'sphere',
-				ParamSet().add_float('radius', size/2.0)
-			),
-		)
-		hair_Strand = (
-			(
-				'HAIR_Strand_%s'%psys.name,
-				psys.settings.material - 1,
-				'cylinder',
-				ParamSet() \
-					.add_float('radius', size/2.0) \
-					.add_float('zmin', 0.0) \
-					.add_float('zmax', 1.0)
-			),
-		)
-		
-		for sn, si, st, sp in hair_Junction:
-			self.lux_context.objectBegin(sn)
-			self.lux_context.shape(st, sp)
-			self.lux_context.objectEnd()
-		
-		for sn, si, st, sp in hair_Strand:
-			self.lux_context.objectBegin(sn)
-			self.lux_context.shape(st, sp)
-			self.lux_context.objectEnd()
-		
+		partsys_name = '%s_%s'%(obj.name, psys.name)
 		det = DupliExportProgressThread()
-		det.start(len(psys.particles))
-		
-		for particle in psys.particles:
-			if not (particle.is_exist and particle.is_visible): continue
-			
-			det.exported_objects += 1
-			
+		det.start(num_parents + num_children)
+
+		if psys.settings.luxrender_hair.use_binary_output:
+			# Put HAIR_FILES files in frame-numbered subfolders to avoid
+			# clobbering when rendering animations
+			sc_fr = '%s/%s/%s/%05d' % (efutil.export_path, efutil.scene_filename(), bpy.path.clean_name(self.geometry_scene.name), self.visibility_scene.frame_current)
+			if not os.path.exists( sc_fr ):
+				os.makedirs(sc_fr)
+					
+			hair_filename = '%s.hair' % bpy.path.clean_name(partsys_name)
+			hair_file_path = '/'.join([sc_fr, hair_filename])
+
+			segments = []
 			points = []
-			for j in range(len(particle.hair_keys)):
-				points.append(particle.hair_keys[j].co)
-			if psys.settings.use_hair_bspline:
-				temp = []
-				degree = 2
-				dimension = 3
-				for i in range(math.trunc(math.pow(2,psys.settings.render_step))):
-					if i > 0:
-						u = i*(len(points)- degree)/math.trunc(math.pow(2,psys.settings.render_step)-1)-0.0000000000001
-					else:
-						u = i*(len(points)- degree)/math.trunc(math.pow(2,psys.settings.render_step)-1)
-					temp.append(self.BSpline(points, dimension, degree, u))
-				points = temp
+			thickness = []
+			colors = []
+			uv_coords = []
+			total_segments_count = 0
+			vertex_color_layer = None
+			uv_tex = None
+			colorflag = 0
+			uvflag = 0                      
+			image_width = 0
+			image_height = 0
+			image_pixels = []
 			
-			for j in range(len(points)-1):
-				# transpose SB so we can extract columns
-				# TODO - change when matrix.col is available
-				SB = obj.matrix_basis.transposed().to_3x3()
-				SB = fix_matrix_order(SB) # matrix indexing hack
-				v1 = points[j+1] - points[j]
-				v2 = SB[2].cross(v1)
-				v3 = v1.cross(v2)
-				v2.normalize()
-				v3.normalize()
-				if any(v.length_squared == 0 for v in (v1, v2, v3)):
-					M = SB
-				else:
-					# v1, v2, v3 are the new columns
-					# set as rows, transpose later
-					M = mathutils.Matrix( (v3,v2,v1) )
-					M = fix_matrix_order(M) # matrix indexing hack
-				M = M.transposed().to_4x4()
+			mesh = obj.to_mesh(self.geometry_scene, True, 'RENDER')
+			uv_textures = mesh.tessface_uv_textures
+			vertex_color =  mesh.tessface_vertex_colors
+
+			if psys.settings.luxrender_hair.export_color == 'vertex_color':
+				if vertex_color.active and vertex_color.active.data:
+					vertex_color_layer = vertex_color.active.data
+					colorflag = 1
+
+			if uv_textures.active and uv_textures.active.data:
+				uv_tex = uv_textures.active.data
+				if psys.settings.luxrender_hair.export_color == 'uv_texture_map':
+					if uv_tex[0].image:
+						image_width = uv_tex[0].image.size[0]
+						image_height = uv_tex[0].image.size[1]
+						image_pixels = uv_tex[0].image.pixels[:]
+						colorflag = 1
+				uvflag = 1
+
+			info = 'Created by LuxBlend 2.6 exporter for LuxRender - www.luxrender.net'
+
+			transform = obj.matrix_world.inverted()
+			total_strand_count = 0	
 				
-				Mtrans = mathutils.Matrix.Translation(points[j])
-				matrix = obj.matrix_world * Mtrans * M
+			for pindex in range(start, num_parents + num_children):                        
+				det.exported_objects += 1                               
+				point_count = 0
+				i = 0
+
+				if num_children == 0:
+					i = pindex
+		
+				# A small optimization in order to speedup the export
+				# process: cache the uv_co and color value
+				uv_co = None
+				col = None
+				seg_length = 1.0				
+				for step in range(0, steps):
+					co = psys.co_hair(obj, mod, pindex, step)                               
+					if (step > 0): seg_length = (co-obj.matrix_world*points[len(points)-1]).length_squared 
+					if not (co.length_squared == 0 or seg_length == 0):
+						points.append(transform*co)
+						point_count = point_count + 1
+
+						if uvflag:
+							if not uv_co:
+								uv_co = psys.uv_on_emitter(mod, psys.particles[i], pindex, uv_textures.active_index)
+							uv_coords.append(uv_co)
+
+						if psys.settings.luxrender_hair.export_color == 'uv_texture_map' and not len(image_pixels) == 0:
+							if not col:
+								x_co = round(uv_co[0] * (image_width - 1))
+								y_co = round(uv_co[1] * (image_height - 1))
+							
+								pixelnumber = (image_width * y_co) + x_co
+							
+								r = image_pixels[pixelnumber*4]
+								g = image_pixels[pixelnumber*4+1]
+								b = image_pixels[pixelnumber*4+2]
+								col = (r,g,b)
+							colors.append(col)
+						elif psys.settings.luxrender_hair.export_color == 'vertex_color':
+							if not col:
+								col = psys.mcol_on_emitter(mod, psys.particles[i], pindex, vertex_color.active_index)
+							colors.append(col)
+
+				if point_count == 1:
+					points.pop()
+					point_count = point_count - 1
+				elif point_count > 1:
+					segments.append(point_count - 1)
+					total_strand_count = total_strand_count + 1
+					total_segments_count = total_segments_count + point_count - 1
+			hair_file_path = efutil.path_relative_to_export(hair_file_path)
+			with open(hair_file_path, 'wb') as hair_file:
+				## Binary hair file format from
+				## http://www.cemyuksel.com/research/hairmodels/
+				##
+				##File header
+				hair_file.write(b'HAIR')        #magic number
+				hair_file.write(struct.pack('<I', total_strand_count)) #total strand count
+				hair_file.write(struct.pack('<I', len(points))) #total point count 
+				hair_file.write(struct.pack('<I', 1+2+16*colorflag+32*uvflag)) #bit array for configuration
+				hair_file.write(struct.pack('<I', steps))       #default segments count
+				hair_file.write(struct.pack('<f', size*2))      #default thickness
+				hair_file.write(struct.pack('<f', 0.0))         #default transparency
+				color = (0.65, 0.65, 0.65)
+				hair_file.write(struct.pack('<3f', *color))     #default color
+				hair_file.write(struct.pack('<88s', info.encode())) #information
 				
-				self.exportShapeInstances(
-					obj,
-					hair_Strand,
-					matrix=[matrix,None]
-				)
-				matrix = obj.matrix_world * Mtrans
+				##hair data
+				hair_file.write(struct.pack('<%dH'%(len(segments)), *segments))
+				for point in points:
+					hair_file.write(struct.pack('<3f', *point))
+				if colorflag:
+					for col in colors:
+						hair_file.write(struct.pack('<3f', *col))
+				if uvflag:
+					for uv in uv_coords:
+						hair_file.write(struct.pack('<2f', *uv))
+					
+			LuxLog('Binary hair file written: %s' % (hair_file_path))
+			
+			hair_mat = obj.material_slots[psys.settings.material - 1].material
+
+			#Shape parameters			
+			hair_shape_params = ParamSet()
+			
+			hair_shape_params.add_string('filename', hair_file_path)
+			hair_shape_params.add_string('name', bpy.path.clean_name(partsys_name))
+			hair_shape_params.add_point('camerapos', bpy.context.scene.camera.location)
+			hair_shape_params.add_string('tesseltype', psys.settings.luxrender_hair.tesseltype)
+			hair_shape_params.add_string('acceltype', psys.settings.luxrender_hair.acceltype)
+		
+			if psys.settings.luxrender_hair.tesseltype in ['ribbonadaptive', 'solidadaptive']:
+				hair_shape_params.add_integer('adaptive_maxdepth', psys.settings.luxrender_hair.adaptive_maxdepth)
+				hair_shape_params.add_float('adaptive_error', psys.settings.luxrender_hair.adaptive_error)
+	
+			if psys.settings.luxrender_hair.tesseltype in ['solid', 'solidadaptive']:
+				hair_shape_params.add_integer('solid_sidecount', psys.settings.luxrender_hair.solid_sidecount)
+				hair_shape_params.add_bool('solid_capbottom', psys.settings.luxrender_hair.solid_capbottom)
+				hair_shape_params.add_bool('solid_captop', psys.settings.luxrender_hair.solid_captop)
+			
+ 			# Export shape definition to .LXO file			
+			self.lux_context.attributeBegin('hairfile_%s'%partsys_name)
+			self.lux_context.transform( matrix_to_list(obj.matrix_world, apply_worldscale=True) )
+			self.lux_context.namedMaterial(hair_mat.name)
+			self.lux_context.shape('hairfile', hair_shape_params)
+			self.lux_context.attributeEnd()
+			self.lux_context.set_output_file(Files.MATS)
+			mat_export_result = hair_mat.luxrender_material.export(self.visibility_scene, self.lux_context, hair_mat, mode='indirect')
+			self.lux_context.set_output_file(Files.GEOM)
+	
+		else:
+			#Old export with cylinder and sphere primitives
+			# This should force the strand/junction objects to be instanced
+			self.objects_used_as_duplis.add(obj)
+			hair_Junction = (
+				(
+					'HAIR_Junction_%s'%partsys_name,
+					psys.settings.material - 1,
+					'sphere',
+					ParamSet().add_float('radius', size)
+				),
+			)
+			hair_Strand = (
+				(
+					'HAIR_Strand_%s'%partsys_name,
+					psys.settings.material - 1,
+					'cylinder',
+					ParamSet() \
+						.add_float('radius', size) \
+						.add_float('zmin', 0.0) \
+						.add_float('zmax', 1.0)
+				),
+			)
+		
+			for sn, si, st, sp in hair_Junction:
+				self.lux_context.objectBegin(sn)
+				self.lux_context.shape(st, sp)
+				self.lux_context.objectEnd()
+		
+			for sn, si, st, sp in hair_Strand:
+				self.lux_context.objectBegin(sn)
+				self.lux_context.shape(st, sp)
+				self.lux_context.objectEnd()
 				
+			for pindex in range(num_parents + num_children):
+				det.exported_objects += 1
+				points = []
+
+				for step in range(0,steps):
+					co = psys.co_hair(obj, mod, pindex, step)
+					if not co.length_squared == 0:
+						points.append(co)
+						
+				if psys.settings.use_hair_bspline:
+					temp = []
+					degree = 2
+					dimension = 3
+					for i in range(math.trunc(math.pow(2,psys.settings.render_step))):
+						if i > 0:
+							u = i*(len(points)- degree)/math.trunc(math.pow(2,psys.settings.render_step)-1)-0.0000000000001
+						else:
+							u = i*(len(points)- degree)/math.trunc(math.pow(2,psys.settings.render_step)-1)
+						temp.append(self.BSpline(points, dimension, degree, u))
+					points = temp
+			
+				for j in range(len(points)-1):
+					# transpose SB so we can extract columns
+					# TODO - change when matrix.col is available
+					SB = obj.matrix_basis.transposed().to_3x3()
+					SB = fix_matrix_order(SB) # matrix indexing hack
+					v1 = points[j+1] - points[j]
+					v2 = SB[2].cross(v1)
+					v3 = v1.cross(v2)
+					v2.normalize()
+					v3.normalize()
+					if any(v.length_squared == 0 for v in (v1, v2, v3)):
+						#Use standard basis and scale according to segment length
+						M = SB
+						v = v1+v2+v3
+						scale = v.length
+						v.normalize()						
+						M = mathutils.Matrix.Scale(abs(scale),3,v)*M						
+					else:
+						# v1, v2, v3 are the new columns
+						# set as rows, transpose later
+						M = mathutils.Matrix( (v3,v2,v1) )
+						M = fix_matrix_order(M) # matrix indexing hack
+					M = M.transposed().to_4x4()
+					
+					Mtrans = mathutils.Matrix.Translation(points[j])
+					matrix = Mtrans * M
+				
+					self.exportShapeInstances(
+						obj,
+						hair_Strand,
+						matrix=[matrix,None]
+					)
+					
+					self.exportShapeInstances(
+						obj,
+						hair_Junction,
+						matrix=[Mtrans,None]
+					)
+
+				matrix = mathutils.Matrix.Translation(points[len(points)-1])
 				self.exportShapeInstances(
 					obj,
 					hair_Junction,
 					matrix=[matrix,None]
 				)
 		
+		psys.set_resolution(self.geometry_scene, obj, 'PREVIEW')
 		det.stop()
 		det.join()
 		
 		LuxLog('... done, exported %s hairs' % det.exported_objects)
+
 	
 	def handler_Duplis_GENERIC(self, obj, *args, **kwargs):
 		try:
@@ -977,11 +1283,6 @@ class GeometryExporter(object):
 				
 				if obj.parent and obj.parent.is_duplicator:
 					raise UnexportableObjectException(' -> parent is duplicator')
-				
-				for mod in obj.modifiers:
-					if mod.name == 'Smoke':
-						if mod.smoke_type == 'DOMAIN':
-							raise UnexportableObjectException(' -> Smoke domain')
 				
 				number_psystems = len(obj.particle_systems)
 				

@@ -677,7 +677,7 @@ class luxrender_film(declarative_property_group):
 			'attr': 'outlierrejection_k',
 			'name': 'Firefly rejection',
 			'description': 'Firefly (outlier) rejection k parameter. 0=disabled',
-			'default': 5,
+			'default': 2,
 			'min': 0,
 			'soft_min': 0,
 		},
@@ -698,7 +698,8 @@ class luxrender_film(declarative_property_group):
 			'items': [
 				('lum', 'Luminosity', 'Preserve luminosity'),
 				('hue', 'Hue', 'Preserve hue'),
-				('cut', 'Cut', 'Clip channels individually')
+				('cut', 'Cut', 'Clip channels individually'),
+				('darken', 'Darken', 'Darken highlights')
 			],
 			'default': 'cut'
 		},
@@ -790,7 +791,7 @@ class luxrender_film(declarative_property_group):
 		params.add_float('colorspace_blue',		[cs_object.cs_blueX,	cs_object.cs_blueY])
 		
 		# Camera Response Function
-		if LUXRENDER_VERSION >= '0.8' and self.luxrender_colorspace.use_crf == 'file':
+		if self.luxrender_colorspace.use_crf == 'file'and self.luxrender_colorspace.crf_file != '':
 			if scene.camera.library is not None:
 				local_crf_filepath = bpy.path.abspath(self.luxrender_colorspace.crf_file, scene.camera.library.filepath)
 			else:
@@ -803,7 +804,7 @@ class luxrender_film(declarative_property_group):
 				params.add_string('cameraresponse_data', encoded_data.splitlines() )
 			else:
 				params.add_string('cameraresponse', local_crf_filepath)
-		if LUXRENDER_VERSION >= '0.8' and self.luxrender_colorspace.use_crf == 'preset':
+		if self.luxrender_colorspace.use_crf == 'preset':
 			params.add_string('cameraresponse', self.luxrender_colorspace.crf_preset)
 		
 		# Output types
@@ -814,7 +815,7 @@ class luxrender_film(declarative_property_group):
 		
 		if self.output_alpha:
 			output_channels = 'RGBA'
-			params.add_bool('premultiplyalpha', self.premultiply_alpha)
+			params.add_bool('premultiplyalpha', True)
 		else:
 			output_channels = 'RGB'
 								
@@ -865,7 +866,7 @@ class luxrender_film(declarative_property_group):
 			params.add_integer('halttime', scene.luxrender_halt.halttime)
 
 		if scene.luxrender_halt.haltthreshold > 0:
-			params.add_float('haltthreshold', 1 - ( scene.luxrender_halt.haltthreshold / 100.00 ))
+			params.add_float('haltthreshold', 1 / 10.0**scene.luxrender_halt.haltthreshold)
 		
 		# Convergence Test
 		if scene.luxrender_halt.convergencestep != 32:
@@ -988,15 +989,11 @@ class luxrender_colorspace(declarative_property_group):
 		
 		'gamma_label',
 		'gamma',
-	]
-	
-	if LUXRENDER_VERSION >= '0.8':
-		controls.extend([
-			'crf_label',
-			'use_crf',
-			'crf_preset_menu',
-			'crf_file'
-		])
+		'crf_label',
+		'use_crf',
+		'crf_preset_menu',
+		'crf_file'
+		]
 	
 	visibility = {
 		'preset_name':		{ 'preset': True },
@@ -1283,11 +1280,12 @@ class luxrender_tonemapping(declarative_property_group):
 			'description': 'Choose tonemapping type',
 			'default': 'autolinear',
 			'items': [
-				('reinhard', 'Reinhard', 'reinhard'),
-				('linear', 'Linear (manual)', 'linear'),
-				('autolinear', 'Linear (auto-exposure)', 'autolinear'),
-				('contrast', 'Contrast', 'contrast'),
-				('maxwhite', 'Maxwhite', 'maxwhite')
+				('reinhard', 'Reinhard', 'Reinhard non-linear tonemapping'),
+				('linear', 'Linear (manual)', 'Linear tonemapping using camera controls'),
+				('autolinear', 'Linear (auto-exposure)', 'Simple auto-exposure'),
+				('contrast', 'Contrast', 'Scaleable contrast-based tonemapping'),
+				('maxwhite', 'Maxwhite', 'Set brightest pixel as RGB 1.0'),
+				('falsecolors', 'False Colors', 'Convert image to a false color readout of irradiance levels')
 			]
 		},
 		

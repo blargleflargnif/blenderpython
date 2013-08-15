@@ -30,6 +30,7 @@ import bpy
 from extensions_framework import declarative_property_group
 
 from .. import LuxRenderAddon
+from ..properties import find_node
 from ..properties.texture import (
 	FloatTextureParameter, ColorTextureParameter, FresnelTextureParameter,
 	import_paramset_to_blender_texture, shorten_name, refresh_preview
@@ -111,16 +112,16 @@ TF_R1					= FloatTextureParameter('R1', 'R1',									add_float_value=True, min=
 TF_R2					= FloatTextureParameter('R2', 'R2',									add_float_value=True, min=0.00001, max=1.0, default=0.90 )
 TF_R3					= FloatTextureParameter('R3', 'R3',									add_float_value=True, min=0.00001, max=1.0, default=0.7 )
 TF_sigma				= FloatTextureParameter('sigma', 'Sigma',							add_float_value=True, min=0.0, max=45.0 )
-TF_uroughness			= FloatTextureParameter('uroughness', 'U-Roughness',				add_float_value=True, min=0.00001, max=0.8, default=0.075 )
-TF_uexponent			= FloatTextureParameter('uexponent', 'U-Exponent',					add_float_value=True, min=1.0, max=1000000, default=353.556 )
-TF_vroughness			= FloatTextureParameter('vroughness', 'V-Roughness',				add_float_value=True, min=0.00001, max=0.8, default=0.075 )
-TF_vexponent			= FloatTextureParameter('vexponent', 'V-Exponent',					add_float_value=True, min=1.0, max=1000000, default=353.556 )
+TF_uroughness			= FloatTextureParameter('uroughness', 'U-Roughness',				add_float_value=True, min=0.000001, max=0.8, default=0.075 )
+TF_uexponent			= FloatTextureParameter('uexponent', 'U-Exponent',					add_float_value=True, min=1.0, max=1000000000000, default=353.556 )
+TF_vroughness			= FloatTextureParameter('vroughness', 'V-Roughness',				add_float_value=True, min=0.000001, max=0.8, default=0.075 )
+TF_vexponent			= FloatTextureParameter('vexponent', 'V-Exponent',					add_float_value=True, min=1.0, max=1000000000000, default=353.556 )
 TF_backface_d			= FloatTextureParameter('bf_d', 'Backface absorption depth (nm)',	real_attr='backface_d', add_float_value=True, default=0.0, min=0.0, max=1500.0 ) # default 0.0 for OFF
 TF_backface_index		= FloatTextureParameter('bf_index', 'Backface IOR',					real_attr='backface_index', add_float_value=True, min=0.0, max=25.0, default=1.333333)
 TF_backface_uroughness	= FloatTextureParameter('bf_uroughness', 'Backface U-Roughness',	real_attr='backface_uroughness', add_float_value=True, min=0.00001, max=1.0, default=0.25 ) #backface roughness is high than front by default, will usually be for backs of leaves or cloth
-TF_backface_uexponent	= FloatTextureParameter('bf_uexponent', 'Backface U-Exponent',		real_attr='backface_uexponent', add_float_value=True, min=1.0, max=1000000, default=30 )
+TF_backface_uexponent	= FloatTextureParameter('bf_uexponent', 'Backface U-Exponent',		real_attr='backface_uexponent', add_float_value=True, min=1.0, max=1000000000000, default=30 )
 TF_backface_vroughness	= FloatTextureParameter('bf_vroughness', 'Backface V-Roughness',	real_attr='backface_vroughness', add_float_value=True, min=0.00001, max=1.0, default=0.25 )
-TF_backface_vexponent	= FloatTextureParameter('bf_vexponent', 'Backface V-Exponent',		real_attr='backface_vexponent',	add_float_value=True, min=1.0, max=1000000, default=30 )
+TF_backface_vexponent	= FloatTextureParameter('bf_vexponent', 'Backface V-Exponent',		real_attr='backface_vexponent',	add_float_value=True, min=1.0, max=1000000000000, default=30 )
 #These are for the layered mat:
 TF_OP1					= FloatTextureParameter('opacity1', 'Opacity 1',					add_float_value=True, default=1.0, min=0.0, max=1.0 )
 TF_OP2					= FloatTextureParameter('opacity2', 'Opacity 2',					add_float_value=True, default=1.0, min=0.0, max=1.0 )
@@ -351,6 +352,7 @@ class luxrender_material(declarative_property_group):
 	
 	controls = [
 		# Type select Menu is drawn manually
+		#'nodetree', drawn manually
 		'Interior',
 		'Exterior',
 #		'generatetangents' TODO: Make this checkbox actually do something (it has to write a line to the mesh definition)
@@ -396,6 +398,13 @@ class luxrender_material(declarative_property_group):
 		'step': 25,
 		'default': 1.0
 		},
+		{
+		'attr': 'nodetree',
+		'type': 'string',
+		'description': 'Node tree',
+		'name': 'Node Tree',
+		'default': ''
+		},
 #		{
 #			'type': 'bool',
 #			'attr': 'generatetangents',
@@ -432,6 +441,7 @@ class luxrender_material(declarative_property_group):
 		'velvet': 'Kd',
 	}
 	
+	
 	def reset(self, prnt=None):
 		super().reset()
 		# Also reset sub-property groups
@@ -459,10 +469,28 @@ class luxrender_material(declarative_property_group):
 			if blender_material.diffuse_color != submat_col:
 				blender_material.diffuse_color = submat_col
 	
-	def export(self, scene, lux_context, material, mode='indirect'):
+	def exportNodetree(self, scene, lux_context, material, mode):
+		outputNode = find_node(material, 'luxrender_material_output_node')
 		
-		if scene.luxrender_testing.clay_render and self.type not in ['glass', 'glass2']:
+		print('outputNode: ', outputNode)
+		
+		if outputNode is None:
+			return set()
+			
+		
+		return outputNode.export(scene, lux_context, material, mode)
+		
+	
+	def export(self, scene, lux_context, material, mode='indirect'):
+		mat_is_transparent = False
+		if self.type in ['glass', 'glass2', 'null']:
+			mat_is_transparent == True
+		
+		if scene.luxrender_testing.clay_render and mat_is_transparent == False:
 			return {'CLAY'}
+		
+		if self.nodetree != '':
+			return self.exportNodetree(scene, lux_context, material, mode)
 		
 		with MaterialCounter(material.name):
 			if not (mode=='indirect' and material.name in ExportedMaterials.exported_material_names):
@@ -480,7 +508,7 @@ class luxrender_material(declarative_property_group):
 					
 					m2 = bpy.data.materials[m2_name]
 					m2.luxrender_material.export(scene, lux_context, m2, 'indirect')
-
+				
 				if self.type == 'glossycoating':
 					bm_name = self.luxrender_mat_glossycoating.basematerial_material
 					if bm_name == '':
@@ -744,7 +772,7 @@ class luxrender_mat_compositing(declarative_property_group):
 		{
 			'type': 'bool',
 			'attr': 'use_compositing',
-			'name': 'Use compositing settings',
+			'name': 'Use Compositing Settings',
 			'default': False,
 			'save_in_preset': True
 		},
@@ -753,12 +781,14 @@ class luxrender_mat_compositing(declarative_property_group):
 			'attr': 'visible_material',
 			'name': 'Visible Material',
 			'default': True,
+			'description': 'Disable to render this material as a holdout (mask). The normal material will still be visible in reflections and GI',
 			'save_in_preset': True
 		},
 		{
 			'type': 'bool',
 			'attr': 'visible_emission',
 			'name': 'Visible Emission',
+			'description': 'If disabled, an emitting object will not appear to shine, even when acting as a light emitter',
 			'default': True,
 			'save_in_preset': True
 		},
@@ -766,6 +796,7 @@ class luxrender_mat_compositing(declarative_property_group):
 			'type': 'bool',
 			'attr': 'visible_indirect_material',
 			'name': 'Visible Indirect Material',
+ 			'description': 'Disable to hide this object from GI',
 			'default': True,
 			'save_in_preset': True
 		},
@@ -773,6 +804,7 @@ class luxrender_mat_compositing(declarative_property_group):
 			'type': 'bool',
 			'attr': 'visible_indirect_emission',
 			'name': 'Visible Indirect Emission',
+			'description': 'If disabled, an emitting object will not cast light, even though it appears to shine when viewed directly',
 			'default': True,
 			'save_in_preset': True
 		},
@@ -780,6 +812,7 @@ class luxrender_mat_compositing(declarative_property_group):
 			'type': 'bool',
 			'attr': 'override_alpha',
 			'name': 'Override Alpha',
+			'description': 'If enabled along with disabling visible-direct, the resulting alpha value will the value set below rather than 0',
 			'default': False,
 			'save_in_preset': True
 		},
@@ -788,6 +821,7 @@ class luxrender_mat_compositing(declarative_property_group):
 			'attr': 'override_alpha_value',
 			'name': 'Override Alpha Value',
 			'default': 0.0,
+			'description': 'Alternate alpha value to use with Override-Alpha',
 			'min': 0.0,
 			'soft_min': 0.0,
 			'max': 1.0,
@@ -1168,10 +1202,10 @@ class CoatingFloatTextureParameter(FloatTextureParameter):
 # Float Textures
 TF_c_d					= CoatingFloatTextureParameter('d', 'Absorption depth (nm)',		add_float_value=True, default=0.0, min=0.0, max=2500.0 ) # default 0.0 for OFF
 TF_c_index				= CoatingFloatTextureParameter('index', 'IOR',						add_float_value=True, min=0.0, max=25.0, default=1.520) #default of something other than 1.0 so glass and roughglass render propery with defaults
-TF_c_uroughness			= CoatingFloatTextureParameter('uroughness', 'U-Roughness',			add_float_value=True, min=0.00001, max=0.8, default=0.075 )
-TF_c_uexponent			= CoatingFloatTextureParameter('uexponent', 'U-Exponent',			add_float_value=True, min=1.0, max=1000000, default=353.556 )
-TF_c_vroughness			= CoatingFloatTextureParameter('vroughness', 'V-Roughness',			add_float_value=True, min=0.00001, max=0.8, default=0.075 )
-TF_c_vexponent			= CoatingFloatTextureParameter('vexponent', 'V-Exponent',			add_float_value=True, min=1.0, max=1000000, default=353.556 )
+TF_c_uroughness			= CoatingFloatTextureParameter('uroughness', 'U-Roughness',			add_float_value=True, min=0.000001, max=0.8, default=0.075 )
+TF_c_uexponent			= CoatingFloatTextureParameter('uexponent', 'U-Exponent',			add_float_value=True, min=1.0, max=1000000000000, default=353.556 )
+TF_c_vroughness			= CoatingFloatTextureParameter('vroughness', 'V-Roughness',			add_float_value=True, min=0.000001, max=0.8, default=0.075 )
+TF_c_vexponent			= CoatingFloatTextureParameter('vexponent', 'V-Exponent',			add_float_value=True, min=1.0, max=1000000000000, default=353.556 )
 TF_c_bumpmap			= CoatingFloatTextureParameter('bumpmap', 'Bump Map',				add_float_value=True, min=-5.0, max=5.0, default=0.01, precision=6, multiply_float=True, ignore_unassigned=True, subtype='DISTANCE', unit='LENGTH' )
 TF_c_normalmap			= CoatingFloatTextureParameter('normalmap', 'Normal Map',			add_float_value=True, min=-5.0, max=5.0, default=1.0, precision=6, multiply_float=False, ignore_unassigned=True)
 
@@ -1213,12 +1247,12 @@ class luxrender_coating(declarative_property_group):
 	visibility = dict_merge(
 		{
 
-			'multibounce':      { 'use_coating': True },
+			'multibounce':	  { 'use_coating': True },
 
-			'useior':           { 'use_coating': True },
-			'draw_ior_menu':    { 'use_coating': True, 'useior': True },
-			'anisotropic':      { 'use_coating': True },
-			'use_exponent':     { 'use_coating': True }
+			'useior':		   { 'use_coating': True },
+			'draw_ior_menu':	{ 'use_coating': True, 'useior': True },
+			'anisotropic':	  { 'use_coating': True },
+			'use_exponent':	 { 'use_coating': True }
 		},
 		TF_c_d.visibility,
 		TF_c_index.visibility,
@@ -1237,16 +1271,16 @@ class luxrender_coating(declarative_property_group):
 	enabled = texture_append_visibility(enabled, TF_c_vexponent,  { 'use_coating': True, 'anisotropic': True })
 	
 	visibility = texture_append_visibility(visibility, TF_c_normalmap,  { 'use_coating': True })
-	visibility = texture_append_visibility(visibility, TF_c_bumpmap,    { 'use_coating': True })
+	visibility = texture_append_visibility(visibility, TF_c_bumpmap,	{ 'use_coating': True })
 	visibility = texture_append_visibility(visibility, TF_c_uroughness, { 'use_coating': True, 'use_exponent': False })
 	visibility = texture_append_visibility(visibility, TF_c_vroughness, { 'use_coating': True, 'use_exponent': False })
 	visibility = texture_append_visibility(visibility, TF_c_uexponent,  { 'use_coating': True, 'use_exponent': True })
 	visibility = texture_append_visibility(visibility, TF_c_vexponent,  { 'use_coating': True, 'use_exponent': True })
 
-	visibility = texture_append_visibility(visibility, TC_c_Ks,    { 'use_coating': True, 'useior': False })
+	visibility = texture_append_visibility(visibility, TC_c_Ks,	{ 'use_coating': True, 'useior': False })
 	visibility = texture_append_visibility(visibility, TF_c_index, { 'use_coating': True, 'useior': True })
-	visibility = texture_append_visibility(visibility, TC_c_Ka,    { 'use_coating': True })
-	visibility = texture_append_visibility(visibility, TF_c_d,     { 'use_coating': True })
+	visibility = texture_append_visibility(visibility, TC_c_Ka,	{ 'use_coating': True })
+	visibility = texture_append_visibility(visibility, TF_c_d,	 { 'use_coating': True })
 	
 	properties = [
 		{	# Drawn in the panel header
@@ -1956,7 +1990,6 @@ class luxrender_mat_mattetranslucent(declarative_property_group):
 	
 	def get_paramset(self, material):
 		mattetranslucent_params = ParamSet()
-		
 		mattetranslucent_params.add_bool('energyconserving', self.energyconserving)
 		mattetranslucent_params.update( TC_Kr.get_paramset(self) )
 		mattetranslucent_params.update( TC_Kt.get_paramset(self) )
@@ -2459,11 +2492,11 @@ class luxrender_mat_metal(declarative_property_group):
 			'description': 'Metal type to use, select "Use NK file" to input external metal data',
 			'items': [
 				('nk', 'Use NK file', 'nk'),
-				('amorphous carbon', 'amorphous carbon', 'amorphous carbon'),
-				('copper', 'copper', 'copper'),
-				('gold', 'gold', 'gold'),
-				('silver', 'silver', 'silver'),
-				('aluminium', 'aluminium', 'aluminium')
+				('amorphous carbon', 'Amorphous carbon', 'amorphous carbon'),
+				('copper', 'Copper', 'copper'),
+				('gold', 'Gold', 'gold'),
+				('silver', 'Silver', 'silver'),
+				('aluminium', 'Aluminium', 'aluminium')
 			],
 			'default': 'aluminium',
 			'save_in_preset': True
@@ -2604,11 +2637,11 @@ class luxrender_mat_metal2(declarative_property_group):
 			'name': 'Preset',
 			'description': 'Metal type to use',
 			'items': [
-				('amorphous carbon', 'amorphous carbon', 'amorphous carbon'),
-				('copper', 'copper', 'copper'),
-				('gold', 'gold', 'gold'),
-				('silver', 'silver', 'silver'),
-				('aluminium', 'aluminium', 'aluminium')
+				('amorphous carbon', 'Amorphous carbon', 'amorphous carbon'),
+				('copper', 'Copper', 'copper'),
+				('gold', 'Gold', 'gold'),
+				('silver', 'Silver', 'silver'),
+				('aluminium', 'Aluminium', 'aluminium')
 			],
 			'default': 'aluminium',
 			'save_in_preset': True

@@ -18,13 +18,13 @@
 
 bl_info = {
     "name": "Amaranth Toolset",
-    "author": "Pablo Vazquez",
-    "version": (0, 3),
-    "blender": (2, 7, 0),
+    "author": "Pablo Vazquez, Bassam Kurdali, Sergey Sharybin",
+    "version": (0, 5),
+    "blender": (2, 68),
     "location": "Scene Properties > Amaranth Toolset Panel",
     "description": "A collection of tools and settings to improve productivity",
     "warning": "",
-    "wiki_url": "",
+    "wiki_url": "http://pablovazquez.org/amaranth",
     "tracker_url": "",
     "category": "Scene"}
 
@@ -32,6 +32,64 @@ bl_info = {
 import bpy
 from bpy.types import Operator
 from mathutils import Vector
+from bpy.app.handlers import persistent
+
+# Properties
+def init_properties():
+
+    scene = bpy.types.Scene
+    node = bpy.types.Node
+    nodes_compo = bpy.types.CompositorNodeTree
+
+    scene.use_frame_current = bpy.props.BoolProperty(default=True)
+    scene.use_scene_refresh = bpy.props.BoolProperty(default=True)
+    scene.use_file_save_reload = bpy.props.BoolProperty(default=True)
+    scene.use_timeline_extra_info = bpy.props.BoolProperty(default=True)
+    scene.use_image_node_display = bpy.props.BoolProperty(default=True)
+
+    scene.use_unsimplify_render = bpy.props.BoolProperty(
+        default=False,
+        name="Unsimplify Render",
+        description="Disable Simplify during render")
+    scene.simplify_status = bpy.props.BoolProperty(default=False)
+
+    node.use_matching_indices = bpy.props.BoolProperty(
+        default=True,
+        description="If disabled, display all available indices")
+
+    test_items = [
+        ("ALL", "All Types", "", 0),
+        ("BLUR", "Blur", "", 1),
+        ("BOKEHBLUR", "Bokeh Blur", "", 2),
+        ("VECBLUR", "Vector Blur", "", 3),
+        ("DEFOCUS", "Defocus", "", 4),
+        ("R_LAYERS", "Render Layer", "", 5)
+        ]
+
+    nodes_compo.types = bpy.props.EnumProperty(
+        items=test_items, name = "Types")
+
+    nodes_compo.toggle_mute = bpy.props.BoolProperty(default=False)
+    node.status = bpy.props.BoolProperty(default=False)
+
+
+def clear_properties():
+    props = (
+        "use_frame_current",
+        "use_scene_refresh",
+        "use_file_save_reload",
+        "use_timeline_extra_info",
+        "use_unsimplify_render",
+        "simplify_status",
+        "use_matching_indices",
+        "use_simplify_nodes_vector",
+        "status"
+    )
+    
+    wm = bpy.context.window_manager
+    for p in props:
+        if p in wm:
+            del wm[p]
 
 # FEATURE: Refresh Scene!
 class SCENE_OT_refresh(Operator):
@@ -51,9 +109,10 @@ class SCENE_OT_refresh(Operator):
 def button_refresh(self, context):
 
     scene = context.scene
+    layout = self.layout
     if scene.use_scene_refresh:
-        self.layout.separator()
-        self.layout.operator(
+        layout.separator()
+        layout.operator(
             SCENE_OT_refresh.bl_idname,
             text="Refresh!",
             icon='FILE_REFRESH')
@@ -69,7 +128,7 @@ def save_reload(self, context, path):
     else:
         bpy.ops.wm.save_as_mainfile("INVOKE_AREA")
 
-class FILE_OT_save_reload(Operator):
+class WM_OT_save_reload(Operator):
     """Save and Reload the current blend file"""
     bl_idname = "wm.save_reload"
     bl_label = "Save & Reload"
@@ -86,10 +145,11 @@ class FILE_OT_save_reload(Operator):
 def button_save_reload(self, context):
 
     scene = context.scene
+    layout = self.layout
     if scene.use_file_save_reload:
-        self.layout.separator()
-        self.layout.operator(
-            FILE_OT_save_reload.bl_idname,
+        layout.separator()
+        layout.operator(
+            WM_OT_save_reload.bl_idname,
             text="Save & Reload",
             icon='FILE_REFRESH')
 # // FEATURE: Save & Reload
@@ -112,13 +172,22 @@ def label_timeline_extra_info(self, context):
     scene = context.scene
     if scene.use_timeline_extra_info:
         row = layout.row(align=True)
-        row.label(text="%s / %s" % (bpy.utils.smpte_from_frame(scene.frame_current - scene.frame_start),
-                        bpy.utils.smpte_from_frame(scene.frame_end - scene.frame_start)), icon="TIME")
 
-        if (scene.frame_current > scene.frame_end):
-            row.label(text="%s Frames Too Much" % (scene.frame_end - scene.frame_current))
+        # Check for preview range
+        frame_start = scene.frame_preview_start if scene.use_preview_range else scene.frame_start
+        frame_end = scene.frame_preview_end if scene.use_preview_range else scene.frame_end
+        
+        row.label(text="%s / %s" % (bpy.utils.smpte_from_frame(scene.frame_current - frame_start),
+                        bpy.utils.smpte_from_frame(frame_end - frame_start)))
+
+        if (scene.frame_current > frame_end):
+            row.label(text="%s Frames Ahead" % ((frame_end - scene.frame_current) * -1))
+        elif (scene.frame_current == frame_start):
+            row.label(text="%s Start Frame" % scene.frame_current)
+        elif (scene.frame_current == frame_end):
+            row.label(text="%s End Frame" % scene.frame_current)
         else:
-            row.label(text="%s Frames Left" % (scene.frame_end - scene.frame_current))
+            row.label(text="%s Frames Left" % (frame_end - scene.frame_current))
 
 # // FEATURE: Timeline Time + Frames Left
 
@@ -151,7 +220,9 @@ class NODE_OT_AddTemplateVignette(Operator):
     @classmethod
     def poll(cls, context):
         space = context.space_data
-        return space.type == 'NODE_EDITOR' and space.node_tree is not None
+        return space.type == 'NODE_EDITOR' \
+                and space.node_tree is not None \
+                and space.tree_type == 'CompositorNodeTree'
 
     # used as reference the setup scene script from master nazgul
     def _setupNodes(self, context):
@@ -236,6 +307,100 @@ def node_templates_pulldown(self, context):
     row.menu("NODE_MT_amaranth_templates",
         icon="RADIO")
 # // FEATURE: Node Templates
+
+def node_stats(self,context):
+    if context.scene.node_tree:
+        tree_type = context.space_data.tree_type
+        nodes = context.scene.node_tree.nodes
+        nodes_total = len(nodes.keys())
+        nodes_selected = 0
+        for n in nodes:
+            if n.select:
+                nodes_selected = nodes_selected + 1
+
+        if tree_type == 'CompositorNodeTree':
+            layout = self.layout
+            row = layout.row(align=True)
+            row.label(text="Nodes: %s/%s" % (nodes_selected, str(nodes_total)))
+
+# FEATURE: Simplify Compo Nodes
+class NODE_PT_simplify(bpy.types.Panel):
+    '''Simplify Compositor Panel'''
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = 'Simplify'
+#    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        node_tree = context.scene.node_tree
+
+        if node_tree is not None:
+            layout.prop(node_tree, 'types')
+            layout.operator(NODE_OT_toggle_mute.bl_idname,
+                text="Turn On" if node_tree.toggle_mute else "Turn Off",
+                icon='RESTRICT_VIEW_OFF' if node_tree.toggle_mute else 'RESTRICT_VIEW_ON')
+        
+            if node_tree.types == 'VECBLUR':
+                layout.label(text="This will also toggle the Vector pass {}".format(
+                                    "on" if node_tree.toggle_mute else "off"), icon="INFO")
+
+class NODE_OT_toggle_mute(Operator):
+    """"""
+    bl_idname = "node.toggle_mute"
+    bl_label = "Toggle Mute"
+
+    def execute(self, context):
+        scene = context.scene
+        node_tree = scene.node_tree
+        node_type = node_tree.types
+        rlayers = scene.render
+        
+        if not 'amaranth_pass_vector' in scene.keys():
+            scene['amaranth_pass_vector'] = []
+        
+        #can't extend() the list, so make a dummy one
+        pass_vector = scene['amaranth_pass_vector']
+
+        if not pass_vector:
+            pass_vector = []
+
+        if node_tree.toggle_mute:
+            for node in node_tree.nodes:
+                if node_type == 'ALL':
+                    node.mute = node.status
+                if node.type == node_type:
+                    node.mute = node.status
+                if node_type == 'VECBLUR':
+                    for layer in rlayers.layers:
+                        if layer.name in pass_vector:
+                            layer.use_pass_vector = True
+                            pass_vector.remove(layer.name)
+
+                node_tree.toggle_mute = False
+
+        else:
+            for node in node_tree.nodes:
+                if node_type == 'ALL':
+                    node.mute = True
+                if node.type == node_type:
+                    node.status = node.mute
+                    node.mute = True
+                if node_type == 'VECBLUR':
+                    for layer in rlayers.layers:
+                        if layer.use_pass_vector:
+                            pass_vector.append(layer.name)
+                            layer.use_pass_vector = False
+                            pass
+
+                node_tree.toggle_mute = True
+
+        # Write back to the custom prop
+        pass_vector = sorted(set(pass_vector))
+        scene['amaranth_pass_vector'] = pass_vector
+
+        return {'FINISHED'}
+        
 
 # FEATURE: OB/MA ID panel in Node Editor
 class NODE_PT_indices(bpy.types.Panel):
@@ -359,6 +524,194 @@ class NODE_PT_indices(bpy.types.Panel):
 
 # // FEATURE: OB/MA ID panel in Node Editor
 
+# FEATURE: Unsimplify on render
+@persistent
+def unsimplify_render_pre(scene):
+    render = scene.render
+    scene.simplify_status = render.use_simplify
+
+    if scene.use_unsimplify_render:
+        render.use_simplify = False
+
+@persistent
+def unsimplify_render_post(scene):
+    render = scene.render
+    render.use_simplify = scene.simplify_status
+
+def unsimplify_ui(self,context):
+    scene = bpy.context.scene
+    self.layout.prop(scene, 'use_unsimplify_render')
+# //FEATURE: Unsimplify on render
+
+# FEATURE: Extra Info Stats
+def stats_scene(self, context):
+    scenes_count = str(len(bpy.data.scenes))
+    cameras_count = str(len(bpy.data.cameras))
+    cameras_selected = 0
+    meshlights = 0
+    meshlights_visible = 0
+
+    for ob in context.scene.objects:
+        if ob.material_slots:
+            for ma in ob.material_slots:
+                if ma.material:
+                    if ma.material.node_tree:
+                        for no in ma.material.node_tree.nodes:
+                            if no.type == 'EMISSION':
+                                meshlights = meshlights + 1
+                                if ob in context.visible_objects:
+                                    meshlights_visible = meshlights_visible + 1
+                                break
+        if ob in context.selected_objects:
+            if ob.type == 'CAMERA':
+                cameras_selected = cameras_selected + 1
+
+    meshlights_string = '| Meshlights:{}/{}'.format(meshlights_visible, meshlights)
+
+    row = self.layout.row(align=True)
+    row.label(text="Scenes:{} | Cameras:{}/{} {}".format(
+               scenes_count, cameras_selected, cameras_count,
+               meshlights_string if context.scene.render.engine == 'CYCLES' else ''))
+
+# //FEATURE: Extra Info Stats
+
+# FEATURE: Camera Bounds as Render Border
+class VIEW3D_OT_render_border_camera(Operator):
+    """Set camera bounds as render border"""
+    bl_idname = "view3d.render_border_camera"
+    bl_label = "Camera as Render Border"
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.region_3d.view_perspective == 'CAMERA'
+
+    def execute(self, context):
+        render = context.scene.render
+        render.use_border = True
+        render.border_min_x = 0
+        render.border_min_y = 0
+        render.border_max_x = 1
+        render.border_max_y = 1
+
+        return {'FINISHED'}
+
+def button_render_border_camera(self, context):
+
+    view3d = context.space_data.region_3d
+    
+    if view3d.view_perspective == 'CAMERA':
+        layout = self.layout
+        layout.separator()
+        layout.operator(VIEW3D_OT_render_border_camera.bl_idname,
+                        text="Camera as Render Border", icon="FULLSCREEN_ENTER")
+
+# //FEATURE: Camera Bounds as Render Border
+
+# FEATURE: Passepartout options on W menu
+def button_camera_passepartout(self, context):
+
+    view3d = context.space_data.region_3d
+    cam = context.scene.camera.data
+    
+    if view3d.view_perspective == 'CAMERA':
+        layout = self.layout
+        if cam.show_passepartout:
+            layout.prop(cam, "passepartout_alpha", text="Passepartout")
+        else:
+            layout.prop(cam, "show_passepartout")
+
+# FEATURE: Show Only Render with Alt+Shift+Z
+class VIEW3D_OT_show_only_render(Operator):
+    bl_idname = "view3d.show_only_render"
+    bl_label = "Show Only Render"
+
+    def execute(self, context):
+        space = bpy.context.space_data
+        
+        if space.show_only_render:
+            space.show_only_render = False
+        else:
+            space.show_only_render = True
+        return {'FINISHED'}
+
+
+# FEATURE: Display Active Image Node on Image Editor
+# Made by Sergey Sharybin, tweaks from Bassam Kurdali
+image_nodes = {"CompositorNodeImage",
+               "ShaderNodeTexImage",
+               "ShaderNodeTexEnvironment"}
+
+class NODE_OT_show_active_node_image(Operator):
+    """Show active image node image in the image editor"""
+    bl_idname = "node.show_active_node_image"
+    bl_label = "Show Active Node Node"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        if context.scene.use_image_node_display:
+            if context.active_node:
+                active_node = context.active_node
+                if active_node.bl_idname in image_nodes and active_node.image:
+                    for area in context.screen.areas:
+                        if area.type == "IMAGE_EDITOR":
+                            for space in area.spaces:
+                                if space.type == "IMAGE_EDITOR":
+                                    space.image = active_node.image
+                            break
+    
+        return {'FINISHED'}
+# // FEATURE: Display Active Image Node on Image Editor
+
+# FEATURE: Select Meshlights
+class OBJECT_OT_select_meshlights(Operator):
+    """Select light emitting meshes"""
+    bl_idname = "object.select_meshlights"
+    bl_label = "Select Meshlights"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'CYCLES'
+
+    def execute(self, context):
+        # Deselect everything first
+        bpy.ops.object.select_all(action='DESELECT')
+
+        for ob in context.scene.objects:
+            if ob.material_slots:
+                for ma in ob.material_slots:
+                    if ma.material:
+                        if ma.material.node_tree:
+                            for no in ma.material.node_tree.nodes:
+                                if no.type == 'EMISSION':
+                                    ob.select = True
+                                    context.scene.objects.active = ob
+
+        if not context.selected_objects and not context.scene.objects.active:
+            self.report({'INFO'}, "No meshlights to select")
+
+        return {'FINISHED'}
+
+def button_select_meshlights(self, context):
+    
+    if context.scene.render.engine == 'CYCLES':
+        self.layout.operator('object.select_meshlights', icon="LAMP_SUN")
+# // FEATURE: Select Meshlights
+
+# FEATURE: Cycles Viewport Extra Settings
+def material_cycles_settings_extra(self, context):
+    
+    layout = self.layout
+    col = layout.column()
+    row = col.row(align=True)
+    
+    obj = context.object
+    mat = context.material
+    if obj.type == 'MESH':
+        row.prop(obj, "show_transparent", text="Viewport Alpha")
+        row.active = obj.show_transparent
+        row.prop(mat, "alpha", text="Alpha")
+
 # UI: Amaranth Options Panel
 class AmaranthToolsetPanel(bpy.types.Panel):
     '''Amaranth Toolset Panel'''
@@ -414,6 +767,31 @@ class AmaranthToolsetPanel(bpy.types.Panel):
         sub.active = scene.use_timeline_extra_info
         sub.label(text="Timeline Header")
 
+        # --
+        if bpy.app.version[1] > 67:
+            row = layout.row()
+            box = row.box()
+            box.prop(scene, 'use_image_node_display',
+                     text= 'Active Image Node in Editor',
+                     icon='IMAGE_COL')
+            sub = box.row()
+            sub.active = scene.use_timeline_extra_info
+            sub.label(text="Display active node image in image editor")
+
+classes = (AmaranthToolsetPanel,
+           SCENE_OT_refresh,
+           WM_OT_save_reload,
+           NODE_OT_AddTemplateVignette,
+           NODE_MT_amaranth_templates,
+           FILE_OT_directory_current_blend,
+           NODE_PT_indices,
+           NODE_PT_simplify,
+           NODE_OT_toggle_mute,
+           NODE_OT_show_active_node_image,
+           VIEW3D_OT_render_border_camera,
+           VIEW3D_OT_show_only_render,
+           OBJECT_OT_select_meshlights)
+
 addon_keymaps = []
 
 kmi_defs = (
@@ -422,31 +800,35 @@ kmi_defs = (
 
 def register():
     # UI: Register the panel
-    bpy.utils.register_class(AmaranthToolsetPanel)
-    bpy.types.Scene.use_frame_current = bpy.props.BoolProperty(default=True)
-    bpy.types.Scene.use_scene_refresh = bpy.props.BoolProperty(default=True)
-    bpy.types.Scene.use_file_save_reload = bpy.props.BoolProperty(default=True)
-    bpy.types.Scene.use_timeline_extra_info = bpy.props.BoolProperty(default=True)
+    init_properties()
+    for c in classes:
+        bpy.utils.register_class(c)
 
-    bpy.utils.register_class(SCENE_OT_refresh) # Refresh
     bpy.types.VIEW3D_MT_object_specials.append(button_refresh)
-    
-    bpy.utils.register_class(FILE_OT_save_reload) # Save Reload
+    bpy.types.VIEW3D_MT_object_specials.append(button_render_border_camera)
+    bpy.types.VIEW3D_MT_object_specials.append(button_camera_passepartout)
+
     bpy.types.INFO_MT_file.append(button_save_reload)
+    bpy.types.INFO_HT_header.append(stats_scene)
 
     bpy.types.VIEW3D_MT_object_specials.append(button_frame_current) # Current Frame
+    bpy.types.VIEW3D_MT_pose_specials.append(button_frame_current)
+    bpy.types.VIEW3D_MT_select_object.append(button_select_meshlights)
+
     bpy.types.TIME_HT_header.append(label_timeline_extra_info) # Timeline Extra Info
 
-    bpy.utils.register_class(NODE_OT_AddTemplateVignette) # Node Templates
-    bpy.utils.register_class(NODE_MT_amaranth_templates)
     bpy.types.NODE_HT_header.append(node_templates_pulldown)
+    bpy.types.NODE_HT_header.append(node_stats)
 
-    bpy.utils.register_class(FILE_OT_directory_current_blend) # Node Templates
+    bpy.types.CyclesMaterial_PT_settings.append(material_cycles_settings_extra)
+
     bpy.types.FILEBROWSER_HT_header.append(button_directory_current_blend)
 
-    bpy.utils.register_class(NODE_PT_indices) # OB/MA Indices Panel
-    bpy.types.Node.use_matching_indices = bpy.props.BoolProperty(default=True,
-                                            description="If disabled, display all available indices")
+    bpy.types.SCENE_PT_simplify.append(unsimplify_ui)
+    bpy.types.CyclesScene_PT_simplify.append(unsimplify_ui)
+
+    bpy.app.handlers.render_pre.append(unsimplify_render_pre)
+    bpy.app.handlers.render_post.append(unsimplify_render_post)
 
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
@@ -454,38 +836,64 @@ def register():
         km = kc.keymaps.new(name='Window')
         kmi = km.keymap_items.new('scene.refresh', 'F5', 'PRESS', shift=False, ctrl=False)
         kmi = km.keymap_items.new('wm.save_reload', 'W', 'PRESS', shift=True, ctrl=True)
+
+        km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
+        kmi = km.keymap_items.new('view3d.show_only_render', 'Z', 'PRESS', shift=True, alt=True)
+        kmi = km.keymap_items.new('wm.context_toggle_enum', 'Z', 'PRESS', shift=True, alt=False)
+        kmi.properties.data_path = 'space_data.viewport_shade'
+        kmi.properties.value_1 = 'SOLID'
+        kmi.properties.value_2 = 'RENDERED'
+
+        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
+        km.keymap_items.new("node.show_active_node_image", 'ACTIONMOUSE', 'RELEASE')
+        km.keymap_items.new("node.show_active_node_image", 'SELECTMOUSE', 'RELEASE')
+
         addon_keymaps.append((km, kmi))
 
-    # copypasted from the awesome node efficiency tools, future hotkeys proof!
-    km = kc.keymaps.new(name='Node Editor', space_type="NODE_EDITOR")
-    for (identifier, key, CTRL, SHIFT, ALT, props) in kmi_defs:
-        kmi = km.keymap_items.new(identifier, key, 'PRESS', ctrl=CTRL, shift=SHIFT, alt=ALT)
-        if props:
-            for prop, value in props:
-                setattr(kmi.properties, prop, value)
-        addon_keymaps.append((km, kmi))
+        # copypasted from the awesome node efficiency tools, future hotkeys proof!
+        km = kc.keymaps.new(name='Node Editor', space_type="NODE_EDITOR")
+        for (identifier, key, CTRL, SHIFT, ALT, props) in kmi_defs:
+            kmi = km.keymap_items.new(identifier, key, 'PRESS', ctrl=CTRL, shift=SHIFT, alt=ALT)
+            if props:
+                for prop, value in props:
+                    setattr(kmi.properties, prop, value)
+            addon_keymaps.append((km, kmi))
 
 def unregister():
-    bpy.utils.unregister_class(AmaranthToolsetPanel)
+    for c in classes:
+        bpy.utils.unregister_class(c)
 
-    bpy.utils.unregister_class(SCENE_OT_refresh)
     bpy.types.VIEW3D_MT_object_specials.remove(button_refresh)
-    bpy.utils.unregister_class(FILE_OT_save_reload)
+    bpy.types.VIEW3D_MT_object_specials.remove(button_render_border_camera)
+    bpy.types.VIEW3D_MT_object_specials.remove(button_camera_passepartout)
+
     bpy.types.INFO_MT_file.remove(button_save_reload)
+    bpy.types.INFO_HT_header.remove(stats_scene)
+
     bpy.types.VIEW3D_MT_object_specials.remove(button_frame_current)
+    bpy.types.VIEW3D_MT_pose_specials.remove(button_frame_current)
+    bpy.types.VIEW3D_MT_select_object.remove(button_select_meshlights)
+
     bpy.types.TIME_HT_header.remove(label_timeline_extra_info)
 
-    bpy.utils.unregister_class(NODE_MT_amaranth_templates)
     bpy.types.NODE_HT_header.remove(node_templates_pulldown)
-    bpy.utils.unregister_class(NODE_OT_AddTemplateVignette) 
+    bpy.types.NODE_HT_header.remove(node_stats)
+
+    bpy.types.CyclesMaterial_PT_settings.remove(material_cycles_settings_extra)
 
     bpy.types.FILEBROWSER_HT_header.remove(button_directory_current_blend)
 
-    bpy.utils.unregister_class(NODE_PT_indices)
+    bpy.types.SCENE_PT_simplify.remove(unsimplify_ui)
+    bpy.types.CyclesScene_PT_simplify.remove(unsimplify_ui)
+
+    bpy.app.handlers.render_pre.remove(unsimplify_render_pre)
+    bpy.app.handlers.render_post.remove(unsimplify_render_post)
     
     for km, kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
+    
+    clear_properties()
 
 if __name__ == "__main__":
     register()

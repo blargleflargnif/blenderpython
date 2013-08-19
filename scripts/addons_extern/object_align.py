@@ -24,8 +24,8 @@ bl_info = {
     'name': 'Object align',
     'author': '',
     'version': (0, 0, 0),
-    'blender': (2, 5, 8),
-    'api': 37809,
+    'blender': (2, 6, 7),
+    'api': 57414,
     'location': '',
     'description': '',
     'warning': '',
@@ -52,9 +52,6 @@ class oa_p_group0(bpy.types.PropertyGroup):
 def list_clear_(l):
     l[:] = []
     return l
-
-def init_props():
-    bpy.context.scene.my_custom_props.t = 'opt0'
 
 def rad_(d):
         return d * pi / 180
@@ -290,7 +287,6 @@ def register():
         bpy.utils.register_class(c)
 
     bpy.types.Scene.my_custom_props = PointerProperty(type = oa_p_group0)
-    init_props()
 
 #
 def unregister():

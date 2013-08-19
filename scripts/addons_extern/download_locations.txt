@@ -254,3 +254,7 @@ Appleseed Render -- Joel Daniels
 Marker Jumping -- Greg Zaal
 	https://www.dropbox.com/s/jvzlcnobfw6hebc/marker_jumping.py 
 	Dropbox is the only available link at this time. 
+	
+Jamb Generator 2 -- DragonLEE/SayPRODUCTIONS
+	http://www.blenderartists.org/forum/showthread.php?302075-AddOn-Jamb-Generator-2
+	

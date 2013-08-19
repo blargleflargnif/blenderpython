@@ -258,3 +258,6 @@ Marker Jumping -- Greg Zaal
 Jamb Generator 2 -- DragonLEE/SayPRODUCTIONS
 	http://www.blenderartists.org/forum/showthread.php?302075-AddOn-Jamb-Generator-2
 	
+Meshlab Applink -- ohsnapitsjoel
+	https://bitbucket.org/ohsnapitsjoel/io_meshlab/src
+	

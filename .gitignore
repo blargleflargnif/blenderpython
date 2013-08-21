@@ -1,2 +1,8 @@
 __pycache__
 /scripts/addons_extern/luxrender/pylux.pyd
+
+/scripts/presets/interface_theme/back_to_black.xml
+/scripts/presets/interface_theme/blender_24x.xml
+/scripts/presets/interface_theme/elsyiun.xml
+/scripts/presets/interface_theme/hexagon.xml
+/scripts/presets/interface_theme/ubuntu_ambiance.xml

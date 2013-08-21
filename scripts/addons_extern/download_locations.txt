@@ -261,3 +261,7 @@ Jamb Generator 2 -- DragonLEE/SayPRODUCTIONS
 Meshlab Applink -- ohsnapitsjoel
 	https://bitbucket.org/ohsnapitsjoel/io_meshlab/src
 	
+Object Destruction Editor -- scorpion81
+	https://github.com/scorpion81/Blender-Destructability-Editor/tree/master/object_destruction
+	http://www.blenderartists.org/forum/showthread.php?247559-WIP-Blender-Destructability-Editor
+	

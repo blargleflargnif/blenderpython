@@ -851,12 +851,16 @@ class luxrender_film(declarative_property_group):
 		
 		params.add_string('ldr_clamp_method', self.ldr_clamp_method)
 		
-		if scene.luxrender_engine.export_type == 'EXT':
-			params.add_integer('displayinterval', self.displayinterval)
-			params.add_integer('writeinterval', self.writeinterval)
-			params.add_integer('flmwriteinterval', self.flmwriteinterval)
-		else:
-			params.add_integer('writeinterval', self.internal_updateinterval)
+		#if scene.luxrender_engine.export_type == 'EXT':
+		#	params.add_integer('displayinterval', self.displayinterval)
+		#	params.add_integer('writeinterval', self.writeinterval)
+		#	params.add_integer('flmwriteinterval', self.flmwriteinterval)
+		#else:
+		#	params.add_integer('displayinterval', self.displayinterval)
+		#	params.add_integer('writeinterval', self.internal_updateinterval)
+		params.add_integer('displayinterval', self.displayinterval)
+		params.add_integer('writeinterval', self.writeinterval)
+		params.add_integer('flmwriteinterval', self.flmwriteinterval)
 		
 		# Halt conditions
 		if scene.luxrender_halt.haltspp > 0:

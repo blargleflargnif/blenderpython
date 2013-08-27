@@ -265,3 +265,5 @@ Object Destruction Editor -- scorpion81
 	https://github.com/scorpion81/Blender-Destructability-Editor/tree/master/object_destruction
 	http://www.blenderartists.org/forum/showthread.php?247559-WIP-Blender-Destructability-Editor
 	
+Progressive Animation Renderer -- Greg Zaal
+	http://adaptivesamples.com/2013/07/22/progressive-animation-render-addon-and-image-stacking/

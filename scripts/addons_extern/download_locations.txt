@@ -267,3 +267,6 @@ Object Destruction Editor -- scorpion81
 	
 Progressive Animation Renderer -- Greg Zaal
 	http://adaptivesamples.com/2013/07/22/progressive-animation-render-addon-and-image-stacking/
+	
+Script Runner -- Good Spirit Graphics (Christopher Barrett)
+	http://goodspiritgraphics.com/software/tutorials/blender-tutorials/script-runner-addon/

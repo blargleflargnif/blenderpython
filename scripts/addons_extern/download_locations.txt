@@ -228,7 +228,7 @@ Octane Render exporter + octinstances
 Copy Particles to Rigid Bodies (copy_particles_to_sim.py) -- by liero & elaser
 	http://www.blenderartists.org/forum/showthread.php?279329&p=2439504&viewfull=1#post2439504
 	
-Amaranth Toolset (scene_amaranth_toolset.py) -- by Pablo Vazquez (venomgfx)
+Amaranth Toolset (scene_amaranth_toolset.py) -- by Pablo Vazquez (venomgfx) --- *NOW IN CONTRIB*
 	https://github.com/venomgfx/amaranth
 	
 Constellation (oscurart_constellation.py) -- by Oscurart

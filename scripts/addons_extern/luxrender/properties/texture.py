@@ -3977,9 +3977,15 @@ class luxrender_tex_transform(declarative_property_group):
 		'translate',
 		'rotate',
 		'scale',
+		'lbl_smoke_domain',
 	]
 	
-	visibility = {}
+	visibility = {
+	'translate': { 'coordinates': O(['global', 'globalnormal', 'local', 'localnormal', 'uv']) },
+	'rotate': { 'coordinates': O(['global', 'globalnormal', 'local', 'localnormal', 'uv']) },
+	'scale': { 'coordinates': O(['global', 'globalnormal', 'local', 'localnormal', 'uv']) },
+	'lbl_smoke_domain': { 'coordinates': 'smoke_domain' },
+	}
 	
 	properties = [
 		{
@@ -3992,6 +3998,7 @@ class luxrender_tex_transform(declarative_property_group):
 				('local', 'Object', 'Use object local 3D coordinates'),
 				('localnormal', 'Object Normal', 'Use object local surface normals'),
 				('uv', 'UV', 'Use UV coordinates (x=u y=v z=0)'),
+				('smoke_domain', 'Smoke_Domain', 'Use Smoke Domain Coordinates'),
 			],
 			'default': 'global',
 			'save_in_preset': True
@@ -4010,7 +4017,7 @@ class luxrender_tex_transform(declarative_property_group):
 			'name': 'Rotate',
 			'default': (0.0, 0.0, 0.0),
 			'precision': 5,
-			'subtype': 'DIRECTION',
+#			'subtype': 'DIRECTION',
 			'unit': 'ROTATION',
 			'save_in_preset': True
 		},
@@ -4022,6 +4029,11 @@ class luxrender_tex_transform(declarative_property_group):
 			'precision': 5,
 			'save_in_preset': True
 		},
+		{
+		'type': 'text',
+		'attr': 'lbl_smoke_domain',
+		'name': 'Auto Using Smoke Domain Data'
+		},
 	]
 	
 	def get_paramset(self, scene):
@@ -4029,10 +4041,23 @@ class luxrender_tex_transform(declarative_property_group):
 		
 		ws = get_worldscale(as_scalematrix=False)
 		
-		transform_params.add_string('coordinates', self.coordinates)
-		transform_params.add_vector('translate', [i*ws for i in self.translate])
 		transform_params.add_vector('rotate', self.rotate)
-		transform_params.add_vector('scale', [i*ws for i in self.scale])
+		
+		if self.coordinates == 'smoke_domain':
+			for tex in bpy.data.textures:
+				if bpy.data.textures[tex.name].luxrender_texture.type == 'densitygrid':
+					domain = bpy.data.textures[tex.name].luxrender_texture.luxrender_tex_densitygrid.domain_object
+			obj = bpy.context.scene.objects[domain]
+			vloc = bpy.context.scene.objects[domain].data.vertices[0]
+			vloc_global = obj.matrix_world * vloc.co
+			d_dim = bpy.data.objects[domain].dimensions
+			transform_params.add_string('coordinates', 'global')
+			transform_params.add_vector('translate', vloc_global)
+			transform_params.add_vector('scale', d_dim)
+		else:
+			transform_params.add_string('coordinates', self.coordinates)
+			transform_params.add_vector('translate', [i*ws for i in self.translate])
+			transform_params.add_vector('scale', [i*ws for i in self.scale])
 		
 		return transform_params
 	

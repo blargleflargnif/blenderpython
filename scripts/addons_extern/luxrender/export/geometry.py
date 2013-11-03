@@ -931,6 +931,7 @@ class GeometryExporter(object):
 			uv_tex = None
 			colorflag = 0
 			uvflag = 0                      
+			thicknessflag = 0
 			image_width = 0
 			image_height = 0
 			image_pixels = []
@@ -958,6 +959,15 @@ class GeometryExporter(object):
 
 			transform = obj.matrix_world.inverted()
 			total_strand_count = 0	
+			root_width = psys.settings.luxrender_hair.root_width
+			tip_width = psys.settings.luxrender_hair.tip_width
+			width_offset = psys.settings.luxrender_hair.width_offset
+			
+			if root_width == tip_width:
+				thicknessflag = 0
+				size = root_width * size
+			else:
+				thicknessflag = 1
 				
 			for pindex in range(start, num_parents + num_children):                        
 				det.exported_objects += 1                               
@@ -973,10 +983,17 @@ class GeometryExporter(object):
 				col = None
 				seg_length = 1.0				
 				for step in range(0, steps):
-					co = psys.co_hair(obj, mod, pindex, step)                               
+					co = psys.co_hair(obj, mod, pindex, step) if bpy.app.version < (2, 68, 5 ) else psys.co_hair(obj, pindex, step) # blender api change in r60251 - removed modifier argument
 					if (step > 0): seg_length = (co-obj.matrix_world*points[len(points)-1]).length_squared 
 					if not (co.length_squared == 0 or seg_length == 0):
 						points.append(transform*co)
+						if thicknessflag:
+							if step > steps*width_offset:
+								thick = (root_width*(steps-step-1)+tip_width*(step-steps*width_offset))/(steps*(1-width_offset)-1)
+							else:
+								thick = root_width
+								
+							thickness.append(thick*size)
 						point_count = point_count + 1
 
 						if uvflag:
@@ -1003,6 +1020,8 @@ class GeometryExporter(object):
 
 				if point_count == 1:
 					points.pop()
+					if thicknessflag:
+						thickness.pop()
 					point_count = point_count - 1
 				elif point_count > 1:
 					segments.append(point_count - 1)
@@ -1017,7 +1036,7 @@ class GeometryExporter(object):
 				hair_file.write(b'HAIR')        #magic number
 				hair_file.write(struct.pack('<I', total_strand_count)) #total strand count
 				hair_file.write(struct.pack('<I', len(points))) #total point count 
-				hair_file.write(struct.pack('<I', 1+2+16*colorflag+32*uvflag)) #bit array for configuration
+				hair_file.write(struct.pack('<I', 1+2+4*thicknessflag+16*colorflag+32*uvflag)) #bit array for configuration
 				hair_file.write(struct.pack('<I', steps))       #default segments count
 				hair_file.write(struct.pack('<f', size*2))      #default thickness
 				hair_file.write(struct.pack('<f', 0.0))         #default transparency
@@ -1029,6 +1048,9 @@ class GeometryExporter(object):
 				hair_file.write(struct.pack('<%dH'%(len(segments)), *segments))
 				for point in points:
 					hair_file.write(struct.pack('<3f', *point))
+				if thicknessflag:
+					for thickn in thickness:
+						hair_file.write(struct.pack('<1f', thickn))
 				if colorflag:
 					for col in colors:
 						hair_file.write(struct.pack('<3f', *col))
@@ -1107,7 +1129,7 @@ class GeometryExporter(object):
 				points = []
 
 				for step in range(0,steps):
-					co = psys.co_hair(obj, mod, pindex, step)
+					co = psys.co_hair(obj, mod, pindex, step) if bpy.app.version < (2, 68, 5 ) else psys.co_hair(obj, pindex, step) # blender api change in r60251 - removed modifier argument
 					if not co.length_squared == 0:
 						points.append(co)
 						

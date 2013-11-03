@@ -124,7 +124,7 @@ Slow parent (slow_parent_addon.py) -- by liero
 	
 time offset (time_offset_addon.py) -- by liero
 
-EWOCprojects collection -- by paleajed
+EWOCprojects collection -- by paleajed --- *NOW IN CONTRIB*
 	mes_laprelax.py
 	mesh_innerweld.py
 	mesh_quadder.py

@@ -112,7 +112,7 @@ File browser search (file_browser_search.py) -- by Jakub Zolcik
 Ghosting (ghosting_addon.py) -- by liero
 	http://blenderartists.org/forum/showthread.php?229672
 	
-Layer manager for 2.63a (Layer1_4.py) -- by anfeo
+Layer manager for 2.63a (Layer1_4.py) -- by anfeo --- *NOW IN CONTRIB*
 	http://blender-addon.blogspot.com.au/2012/05/layer-manager-14-for-blender-263a.html
 	http://blenderartists.org/forum/showthread.php?255225
 	

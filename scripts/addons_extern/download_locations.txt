@@ -270,3 +270,7 @@ Progressive Animation Renderer -- Greg Zaal
 	
 Script Runner -- Good Spirit Graphics (Christopher Barrett)
 	http://goodspiritgraphics.com/software/tutorials/blender-tutorials/script-runner-addon/
+	
+Molecular -- PyroEvil (Jean-Francois Gallant)
+	http://pyroevil.com/molecular-script-download/
+	http://www.blenderartists.org/forum/showthread.php?233643

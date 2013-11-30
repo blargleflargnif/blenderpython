@@ -91,7 +91,7 @@ Add vert (add_vert.py) -- by Meta-Androcto
 Mesh aggregator (aggregate_mesh.py) -- by liero
 	http://blenderartists.org/forum/showthread.php?228329
 	
-Blender camera calibration toolkit for image-assisted modeling (blam.py) -- by stuffmatic, ideasman42
+Blender camera calibration toolkit for image-assisted modeling (blam.py) -- by stuffmatic, ideasman42, dfelinto
 	https://github.com/stuffmatic/blam
 	http://blenderartists.org/forum/showthread.php?243370
 	

@@ -312,9 +312,17 @@ class SmdImporter(bpy.types.Operator, Logger):
 		smd = self.smd
 		# We only care about pose data in some SMD types
 		if smd.jobType not in [ REF, ANIM, ANIM_SOLO ]:
-			for line in smd.file:			
-				if smdBreak(line):
-					return
+			if smd.jobType == FLEX: smd.shapeNames = {}
+			for line in smd.file:
+				line = line.strip()
+				if smdBreak(line): return
+				if smd.jobType == FLEX and line.startswith("time"):
+					for c in line:
+						if c in ['#',';','/']:
+							pos = line.index(c)
+							frame = line[:pos].split()[1]
+							if c == '/': pos += 1
+							smd.shapeNames[frame] = line[pos+1:].strip()
 
 		a = smd.a
 		bones = a.data.bones
@@ -537,7 +545,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 				if not bone.parent:					
 					ApplyRecursive(bone)
 			
-			if 'update' in dir(action.fcurves[0]):
+			if len(action.fcurves) > 0 and 'update' in dir(action.fcurves[0]):
 				for fc in action.fcurves:
 					fc.update()
 			elif bpy.context.area != None:
@@ -718,12 +726,12 @@ class SmdImporter(bpy.types.Operator, Logger):
 		for line in smd.file:
 			line = line.rstrip("\n")
 
-			if smdBreak(line):
+			if line and smdBreak(line): # normally a blank line means a break, but Milkshape can export SMDs with zero-length material names...
 				break
 			if smdContinue(line):
 				continue
 
-			mat, mat_ind = self.getMeshMaterial(line)
+			mat, mat_ind = self.getMeshMaterial(line if line else "UndefinedMaterial")
 			mats.append(mat_ind)
 
 			# ***************************************************************
@@ -731,6 +739,8 @@ class SmdImporter(bpy.types.Operator, Logger):
 			vertexCount = 0
 			faceVerts = []
 			for line in smd.file:
+				if smdBreak(line):
+					break
 				if smdContinue(line):
 					continue
 				values = line.split()
@@ -855,12 +865,13 @@ class SmdImporter(bpy.types.Operator, Logger):
 				break
 			if smdContinue(line):
 				continue
-				
+			
 			values = line.split()
 
 			if values[0] == "time":
+				shape_name = smd.shapeNames.get(values[1])
 				if smd.vta_ref == None:
-					smd.m.shape_key_add("Basis")
+					smd.m.shape_key_add(shape_name if shape_name else "Basis")
 					vta_ref = smd.vta_ref = smd.m.copy()
 					vta_ref.name = "VTA vertices"
 					bpy.context.scene.objects.link(vta_ref)
@@ -889,7 +900,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 					
 					if bad_vta_verts > 0:
 						err_ratio = bad_vta_verts/len(vta_ids)
-						message = "{} VTA vertices ({}%) were not matched to a mesh vertex! An object has been created showing where the VTA vertices are.".format(bad_vta_verts, int(err_ratio * 100))
+						message = "{} VTA vertices ({}%) were not matched to a mesh vertex! An object has been created to show where the VTA file's vertices are.".format(bad_vta_verts, int(err_ratio * 100))
 						if err_ratio == 1:
 							self.error(message)
 							return
@@ -900,7 +911,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 					making_base_shape = False
 				
 				if not making_base_shape:
-					smd.m.shape_key_add(values[1])
+					smd.m.shape_key_add(shape_name if shape_name else values[1])
 					num_shapes += 1
 
 				continue # to the first vertex of the new shape
@@ -1091,7 +1102,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 				for i in range(1,len(line)):
 					if line[i] == "frame":
 						shape = qc.ref_mesh.data.shape_keys.key_blocks.get(line[i+1])
-						if shape: shape.name = line[1]
+						if shape and shape.name.startswith("Key"): shape.name = line[1]
 						break
 				continue
 
@@ -1259,76 +1270,85 @@ class SmdImporter(bpy.types.Operator, Logger):
 			
 			if not smd_type: smd.jobType = REF if dm.root.get("model") else ANIM
 			
-			DmeModel = dm.root.get("skeleton")
-			#if not DmeModel.get("model"): smd.jobType = ANIM
+			DmeModel = dm.root["skeleton"]
 			FlexControllers = dm.root.get("combinationOperator")
+			transforms = DmeModel["baseStates"][0]["transforms"] if DmeModel.get("baseStates") and len(DmeModel["baseStates"]) > 0 else None
 			
 			def getBlenderQuat(datamodel_quat):
 				return Quaternion([datamodel_quat[3], datamodel_quat[0], datamodel_quat[1], datamodel_quat[2]])
-			def get_transform_matrix(elem,use_up_axis = True):
+			def get_transform_matrix(elem):
 				out = Matrix()
 				if elem == None: return out
-				if use_up_axis:
-					out = getUpAxisMat(smd.upAxis)
-				out *= Matrix.Translation(Vector(elem["position"]))
-				out *= getBlenderQuat(elem["orientation"]).to_matrix().to_4x4()
+				trfm = elem.get("transform")
+				if transforms:
+					for e in transforms:
+						if e.name == elem.name:
+							trfm = e
+				if trfm == None: return out
+				out *= Matrix.Translation(Vector(trfm["position"]))
+				out *= getBlenderQuat(trfm["orientation"]).to_matrix().to_4x4()
 				return out
 			
 			# Skeleton
 			if target_arm:
-				def validateSkeleton(elem,parent_bone):
-					if elem.type == "DmeJoint":
+				missing_bones = []
+				def validateSkeleton(elem,parent_elem):
+					if elem.type == "DmeJoint" or (elem.type == "DmeDag" and elem["shape"] == None):
 						bone = smd.a.data.bones.get(elem.name)
 						if not bone:
-							self.warning("Could not find bone {}".format(elem.name))
-							return
-						
-						smd.boneIDs[elem.id] = bone.name
-						smd.boneTransformIDs[elem["transform"].id] = bone.name
+							if smd.jobType == REF: missing_bones.append(elem.name)
+						else:
+							scene_parent = bone.parent.name if bone.parent else "<None>"
+							dmx_parent = parent_elem.name if parent_elem else "<None>"
+							if scene_parent != dmx_parent:
+								self.warning("Parent mismatch for bone \"{}\": \"{}\" in Blender, \"{}\" in {}.".format(elem.name,scene_parent,dmx_parent,smd.jobName))
+							
+							smd.boneIDs[elem.id] = bone.name
+							smd.boneTransformIDs[elem["transform"].id] = bone.name
 						
 						if elem.get("children"):
 							for child in elem["children"]:
-								validateSkeleton(child,bone)
+								validateSkeleton(child,elem)
 				
 				for child in DmeModel["children"]:
 					validateSkeleton(child,None)
+				if len(missing_bones):
+					self.warning("{} contains {} bones not present in {}:\n{}".format(smd.jobName,len(missing_bones),smd.a.name,", ".join(missing_bones)))
 			else:
 				if smd.jobType == ANIM: smd.jobType = ANIM_SOLO
 				restData = {}
 				smd.append = False
 				ob = smd.a = self.createArmature(DmeModel.name)
 				if self.qc: self.qc.a = ob
-				smd.a.data.smd_implicit_zero_bone = False # Too easy to break compatibility, plus the skeleton is probably set up already
 				bpy.context.scene.objects.active = smd.a
 				ops.object.mode_set(mode='EDIT')
 				
-				smd.a.matrix_world = get_transform_matrix(DmeModel["transform"])
+				smd.a.matrix_world = getUpAxisMat(smd.upAxis)
 				
 				bone_matrices = {}
 				def parseSkeleton(elem,parent_bone):
-					if elem.type in ["DmeJoint","DmeDag"]:
-						if elem.get("shape") and elem["shape"].type == "DmeAttachment":
-							atch = smd.atch = bpy.data.objects.new(name=elem.name, object_data=None)
-							bpy.context.scene.objects.link(atch)
-							atch.show_x_ray = True
-							atch.empty_draw_type = 'ARROWS'
+					if elem.type =="DmeDag" and elem.get("shape") and elem["shape"].type == "DmeAttachment":
+						atch = smd.atch = bpy.data.objects.new(name=elem["shape"].name, object_data=None)
+						bpy.context.scene.objects.link(atch)
+						atch.show_x_ray = True
+						atch.empty_draw_type = 'ARROWS'
 
-							atch.parent = smd.a
-							if parent_bone:
-								atch.parent_type = 'BONE'
-								atch.parent_bone = parent_bone.name
-							
-							atch.matrix_local = get_transform_matrix(elem["transform"],use_up_axis = False)
-						else:
-							bone = smd.a.data.edit_bones.new(elem.name)
-							bone.parent = parent_bone
-							bone.tail = (0,5,0)
-							bone_matrices[bone.name] = get_transform_matrix(elem["transform"],use_up_axis=False)
-							smd.boneIDs[elem.id] = bone.name
-							smd.boneTransformIDs[elem["transform"].id] = bone.name
-							if elem.get("children"):
-								for child in elem["children"]:
-									parseSkeleton(child,bone)
+						atch.parent = smd.a
+						if parent_bone:
+							atch.parent_type = 'BONE'
+							atch.parent_bone = parent_bone.name
+						
+						atch.matrix_local = get_transform_matrix(elem)
+					elif elem.type == "DmeJoint" or elem.get("shape") == None: # don't import Dags which simply wrap meshes
+						bone = smd.a.data.edit_bones.new(elem.name)
+						bone.parent = parent_bone
+						bone.tail = (0,5,0)
+						bone_matrices[bone.name] = get_transform_matrix(elem)
+						smd.boneIDs[elem.id] = bone.name
+						smd.boneTransformIDs[elem["transform"].id] = bone.name
+						if elem.get("children"):
+							for child in elem["children"]:
+								parseSkeleton(child,bone)
 				
 				for child in DmeModel["children"]:
 					parseSkeleton(child,None)
@@ -1342,7 +1362,8 @@ class SmdImporter(bpy.types.Operator, Logger):
 			
 			def parseModel(elem,matrix=Matrix()):
 				if elem.type in ["DmeModel","DmeDag"]:
-					matrix = get_transform_matrix(elem["transform"])
+					if elem.type == "DmeDag":
+						matrix *= get_transform_matrix(elem)
 					if elem.get("children") and len(elem["children"]):
 						subelems = elem["children"]
 					elif elem["shape"]:
@@ -1355,7 +1376,6 @@ class SmdImporter(bpy.types.Operator, Logger):
 					DmeMesh = elem
 					ops.object.mode_set(mode='OBJECT')
 					ob = smd.m = bpy.data.objects.new(name=DmeMesh.name, object_data=bpy.data.meshes.new(name=DmeMesh.name))
-					ob.matrix_world = matrix
 					bpy.context.scene.objects.link(ob)
 					self.setLayer()
 					ob.show_wire = smd.jobType == PHYS
@@ -1404,13 +1424,13 @@ class SmdImporter(bpy.types.Operator, Logger):
 					# Move from BMesh to Blender
 					bm.to_mesh(ob.data)
 					ob.data.update()
-					ob.matrix_world = matrix
+					ob.matrix_local = matrix
 					if smd.jobType == PHYS:
 						ob.draw_type = 'SOLID'
 					
 					# Weightmap
 					if "jointWeights" in DmeVertexData["vertexFormat"]:
-						jointList = DmeModel["jointList"] if dm.format_ver >= 15 else DmeModel["jointTransforms"]
+						jointList = DmeModel["jointList"] if dm.format_ver >= 11 else DmeModel["jointTransforms"]
 						jointWeights = DmeVertexData["jointWeights"]
 						jointIndices = DmeVertexData["jointIndices"]
 						jointRange = range(DmeVertexData["jointCount"])
@@ -1421,7 +1441,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 								weight = jointWeights[joint_index]
 								if weight > 0:
 									bone_id = jointList[jointIndices[joint_index]].id
-									if dm.format_ver >= 15:
+									if dm.format_ver >= 11:
 										bone_name = smd.boneIDs[bone_id]
 									else:
 										bone_name = smd.boneTransformIDs[bone_id]
@@ -1430,7 +1450,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 										vg = ob.vertex_groups.new(bone_name)
 									if weight == 1:
 										full_weights[vg].append(vert_index)
-									else:
+									elif weight > 0:
 										vg.add([vert_index],weight,'REPLACE')
 								joint_index += 1
 								
@@ -1470,13 +1490,6 @@ class SmdImporter(bpy.types.Operator, Logger):
 								deltaPositions = DmeVertexDeltaData["positions"]
 								for i,posIndex in enumerate(DmeVertexDeltaData["positionsIndices"]):
 									shape_key.data[posIndex].co += Vector(deltaPositions[i])
-						
-							#if "wrinkle" in DmeVertexDeltaData["vertexFormat"]:
-							#	wrinkle = DmeVertexDeltaData["wrinkle"]
-							#	if len(wrinkle):
-							#		vg = ob.vertex_groups.new(shape_key.name)
-							#		for i,posIndex in enumerate(DmeVertexDeltaData["wrinkleIndices"]):
-							#			vg.add([posIndex],wrinkle[i],'REPLACE') # FIXME
 			
 			if smd.jobType in [REF,REF_ADD,PHYS]:
 				parseModel(DmeModel)
@@ -1490,8 +1503,8 @@ class SmdImporter(bpy.types.Operator, Logger):
 				frameRate = animation["frameRate"] if dm.format_ver > 1 else 30 # very, very old DMXs don't have this
 				timeFrame = animation["timeFrame"]
 				scale = timeFrame.get("scale",1.0)
-				duration = timeFrame["duration" if dm.format_ver >= 18 else "durationTime"]
-				offset = timeFrame.get("offset" if dm.format_ver >= 18 else "offsetTime",0.0)
+				duration = timeFrame["duration" if dm.format_ver >= 11 else "durationTime"]
+				offset = timeFrame.get("offset" if dm.format_ver >= 11 else "offsetTime",0.0)
 				
 				if type(duration) == int: duration = datamodel.Time.from_int(duration)
 				if type(offset) == int: offset = datamodel.Time.from_int(offset)

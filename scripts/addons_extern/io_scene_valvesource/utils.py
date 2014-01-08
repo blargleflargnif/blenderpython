@@ -18,7 +18,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy, struct, time, collections, os
+import bpy, struct, time, collections, os, subprocess
 from mathutils import *
 from math import *
 from . import datamodel
@@ -60,6 +60,7 @@ dmx_versions = { # [encoding, format]
 'ep1':[0,0],
 'source2007':[2,1],
 'source2009':[2,1],
+'Team Fortress 2':[2,1],
 'Left 4 Dead':[5,15],
 'Left 4 Dead 2':[5,15],
 'orangebox':[5,18], # aka Source MP
@@ -129,7 +130,7 @@ def getEngineBranchName():
 	elif path.lower().find("dota 2 beta") != -1:
 		return "Dota 2"
 	else:
-		return os.path.basename(os.path.abspath(os.path.join(bpy.path.abspath(path),os.pardir))).title() # why, Python, why
+		return os.path.basename(os.path.abspath(os.path.join(bpy.path.abspath(path),os.pardir))).title().replace("Sdk","SDK") # why, Python, why
 def getDmxVersionsForSDK():
 	path_branch = getEngineBranchName().lower()
 	for branch in dmx_versions.keys():
@@ -143,7 +144,7 @@ def count_exports(context):
 	return num
 
 def getFileExt(flex=False):
-	if shouldExportDMX():
+	if bpy.context.scene.smd_format == 'DMX':
 		return ".dmx"
 	else:
 		if flex: return ".vta"
@@ -382,3 +383,18 @@ class Cache:
 	scene_updated = False
 	action_filter = ""
 p_cache = Cache() # package cached data
+
+class SMD_OT_LaunchHLMV(bpy.types.Operator):
+	'''Launches Half-Life Model Viewer'''
+	bl_idname = "smd.launch_hlmv"
+	bl_label = "Launch HLMV"
+	@classmethod
+	def poll(self,context):
+		return bool(context.scene.smd_studiomdl_custom_path)
+		
+	def execute(self,context):
+		args = [os.path.normpath(os.path.join(bpy.path.abspath(context.scene.smd_studiomdl_custom_path),"hlmv"))]
+		if context.scene.smd_game_path:
+			args.extend(["-game",os.path.normpath(bpy.path.abspath(context.scene.smd_game_path))])
+		subprocess.Popen(args)
+		return {'FINISHED'}

@@ -19,15 +19,15 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-	"name": "SMD\DMX Tools",
+	"name": "Blender Source Tools",
 	"author": "Tom Edwards (Artfunkel)",
-	"version": (1, 8, 2),
+	"version": (1, 10, 3),
 	"blender": (2, 66, 0),
 	"api": 54697,
 	"category": "Import-Export",
 	"location": "File > Import/Export, Scene properties",
-	"wiki_url": "http://code.google.com/p/blender-smd/",
-	"tracker_url": "http://code.google.com/p/blender-smd/issues/list",
+	"wiki_url": "http://steamcommunity.com/groups/BlenderSourceTools",
+	"tracker_url": "http://steamcommunity.com/groups/BlenderSourceTools/discussions/0/",
 	"description": "Importer and exporter for Valve Software's Source Engine. Supports SMD\VTA, DMX and QC."
 }
 
@@ -150,7 +150,7 @@ def scene_update(scene):
 	validObs = GUI.getValidObs()
 	
 	def makeDisplayName(item,action = None):
-		out = os.path.join(item.smd_subdir, getObExportName(action if action else item) + getFileExt())
+		out = os.path.join(item.smd_subdir if item.smd_subdir != "." else None, getObExportName(action if action else item) + getFileExt())
 		#if hasShapes(item):
 		#	out += " (shapes)"
 		return out
@@ -183,6 +183,9 @@ def scene_update(scene):
 			
 			
 		for ob in validObs:
+			if ob.type == 'FONT':
+				ob.smd_triangulate = True # preserved if the user converts to mesh
+			
 			i_name = i_type = i_icon = None
 			if ob.type == 'ARMATURE':
 				if ob.animation_data and ob.animation_data.action:
@@ -231,7 +234,7 @@ def register():
 	
 	bpy.types.Scene.smd_path = StringProperty(name="SMD Export Root",description="The root folder into which SMD and DMX exports from this scene are written", subtype='DIR_PATH')
 	bpy.types.Scene.smd_qc_compile = BoolProperty(name="Compile all on export",description="Compile all QC files whenever anything is exported",default=False)
-	bpy.types.Scene.smd_qc_path = StringProperty(name="QC Path",description="Location of this scene's QC file(s); Unix wildcards supported", subtype="FILE_PATH")
+	bpy.types.Scene.smd_qc_path = StringProperty(name="QC Path",description="This scene's QC file(s); Unix wildcards supported",default="//*.qc",subtype="FILE_PATH")
 	bpy.types.Scene.smd_studiomdl_custom_path = StringProperty(name="Source SDK Path",description="Directory containing studiomdl", subtype="DIR_PATH",update=studiomdl_path_changed)
 	
 	encodings = []
@@ -242,17 +245,13 @@ def register():
 	for fmt in dmx_model_versions: formats.append( (str(fmt), "Model " + str(fmt), '') )
 	bpy.types.Scene.smd_dmx_format = EnumProperty(name="DMX format",description="Manual override for DMX model format version",items=tuple(formats),default='1')
 	
-	formats = (
-	('SMD', "SMD", "Studiomdl Data" ),
-	('DMX', "DMX", "Datamodel Exchange" )
-	)
-	bpy.types.Scene.smd_format = EnumProperty(name="SMD Export Format",items=formats,default='DMX')
+	bpy.types.Scene.smd_format = EnumProperty(name="SMD Export Format",items=( ('SMD', "SMD", "Studiomdl Data" ), ('DMX', "DMX", "Datamodel Exchange" ) ),default='DMX')
 	bpy.types.Scene.smd_up_axis = EnumProperty(name="SMD Target Up Axis",items=axes,default='Z',description="Use for compatibility with data from other 3D tools")
 	bpy.types.Scene.smd_use_image_names = BoolProperty(name="SMD Ignore Materials",description="Only export face-assigned image filenames",default=False)
 	bpy.types.Scene.smd_layer_filter = BoolProperty(name="SMD Export visible layers only",description="Ignore objects in hidden layers",default=False)
 	bpy.types.Scene.smd_material_path = StringProperty(name="DMX material path",description="Folder relative to game root containing VMTs referenced in this scene (DMX only)")
 	bpy.types.Scene.smd_export_list_active = IntProperty(name="SMD active object",default=0,update=export_active_changed)
-	bpy.types.Scene.smd_export_list = CollectionProperty(type=SMD_CT_ObjectExportProps,options={'SKIP_SAVE'})	
+	bpy.types.Scene.smd_export_list = CollectionProperty(type=SMD_CT_ObjectExportProps,options={'SKIP_SAVE','HIDDEN'})	
 	bpy.types.Scene.smd_use_kv2 = BoolProperty(name="SMD Write KeyValues2",description="Write ASCII DMX files",default=False)
 	bpy.types.Scene.smd_game_path = StringProperty(name="QC Compile Target",description="Directory containing gameinfo.txt (if unset, the system VPROJECT will be used)",subtype="DIR_PATH")
 	
@@ -265,6 +264,7 @@ def register():
 	)
 	bpy.types.Object.smd_flex_controller_mode = EnumProperty(name="DMX Flex Controller generation",description="How flex controllers are defined",items=flex_controller_modes,default='SIMPLE')
 	bpy.types.Object.smd_flex_controller_source = StringProperty(name="DMX Flex Controller source",description="A DMX file (or Text datablock) containing flex controllers",subtype='FILE_PATH')
+	bpy.types.Object.smd_triangulate = BoolProperty(name="Triangulate",description="Avoids concave DMX faces, which are not supported by studiomdl",default=False)
 	
 	bpy.types.Armature.smd_implicit_zero_bone = BoolProperty(name="Implicit motionless bone",default=True,description="Create a dummy bone for vertices which don't move. Emulates Blender's behaviour in Source, but may break compatibility with existing files")
 	arm_modes = (

@@ -134,16 +134,14 @@ class ocsElem:
         NodePin.addChild("typename", typename)
         NodePin.addChild("id", str(id))
         NodePin.addChild("pintype", pintype)
-        NodePin.addChild("hasinternalnode", "true")
-        #NodePin.addChild("basenodeid", "1")
-        #NodePin.addChild("basenodepinid", "0")
-        #internalnodegraph = NodePin.addChild("Node", "")
-        internalnodegraph = NodePin.addChild("Node", "")
+        NodePin.addChild("hasinternalnodegraph", "true")
+        NodePin.addChild("basenodeid", "1")
+        NodePin.addChild("basenodepinid", "0")
+        internalnodegraph = NodePin.addChild("internalnodegraph", "")
         return internalnodegraph
 
     def addNodeGraph(self, typename):
-        #NodeGraph = self.addChild("NodeGraph", "")
-        NodeGraph = self
+        NodeGraph = self.addChild("NodeGraph", "")
         NodeGraph.addChild("name", typename)
         NodeGraph.addChild("currentnewnodeid", "2")
         NodeGraph.addChild("currentnewnodepinconnectionid", "1")
@@ -153,8 +151,7 @@ class ocsElem:
         return nodes
 
     def addNode(self, name, typename):
-        #Node = self.addChild("Node", "")
-        Node = self
+        Node = self.addChild("Node", "")
         Node.addChild("name", name)
         Node.addChild("typename", typename)
         Node.addChild("id", "1")
@@ -171,24 +168,23 @@ class ocsElem:
 
     def addFullNode(self, id, typename1, typename2, pintype):
         internalnodegraph = self.addNodePinInternal(id, typename1, pintype)
-        #nodes = internalnodegraph.addNodeGraph(typename1)
-        # aaaa Node = self.addNode(typename1, typename2)
-        Node = internalnodegraph.addNode(typename1, typename2)
-        return Node
+        nodes = internalnodegraph.addNodeGraph(typename1)
+        Node = nodes.addNode(typename1, typename2)
+        return Node, nodes
 
     def addRGBspectrum(self, id, typename, spectrum):
-        Node = self.addFullNode(id, typename, "RGBspectrum", "20000")
+        Node, nodes = self.addFullNode(id, typename, "RGBspectrum", "20000")
         parameters = Node.addChild("parameters", "")
         parameters.addChild("rgbvalue", "%f %f %f" % tuple([c for c in spectrum]))
         Node.addChild("inputnodepins", "")
 
     def addFilmWidth(self, id, mat):
-        Node = self.addFullNode(id, "filmwidth", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "filmwidth", "floattexture", "20000")
         Node.addParametersStdFloatTexture(mat.OCT_filmwidth)
         Node.addChild("inputnodepins", "")
 
     def addFilmIndex(self, id, mat):
-        Node = self.addFullNode(id, "filmindex", "float", "20001")
+        Node, nodes = self.addFullNode(id, "filmindex", "float", "20001")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(mat.OCT_filmindex))
         parameters.addChild("minvalue", "1")
@@ -201,7 +197,7 @@ class ocsElem:
         Node.addChild("inputnodepins", "")
 
     def addIndex(self, id, mat):
-        Node = self.addFullNode(id, "index", "float", "20001")
+        Node, nodes = self.addFullNode(id, "index", "float", "20001")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(mat.OCT_index))
         parameters.addChild("minvalue", "1")
@@ -214,47 +210,47 @@ class ocsElem:
         Node.addChild("inputnodepins", "")
 
     def addRoughnessFloatTexture(self, id, mat):
-        Node = self.addFullNode(id, "roughness", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "roughness", "floattexture", "20000")
         Node.addParametersRoughnessFloatTexture(mat.OCT_roughnessfloat)
         Node.addChild("inputnodepins", "")
 
     def addSpecularFloatTexture(self, id, mat):
-        Node = self.addFullNode(id, "specular", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "specular", "floattexture", "20000")
         Node.addParametersStdFloatTexture(mat.OCT_specular.floattexture)
         Node.addChild("inputnodepins", "")
 
     def addReflectionFloatTexture(self, id, mat):
-        Node = self.addFullNode(id, "reflection", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "reflection", "floattexture", "20000")
         Node.addParametersStdFloatTexture(mat.OCT_specular.floattexture)
         Node.addChild("inputnodepins", "")
 
     def addNormalFloatTexture(self, id, mat):
-        Node = self.addFullNode(id, "normal", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "normal", "floattexture", "20000")
         Node.addParametersStdFloatTexture(0)
         Node.addChild("inputnodepins", "")
 
     def addSmooth(self, id, mat):
-        Node = self.addFullNode(id, "smooth", "bool", "20003")
+        Node, nodes = self.addFullNode(id, "smooth", "bool", "20003")
         Node.addParametersBool(mat.OCT_smooth)
         Node.addChild("inputnodepins", "")
 
     def addBumpNone(self, id, mat):
-        Node = self.addFullNode(id, "bump", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "bump", "floattexture", "20000")
         Node.addParametersStdFloatTexture(0)
         Node.addChild("inputnodepins", "")
 
     def addNormalNone(self, id, mat):
-        Node = self.addFullNode(id, "normal", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "normal", "floattexture", "20000")
         Node.addParametersStdFloatTexture(0)
         Node.addChild("inputnodepins", "")
 
     def addOpacityFloatTexture(self, id, mat):
-        Node = self.addFullNode(id, "opacity", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "opacity", "floattexture", "20000")
         Node.addParameters(mat.OCT_opacity.floattexture,"0","1","true","false","false","0.001","true")
         Node.addChild("inputnodepins", "")
 
     def addTemperature(self, id, mat):
-        Node = self.addFullNode(id, "temperature", "float", "20001")
+        Node, nodes = self.addFullNode(id, "temperature", "float", "20001")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(mat.OCT_temperature))
         parameters.addChild("minvalue", "500")
@@ -263,81 +259,24 @@ class ocsElem:
         parameters.addChild("usetexturealphaui", "false")
         parameters.addChild("isloglincapable", "false")
         parameters.addChild("uselogscale", "false")
-        parameters.addChild("modified", "true")
+        parameters.addChild("modified", "false")
         Node.addChild("inputnodepins", "")
 
     def addPower(self, id, mat):
-        Node = self.addFullNode(id, "power", "float", "20001")
+        Node, nodes = self.addFullNode(id, "power", "float", "20001")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(mat.OCT_power))
-        parameters.addChild("minvalue", "0.001")
-        parameters.addChild("maxvalue", "100000")
+        parameters.addChild("minvalue", "0.01")
+        parameters.addChild("maxvalue", "100")
         parameters.addChild("usetextureui", "false")
         parameters.addChild("usetexturealphaui", "false")
         parameters.addChild("isloglincapable", "true")
         parameters.addChild("uselogscale", "true")
-        parameters.addChild("modified", "true")
+        parameters.addChild("modified", "false")
         Node.addChild("inputnodepins", "")
 
-    def addNormalize(self, id, mat):
-        Node = self.addFullNode(id, "normalize", "bool", "20003")
-        parameters = Node.addChild("parameters","")
-        parameters.addChild("value", str(mat.OCT_normalize))
-        Node.addChild("inputnodepins", "")
-
-    def addDistribution(self, id, mat):
-        Node = self.addFullNode(id, "distribution", "floattexture", "20000")
-        parameters = Node.addChild("parameters","")
-        parameters.addChild("value", str(mat.OCT_distribution))
-        parameters.addChild("minvalue", "0")
-        parameters.addChild("maxvalue", "1")
-        parameters.addChild("usetexturealphaui", "false")
-        parameters.addChild("isloglincapable", "false")
-        parameters.addChild("uselogscale", "false")
-        parameters.addChild("resolution", "0.001")
-        parameters.addChild("modified", "true")
-        Node.addChild("inputnodepins", "")
-
-    def addEfficiencyorTexture(self, id, mat):
-        Node = self.addFullNode(id, "efficiency or texture", "floattexture", "20000")
-        parameters = Node.addChild("parameters","")
-        parameters.addChild("value", str(mat.OCT_efficiencyortexture))
-        parameters.addChild("minvalue", "0")
-        parameters.addChild("maxvalue", "1")
-        parameters.addChild("usetexturealphaui", "false")
-        parameters.addChild("isloglincapable", "false")
-        parameters.addChild("uselogscale", "false")
-        parameters.addChild("resolution", "0.001")
-        parameters.addChild("modified", "true")
-        Node.addChild("inputnodepins", "")
-
-    def addOrientation(self, id, mat):
-        Node = self.addFullNode(id, "orientation", "float3", "20001")
-        parameters = Node.addChild("parameters","")
-		#orientation = "%s %s %s" % (str(mat.OCT_orientationpitch),str(mat.OCT_orientationyaw),str(mat.OCT_orientationroll))
-		#orientation = str.join(str(mat.OCT_orientationpitch), " ", str(mat.OCT_orientationyaw), " ",str(mat.OCT_orientationroll))
-        parameters.addChild("valuexyz", "%s %s %s" % (str(mat.OCT_orientationpitch),str(mat.OCT_orientationyaw),str(mat.OCT_orientationroll)))
-        parameters.addChild("minvalue", "-180")
-        parameters.addChild("maxvalue", "180")
-        parameters.addChild("modified", "true")
-        parameters.addChild("control", "2")
-        Node.addChild("inputnodepins", "")
-
-    def addSamplingRate(self, id, mat):
-        Node = self.addFullNode(id, "sampling_rate", "float", "20001")
-        parameters = Node.addChild("parameters","")
-        parameters.addChild("value", str(mat.OCT_samplingrate))
-        parameters.addChild("minvalue", "0.0001")
-        parameters.addChild("maxvalue", "10000")
-        parameters.addChild("usetextureui", "false")
-        parameters.addChild("usetexturealphaui", "false")
-        parameters.addChild("isloglincapable", "true")
-        parameters.addChild("uselogscale", "true")
-        parameters.addChild("modified", "true")
-        Node.addChild("inputnodepins", "")
-		
     def addTexPower(self, id, OCT_tex):
-        Node = self.addFullNode(id, "power", "floattexture", "20000")
+        Node, nodes = self.addFullNode(id, "power", "floattexture", "20000")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(OCT_tex.power))
         parameters.addChild("minvalue", "0")
@@ -350,7 +289,7 @@ class ocsElem:
         Node.addChild("inputnodepins", "")
 
     def addTexGamma(self, id, OCT_tex):
-        Node = self.addFullNode(id, "gamma", "float", "20001")
+        Node, nodes = self.addFullNode(id, "gamma", "float", "20001")
         parameters = Node.addChild("parameters","")
         parameters.addChild("value", str(OCT_tex.gamma))
         parameters.addChild("minvalue", "0.1")
@@ -363,7 +302,7 @@ class ocsElem:
         Node.addChild("inputnodepins", "")
 
     def addTexScale(self, id, OCT_tex, mat):
-        Node = self.addFullNode(id, "scale", "float2", "20001")
+        Node, nodes = self.addFullNode(id, "scale", "float2", "20001")
         parameters = Node.addChild("parameters","")
         scaleX = 1.0
         scaleY = 1.0
@@ -378,17 +317,17 @@ class ocsElem:
         Node.addChild("inputnodepins", "")
 
     def addTexInvert(self, id, OCT_tex):
-        Node = self.addFullNode(id, "invert", "bool", "20003")
+        Node, nodes = self.addFullNode(id, "invert", "bool", "20003")
         Node.addParametersBool(OCT_tex.invert)
         Node.addChild("inputnodepins", "")
 
     def addNormalize(self, id, mat):
-        Node = self.addFullNode(id, "normalize", "bool", "20003")
+        Node, nodes = self.addFullNode(id, "normalize", "bool", "20003")
         Node.addParametersBool(mat.OCT_normalize)
         Node.addChild("inputnodepins", "")
 
     def addTexture(self, id, mat, OCT_tex, typename, channel):
-        Node = self.addFullNode(id, channel, typename, "20000")
+        Node, nodes = self.addFullNode(id, channel, typename, "20000")
         mtex = mat.texture_slots.get(OCT_tex.texture)
         if mtex and mtex.texture.type == 'IMAGE':
             if not mtex.texture.image:
@@ -423,23 +362,19 @@ class ocsElem:
         inputnodepins.addTexInvert(3, OCT_tex)
 
     def addEmissionNull(self, id, mat):
-        Node = self.addFullNode(id, "emission", "null emission", "20006")
+        Node, nodes = self.addFullNode(id, "emission", "null emission", "20006")
         Node.addChild("inputnodepins", "")
 
     def addEmissionBlackBody(self, id, mat):
-        Node = self.addFullNode(id, "emission", "blackbody", "20006")
+        Node, nodes = self.addFullNode(id, "emission", "blackbody", "20006")
         inputnodepins = Node.addChild("inputnodepins", "")
         inputnodepins.addTemperature(0, mat)
         inputnodepins.addPower(1, mat)
         inputnodepins.addNormalize(2, mat)
-        inputnodepins.addDistribution(3, mat)
-        inputnodepins.addEfficiencyorTexture(4, mat)
-        inputnodepins.addOrientation(5, mat)
-        inputnodepins.addSamplingRate(6, mat)
-        #nodes.addChild("nodepinconnections", "")
+        nodes.addChild("nodepinconnections", "")
 
     def addEmissionTexture(self, id, mat):
-        Node = self.addFullNode(id, "emission", "texture emission", "20006")
+        Node, nodes = self.addFullNode(id, "emission", "texture emission", "20006")
         inputnodepins = Node.addChild("inputnodepins", "")
         if mat.OCT_emission.emission == "RGBspectrum":
             inputnodepins.addRGBspectrum(0, "texture", mat.specular_color)
@@ -524,7 +459,8 @@ class ocsElem:
     def addMaterialDiffuse(self, mat):
         currentnewnodeid = 1
         currentnewnodepinconnectionid = 0
-        Node = self.addChild("Node", "")
+        nodes = self.addChild("nodes","")
+        Node = nodes.addChild("Node", "")
         Node.addChild("name", mat.name)
         Node.addChild("typename", "diffuse")
         Node.addChild("id", "1")
@@ -543,7 +479,8 @@ class ocsElem:
     def addMaterialGlossy(self, mat):
         currentnewnodeid = 1
         currentnewnodepinconnectionid = 0
-        Node = self.addChild("Node", "")
+        nodes = self.addChild("nodes","")
+        Node = nodes.addChild("Node", "")
         Node.addChild("name", mat.name)
         Node.addChild("typename", "glossy")
         Node.addChild("id", "1")
@@ -564,7 +501,8 @@ class ocsElem:
     def addMaterialSpecular(self, mat):
         currentnewnodeid = 1
         currentnewnodepinconnectionid = 0
-        Node = self.addChild("Node", "")
+        nodes = self.addChild("nodes","")
+        Node = nodes.addChild("Node", "")
         Node.addChild("name", mat.name)
         Node.addChild("typename", "specular")
         Node.addChild("id", "1")
@@ -588,19 +526,19 @@ class ocsElem:
         nodemat.addChild("typename",mat.name)
         nodemat.addChild("id",str(inputid))
         nodemat.addChild("pintype","20005")
-        nodemat.addChild("hasinternalnode","true")
+        nodemat.addChild("hasinternalnodegraph","true")
         #if mat.OCT_material_type == "glossy":
-        #nodemat.addChild("basenodeid","1")
+        nodemat.addChild("basenodeid","1")
         #else:
         #    nodemat.addChild("basenodeid","8")
-        #nodemat.addChild("basenodepinid","0")
-        #internalnodegraph = nodemat.addChild("internalnodegraph","")
-        NodeGraph = nodemat
+        nodemat.addChild("basenodepinid","0")
+        internalnodegraph = nodemat.addChild("internalnodegraph","")
+        NodeGraph = internalnodegraph.addChild("NodeGraph","")
         currentnewnodeid = 1
         currentnewnodepinconnectionid = 0
-        #NodeGraph.addChild("name",mat.name)
-        #NodeGraph.addChild("currentnewnodeid",str(currentnewnodeid))
-        #NodeGraph.addChild("currentnewnodepinconnectionid",str(currentnewnodepinconnectionid))
+        NodeGraph.addChild("name",mat.name)
+        NodeGraph.addChild("currentnewnodeid",str(currentnewnodeid))
+        NodeGraph.addChild("currentnewnodepinconnectionid",str(currentnewnodepinconnectionid))
         if mat.OCT_material_type == "diffuse":
             currentnewnodeid, currentnewnodepinconnectionid = NodeGraph.addMaterialDiffuse(mat)
         elif mat.OCT_material_type == "glossy":

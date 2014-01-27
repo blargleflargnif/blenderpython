@@ -84,7 +84,7 @@ class BUTTON_OCT_render(bpy.types.Operator):
         octanerender.frameStart = scene.frame_current
         octanerender.frameStop  = octanerender.frameStart
 
-        octanerender.replace_project = octane_render.replace_project
+#        octanerender.replace_project = octane_render.replace_project
         octane_render.replace_project = False
         if octane_render.import_render:
             log('Call to render with INVOKE_AREA')

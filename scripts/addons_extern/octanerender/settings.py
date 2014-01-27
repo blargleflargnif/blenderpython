@@ -158,20 +158,21 @@ def addProperties():
 
 # Octane Environement Settings
 
-    OctaneRenderSettings.replace_project = BoolProperty(
-        name="Create or replace OCS file",
-        description="Will create or overwrite the ocs file",
-        default = True)
+## Removed until the -n flag is fixed in the Octane command line.
+#    OctaneRenderSettings.replace_project = BoolProperty(
+#        name="Create or replace OCS file",
+#        description="Will create or overwrite the ocs file",
+#        default = True)
 
-    OctaneRenderSettings.relink_obj = BoolProperty(
-        name="Relink OBJ to existing OCS",
-        description="Force OBJ mesh file to relink into rendered OCS",
-        default = True)
+#    OctaneRenderSettings.relink_obj = BoolProperty(
+#        name="Relink OBJ to existing OCS",
+#        description="Force OBJ mesh file to relink into rendered OCS",
+#        default = True)
 
-    OctaneRenderSettings.write_ocs = BoolProperty(
-        name="Write materials into OCS file",
-        description="Will write some parameters directly into the ocs file - EXPERIMENTAL!",
-        default = False)
+#    OctaneRenderSettings.write_ocs = BoolProperty(
+#        name="Write materials into OCS file",
+#        description="Will write some parameters directly into the ocs file - EXPERIMENTAL!",
+#        default = False)
 
     # Camera Properties
     OctaneRenderSettings.export_camera = BoolProperty(
@@ -190,12 +191,12 @@ def addProperties():
     OctaneRenderSettings.export_remove_hidden = BoolProperty(
         name="Remove Hidden",
         description="Remove objects with restricted rendability from export result",
-        default = False)
+        default = True)
 
     OctaneRenderSettings.export_remove_invisible = BoolProperty(
         name="Remove Invisible",
         description="Remove objects with restricted visibility from export result",
-        default = False)
+        default = True)
 
     # Output Opyions
     OctaneRenderSettings.export_apply_modifiers = BoolProperty(
@@ -262,10 +263,10 @@ def addProperties():
         default = "",
         subtype='FILE_PATH')
 
-    OctaneRenderSettings.GPU_selector = BoolProperty(
-        name="GPU Devices to use",
-        description="Custom GPU devices config",
-        default = False)
+#    OctaneRenderSettings.GPU_selector = BoolProperty(
+#        name="GPU Devices to use",
+#        description="Custom GPU devices config",
+#        default = False)
 
     OctaneRenderSettings.GPU_use_list = StringProperty(
         name=getLabel('GPU_use_list'),
@@ -742,42 +743,12 @@ def addProperties():
     bpy.types.Material.OCT_power = FloatProperty(
         name="Power",
         description="Emitter Power",
-        min=0.0, max=100000.0, step = 1.0, default=1.0)
+        min=0.0, max=100.0, step = 1.0, default=1.0)
 
     bpy.types.Material.OCT_normalize = BoolProperty(
         name="Normalize",
         description="Emitter Normalize",
         default=False)
-
-    bpy.types.Material.OCT_distribution = FloatProperty(
-        name="Distribution",
-        description="Emitter Distribution",
-        min=0.0, max=1.0, step = 0.01, default=1.0)
-
-    bpy.types.Material.OCT_efficiencyortexture = FloatProperty(
-        name="Efficiency",
-        description="Emitter Efficiency",
-        min=0.0, max=1.0, step = 0.01, default=0.025)
-
-    bpy.types.Material.OCT_orientationpitch = FloatProperty(
-        name="Orientation pitch",
-        description="Emitter Orientation pitch",
-        min=-180.0, max=180.0, step = 1.00, default=0.0)
-
-    bpy.types.Material.OCT_orientationyaw = FloatProperty(
-        name="Orientation yaw",
-        description="Emitter Orientation yaw",
-        min=-180.0, max=180.0, step = 1.00, default=0.0)
-
-    bpy.types.Material.OCT_orientationroll = FloatProperty(
-        name="Orientation roll",
-        description="Emitter Orientation roll",
-        min=-180.0, max=180.0, step = 1.00, default=0.0)
-
-    bpy.types.Material.OCT_samplingrate = FloatProperty(
-        name="Sampling rate",
-        description="Emitter Sampling rate",
-        min=0.0001, max=10000.0, step = 1.00, default=1.0)
 
 
 

@@ -157,12 +157,6 @@ class MATERIAL_OCT_properties(OctaneMaterialButtonsPanel, bpy.types.Panel):
                 box.prop(mat, "OCT_temperature")
                 box.prop(mat, "OCT_normalize")
                 box.prop(mat, "OCT_power")
-                box.prop(mat, "OCT_distribution")
-                box.prop(mat, "OCT_efficiencyortexture")
-                box.prop(mat, "OCT_orientationpitch")
-                box.prop(mat, "OCT_orientationyaw")
-                box.prop(mat, "OCT_orientationroll")
-                box.prop(mat, "OCT_samplingrate")
             elif mat.OCT_emitter_type == "texture":
                 box.prop(mat.OCT_emission, "emission", text="Emission source")
                 if mat.OCT_emission.emission == "RGBspectrum":

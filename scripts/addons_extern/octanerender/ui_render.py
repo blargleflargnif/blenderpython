@@ -204,14 +204,13 @@ class RENDER_OCT_environment_settings(OctaneRenderButtonsPanel, bpy.types.Panel)
         scene = context.scene
         octane_render = scene.octane_render
 
-        layout.prop(octane_render, "replace_project")
+        #layout.prop(octane_render, "replace_project")
         #if octane_render.replace_project == False:
         #    layout.prop(octane_render, "relink_obj")
 
-        layout.prop(octane_render,"write_ocs")
+        #layout.prop(octane_render,"write_ocs")
 
         # Camera
-        layout.separator()
         row = layout.row()
         row.label(text="Camera Properties", icon='SCENE')
         layout.prop(octane_render, "export_camera")
@@ -313,10 +312,10 @@ class RENDER_OCT_system_settings(OctaneRenderButtonsPanel, bpy.types.Panel):
         row = layout.row()
         split = row.split(align=True)
         col = split.column()
-        col.prop(octane_render, "GPU_selector")
-        if octane_render.GPU_selector:
-            col = split.column()
-            col.prop(octane_render, "GPU_use_list")
+#        col.prop(octane_render, "GPU_selector")
+#        if octane_render.GPU_selector:
+#            col = split.column()
+#            col.prop(octane_render, "GPU_use_list")
         layout.prop(octane_render, "resolution")
         layout.prop(octane_render, "verbose")
         if octane_render.verbose == True:

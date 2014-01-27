@@ -22,9 +22,9 @@
 
 bl_info = {
     "name": "Octane Render Extended",
-    "author": "Lionel Zamouth",
-    "version": (1,2,0),
-    "blender": (2, 6, 2),
+    "author": "Lionel Zamouth / Stephen Boyd",
+    "version": (2,0,2),
+    "blender": (2, 6, 9),
     "api": 45110,
     "location": "Info Header - Engine dropdown",
     "description": "Extended Octane Render addon - UNSUPPORTED",
@@ -33,7 +33,7 @@ bl_info = {
     "tracker_url": "",
     "support": 'COMMUNITY',
     "category": "Render"}
-Version = 'v1.20'
+Version = 'v2.02'
 Supported = False
 
 

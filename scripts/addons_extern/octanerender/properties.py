@@ -29,15 +29,6 @@ for member in dir(properties_data_mesh):
         pass
 del properties_data_mesh
 
-from bl_ui import properties_scene
-for member in dir(properties_scene):
-    subclass = getattr(properties_scene, member)
-    try:
-        subclass.COMPAT_ENGINES.add('OCT_RENDER')
-    except:
-        pass
-del properties_scene
-
 from bl_ui import properties_texture
 for member in dir(properties_texture):
     subclass = getattr(properties_texture, member)

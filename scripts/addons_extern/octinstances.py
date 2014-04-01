@@ -79,19 +79,18 @@ def exportDuplis(context, emitter, oct_t):
 	octane = context.scene.octane_render
 	export_path = bpath.abspath(octane.path)
 	
-	if octane.instances_write_dupli:
-		filepath = "".join([export_path, emitter.name, "_objects"])
-		info("Writing dupli objects to file '%s'" % (filepath + ".obj"))
-		duplis_world = {}
-		for c in emitter.children:
-			duplis_world[c] = c.matrix_world.copy()
-			c.matrix_world = Matrix.Identity(4)
-		d_type = emitter.dupli_type
-		emitter.dupli_type = 'NONE' 
-		writeDupliObjects(context, emitter.children, filepath)
-		emitter.dupli_type = d_type
-		for k, v in duplis_world.items():
-			k.matrix_world = v
+	filepath = "".join([export_path, emitter.name, "_objects"])
+	info("Writing dupli objects to file '%s'" % (filepath + ".obj"))
+	duplis_world = {}
+	for c in emitter.children:
+		duplis_world[c] = c.matrix_world.copy()
+		c.matrix_world = Matrix.Identity(4)
+	d_type = emitter.dupli_type
+	emitter.dupli_type = 'NONE' 
+	writeDupliObjects(context, emitter.children, filepath)
+	emitter.dupli_type = d_type
+	for k, v in duplis_world.items():
+		k.matrix_world = v
 	
 	emitter.dupli_list_create(context.scene)
 	lst = emitter.dupli_list
@@ -118,12 +117,11 @@ def exportMeshDuplis(context, obj, users, oct_t):
 	info("Saving transforms for '%s' mesh-dupli objects into file '%s' " % (obj.data.name, csv_filename))
 	
 	try:
-		if octane.instances_write_dupli:
-			filepath = export_path + obj.data.name
-			obj_world = obj.matrix_world.copy()
-			obj.matrix_world = Matrix.Identity(4)
-			writeDupliObjects(context, [obj], filepath)
-			obj.matrix_world = obj_world
+		filepath = export_path + obj.data.name
+		obj_world = obj.matrix_world.copy()
+		obj.matrix_world = Matrix.Identity(4)
+		writeDupliObjects(context, [obj], filepath)
+		obj.matrix_world = obj_world
 		fh = open(csv_filename, "w")
 		for o in users:
 			t = o.matrix_world.copy()
@@ -145,7 +143,7 @@ def exportParticles(context, emitter, psys, oct_t):
 	
 	if pset.render_type == "OBJECT":
 		dupli_ob = pset.dupli_object
-		if dupli_ob is not None and octane.instances_write_dupli:
+		if dupli_ob is not None:
 			info(infostr + " with %i instances of '%s' objects" % (len(particles), dupli_ob.name))
 			filepath = "".join([bpath.abspath(octane.path), dupli_ob.name])
 			info("Writing dupli object to file '%s'" % (filepath + ".obj"))

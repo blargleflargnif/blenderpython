@@ -21,7 +21,7 @@
 bl_info = {
 	"name": "Octane Instances Transform Exporter (unofficial)",
 	"author": "Matej Mo",
-	"version": (0,1,9),
+	"version": (0,2,1),
 	"blender": (2, 6, 3),
 	"location": "Settings > Render",
 	"description": "Instance transform export tool attached to the unofficial Octane Render exporter",
@@ -79,18 +79,19 @@ def exportDuplis(context, emitter, oct_t):
 	octane = context.scene.octane_render
 	export_path = bpath.abspath(octane.path)
 	
-	filepath = "".join([export_path, emitter.name, "_objects"])
-	info("Writing dupli objects to file '%s'" % (filepath + ".obj"))
-	duplis_world = {}
-	for c in emitter.children:
-		duplis_world[c] = c.matrix_world.copy()
-		c.matrix_world = Matrix.Identity(4)
-	d_type = emitter.dupli_type
-	emitter.dupli_type = 'NONE' 
-	writeDupliObjects(context, emitter.children, filepath)
-	emitter.dupli_type = d_type
-	for k, v in duplis_world.items():
-		k.matrix_world = v
+	if octane.instances_write_dupli:
+		filepath = "".join([export_path, emitter.name, "_objects"])
+		info("Writing dupli objects to file '%s'" % (filepath + ".obj"))
+		duplis_world = {}
+		for c in emitter.children:
+			duplis_world[c] = c.matrix_world.copy()
+			c.matrix_world = Matrix.Identity(4)
+		d_type = emitter.dupli_type
+		emitter.dupli_type = 'NONE' 
+		writeDupliObjects(context, emitter.children, filepath)
+		emitter.dupli_type = d_type
+		for k, v in duplis_world.items():
+			k.matrix_world = v
 	
 	emitter.dupli_list_create(context.scene)
 	lst = emitter.dupli_list
@@ -100,8 +101,7 @@ def exportDuplis(context, emitter, oct_t):
 		fh = open(export_path + emitter.name + ".csv", "w")
 		for duplicate in lst.values():
 			t = duplicate.matrix.copy()
-			t = oct_t[0] * t * oct_t[1]
-			writeTransform(t, fh)
+			writeTransform(oct_t[0] * t * oct_t[1], fh)
 		fh.close()
 	except IOError as err:
 		msg = "IOError during file handling '{0}'".format(err)
@@ -117,16 +117,16 @@ def exportMeshDuplis(context, obj, users, oct_t):
 	info("Saving transforms for '%s' mesh-dupli objects into file '%s' " % (obj.data.name, csv_filename))
 	
 	try:
-		filepath = export_path + obj.data.name
-		obj_world = obj.matrix_world.copy()
-		obj.matrix_world = Matrix.Identity(4)
-		writeDupliObjects(context, [obj], filepath)
-		obj.matrix_world = obj_world
+		if octane.instances_write_dupli:
+			filepath = export_path + obj.data.name
+			obj_world = obj.matrix_world.copy()
+			obj.matrix_world = Matrix.Identity(4)
+			writeDupliObjects(context, [obj], filepath)
+			obj.matrix_world = obj_world
 		fh = open(csv_filename, "w")
 		for o in users:
 			t = o.matrix_world.copy()
-			t = oct_t[0] * t * oct_t[1]
-			writeTransform(t, fh)
+			writeTransform(oct_t[0] * t * oct_t[1], fh)
 		fh.close()
 	except IOError as err:
 		msg = "IOError during file handling '{0}'".format(err)
@@ -143,7 +143,7 @@ def exportParticles(context, emitter, psys, oct_t):
 	
 	if pset.render_type == "OBJECT":
 		dupli_ob = pset.dupli_object
-		if dupli_ob is not None:
+		if dupli_ob is not None and octane.instances_write_dupli:
 			info(infostr + " with %i instances of '%s' objects" % (len(particles), dupli_ob.name))
 			filepath = "".join([bpath.abspath(octane.path), dupli_ob.name])
 			info("Writing dupli object to file '%s'" % (filepath + ".obj"))
@@ -152,14 +152,6 @@ def exportParticles(context, emitter, psys, oct_t):
 			dupli_ob.matrix_world = transl_inv * dupli_ob.matrix_world
 			writeDupliObjects(context, [dupli_ob], filepath)
 			dupli_ob.matrix_world = dupli_world
-#			
-#	elif pset.render_type == "GROUP":
-#		duplig = pset.dupli_group
-#		if duplig is not None:
-#			objects = duplig.objects
-#			infostr += " with %i instances from group '%s'" % (len(particles), duplig.name)
-#			info(infostr + " {0}".format([o.name for o in objects]))
-#			# TODO: separate group scatter per object
 	else:
 		warning("Invalid PS visualization type '%s'" % pset.render_type)
 		return
@@ -170,28 +162,25 @@ def exportParticles(context, emitter, psys, oct_t):
 		fh = open(export_path + psys.name + ".csv", "w")
 		for p in particles:
 			#if pset.type == 'HAIR' or not p.alive_state == 'DEAD':
+			rot = Quaternion.to_matrix(p.rotation).to_4x4()
 			if (pset.type == "HAIR"):
-				loc = Matrix.Translation(p.hair_keys[0].co)
-				scale = Matrix.Scale(p.size, 4) * Matrix.Scale(pset.hair_length, 4)
+				h1 = p.hair_keys[0].co
+				h2 = p.hair_keys[-1].co
+				loc = Matrix.Translation(h1)	
+				scale = Matrix.Scale((h2 - h1).length, 4)
+				rot = emitter.matrix_world.decompose()[1].to_matrix().to_4x4().inverted() * rot
 			else:
 				loc = Matrix.Translation(p.location)
 				scale = Matrix.Scale(p.size, 4)
-			rot = Quaternion.to_matrix(p.rotation).to_4x4()
 			t = loc * rot * scale
 			t = emitter.matrix_world * t if pset.type == "HAIR" else t
-			t = oct_t[0] * t * oct_t[1]
-			writeTransform(t, fh)
+			writeTransform(oct_t[0] * t * oct_t[1], fh)
 		fh.close()
 	except IOError as err:
 		msg = "IOError during file handling '{0}'".format(err)
 		error(msg)
 		raise ExportException(msg)
 
-
-###################
-#		GUI			#
-###################
-### EXPORT BUTTON ###
 class BUTTON_instances_export_selected(Operator):
 	bl_idname = "ops.instances_export_selected"
 	bl_label = "Export instance transforms"

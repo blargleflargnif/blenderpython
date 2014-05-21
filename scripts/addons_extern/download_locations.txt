@@ -277,3 +277,6 @@ Molecular -- PyroEvil (Jean-Francois Gallant)
 	
 Dynamic Parent -- Eibriel
 	http://www.blenderartists.org/forum/showthread.php?296018-WIP-Dynamic-Parent-addon&p=2643211&viewfull=1#post2643211
+	
+cardinalMouse -- Sean Olson (LiquidApe)
+	http://www.blenderartists.org/forum/showthread.php?337126

@@ -1,4 +1,4 @@
-#  Copyright (c) 2014 Tom Edwards contact@steamreview.org
+#  Copyright (c) 2013 Tom Edwards contact@steamreview.org
 #
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
@@ -20,38 +20,33 @@
 
 import bpy, bmesh, random, collections
 from bpy import ops
-from bpy.app.translations import pgettext
 from bpy.props import *
 from .utils import *
 
 class SmdImporter(bpy.types.Operator, Logger):
 	bl_idname = "import_scene.smd"
-	bl_label = get_id("importer_title")
-	bl_description = get_id("importer_tip")
+	bl_label = "Import SMD/VTA, DMX, QC"
+	bl_description = "Imports uncompiled Source Engine model data"
 	bl_options = {'UNDO'}
 	
 	qc = None
 	smd = None
 
 	# Properties used by the file browser
-	filepath = StringProperty(name="File Path", description="File filepath used for importing the SMD/VTA/DMX/QC file", maxlen=1024, default="")
-	filter_folder = BoolProperty(name="Filter Folders", description="", default=True, options={'HIDDEN'})
+	filepath = StringProperty(name="File path", description="File filepath used for importing the SMD/VTA/DMX/QC file", maxlen=1024, default="")
+	filter_folder = BoolProperty(name="Filter folders", description="", default=True, options={'HIDDEN'})
 	filter_glob = StringProperty(default="*.smd;*.vta;*.dmx;*.qc;*.qci", options={'HIDDEN'})
 
 	# Custom properties
-	append = BoolProperty(name=get_id("importer_append"), description=get_id("importer_append_tip"), default=True)
-	doAnim = BoolProperty(name=get_id("importer_doanims"), default=True)
-	upAxis = EnumProperty(name="Up Axis",items=axes,default='Z',description=get_id("importer_up_tip"))
-	makeCamera = BoolProperty(name=get_id("importer_makecamera"),description=get_id("importer_makecamera_tip"),default=False)
-	rotModes = ( ('XYZ', "Euler", ''), ('QUATERNION', "Quaternion", "") )
-	rotMode = EnumProperty(name=get_id("importer_rotmode"),items=rotModes,default='XYZ',description=get_id("importer_rotmode_tip"))
-	boneMode = EnumProperty(name=get_id("importer_bonemode"),items=(('NONE','Default',''),('ARROWS','Arrows',''),('SPHERE','Sphere','')),default='SPHERE',description=get_id("importer_bonemode_tip"))
+	append = BoolProperty(name="Extend any existing model", description="Whether imports will latch onto an existing armature or create their own", default=True)
+	doAnim = BoolProperty(name="Import animations (slow/bulky)", default=True)
+	upAxis = EnumProperty(name="Up axis",items=axes,default='Z',description="Which axis represents 'up' (ignored for QCs)")
+	makeCamera = BoolProperty(name="Make camera at $origin",description="For use in viewmodel editing; if not set, an empty will be created instead",default=False)
+	rotModes = ( ('XYZ', "Euler XYZ", ''), ('QUATERNION', "Quaternion", "") )
+	rotMode = EnumProperty(name="Rotation mode",items=rotModes,default='XYZ',description="Keyframes will be inserted in this rotation mode")
 	
 	def execute(self, context):		
 		pre_obs = set(bpy.context.scene.objects)
-
-		pre_eem = context.user_preferences.edit.use_enter_edit_mode
-		context.user_preferences.edit.use_enter_edit_mode = False
 
 		filepath_lc = self.properties.filepath.lower()
 		if filepath_lc.endswith('.qc') or filepath_lc.endswith('.qci'):
@@ -65,12 +60,12 @@ class SmdImporter(bpy.types.Operator, Logger):
 			self.countSMDs = self.readDMX(self.properties.filepath, self.properties.upAxis, self.properties.rotMode, append=self.properties.append)
 		else:
 			if len(filepath_lc) == 0:
-				self.report({'ERROR'},get_id("importer_err_nofile"))
+				self.report({'ERROR'},"No file selected")
 			else:
-				self.report({'ERROR'},get_id("importer_err_badfile", True).format(os.path.basename(self.properties.filepath)))
+				self.report({'ERROR'},"Format of {} not recognised".format(os.path.basename(self.properties.filepath)))
 			return {'CANCELLED'}
 
-		self.errorReport(get_id("importer_complete", True).format(self.countSMDs,self.elapsed_time()))
+		self.errorReport("imported","file",self,self.countSMDs)
 		if self.countSMDs:
 			ops.object.select_all(action='DESELECT')
 			new_obs = set(bpy.context.scene.objects).difference(pre_obs)
@@ -88,11 +83,10 @@ class SmdImporter(bpy.types.Operator, Logger):
 					space.clip_end = max( space.clip_end, xyz * 2 )
 		if bpy.context.area and bpy.context.area.type == 'VIEW_3D' and bpy.context.region:
 			ops.view3d.view_selected()
-		context.user_preferences.edit.use_enter_edit_mode = pre_eem
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
-		self.properties.upAxis = context.scene.vs.up_axis
+		self.properties.upAxis = context.scene.smd_up_axis
 		bpy.context.window_manager.fileselect_add(self)
 		return {'RUNNING_MODAL'}
 
@@ -240,9 +234,9 @@ class SmdImporter(bpy.types.Operator, Logger):
 				return
 
 		# Got this far? Then this is a fresh import which needs a new armature.
-		smd.a = self.createArmature((self.qc.jobName if self.qc else smd.jobName) + "_skeleton")
+		smd.a = self.createArmature(self.qc.jobName if self.qc else smd.jobName)
 		if self.qc: self.qc.a = smd.a
-		smd.a.data.vs.implicit_zero_bone = False # Too easy to break compatibility, plus the skeleton is probably set up already
+		smd.a.data.smd_implicit_zero_bone = False # Too easy to break compatibility, plus the skeleton is probably set up already
 		
 		boneParents = {}
 		renamedBones = []
@@ -274,7 +268,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 		print("- Imported {} new bones".format(len(smd.a.data.bones)) )
 
 		if len(smd.a.data.bones) > 128:
-			self.warning(get_id("importer_err_bonelimit_smd"))
+			self.warning("Source only supports 128 bones!")
 
 	@classmethod
 	def findArmature(self):
@@ -409,20 +403,15 @@ class SmdImporter(bpy.types.Operator, Logger):
 					bone.matrix = keyframes[bone][0].matrix
 			ops.pose.armature_apply()
 			
-			bone_vis = None if self.properties.boneMode == 'NONE' else bpy.data.objects.get("smd_bone_vis")
-			
-			if self.properties.boneMode == 'SPHERE' and (not bone_vis or bone_vis.type != 'MESH'):
-					ops.mesh.primitive_ico_sphere_add(subdivisions=3,size=2)
-					bone_vis = bpy.context.active_object
-					bone_vis.data.name = bone_vis.name = "smd_bone_vis"
-					bone_vis.use_fake_user = True
-					bpy.context.scene.objects.unlink(bone_vis) # don't want the user deleting this
-					bpy.context.scene.objects.active = smd.a
-			elif self.properties.boneMode == 'ARROWS' and (not bone_vis or bone_vis.type != 'EMPTY'):
-					bone_vis = bpy.data.objects.new("smd_bone_vis",None)
-					bone_vis.use_fake_user = True
-					bone_vis.empty_draw_type = 'ARROWS'
-					bone_vis.empty_draw_size = 5
+			# Get sphere bone mesh
+			bone_vis = bpy.data.objects.get("smd_bone_vis")
+			if not bone_vis:
+				ops.mesh.primitive_ico_sphere_add(subdivisions=3,size=2)
+				bone_vis = bpy.context.active_object
+				bone_vis.data.name = bone_vis.name = "smd_bone_vis"
+				bone_vis.use_fake_user = True
+				bpy.context.scene.objects.unlink(bone_vis) # don't want the user deleting this
+				bpy.context.scene.objects.active = smd.a
 				
 			# Calculate armature dimensions...Blender should be doing this!
 			maxs = [0,0,0]
@@ -520,11 +509,11 @@ class SmdImporter(bpy.types.Operator, Logger):
 					# Key each frame
 					for f,keyframe in keyframes[bone].items():
 						# Transform
-						if smd.a.data.vs.legacy_rotation:
+						if smd.a.data.smd_legacy_rotation:
 							keyframe.matrix *= mat_BlenderToSMD.inverted()
 						
 						if bone.parent:
-							if smd.a.data.vs.legacy_rotation: parentMat = bone.parent.matrix * mat_BlenderToSMD
+							if smd.a.data.smd_legacy_rotation: parentMat = bone.parent.matrix * mat_BlenderToSMD
 							else: parentMat = bone.parent.matrix
 							bone.matrix = parentMat * keyframe.matrix
 						else:
@@ -568,11 +557,11 @@ class SmdImporter(bpy.types.Operator, Logger):
 				smd.a.select = True
 				if ops.graph.clean.poll():
 					ops.graph.handle_type(type='AUTO')
-				bpy.context.area.type = oldType # in Blender 2.59 this leaves context.region blank, making some future ops calls (e.g. view3d.view_all) fail!
+				bpy.context.area.type = oldType # in Blender 2.59 this leaves context.region blank, making some future ops calls (e.g. view3d.view_all) fail!'''
 				for bone in smd.a.data.bones:
 					bone.select = False
 			else: # Blender is probably in background mode
-				self.warning(get_id("importer_err_cleancurves"))
+				self.warning("Unable to clean FCurve handles, animations might be jittery.")
 
 		# clear any unkeyed poses
 		for bone in smd.a.pose.bones:
@@ -712,7 +701,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 			smd.m.vertex_groups.new(bone.name)
 
 		# Apply armature modifier
-		modifier = smd.m.modifiers.new(type="ARMATURE",name=pgettext("Armature"))
+		modifier = smd.m.modifiers.new(type="ARMATURE",name="Armature")
 		modifier.object = smd.a
 
 		# Initialisation
@@ -742,7 +731,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 			if smdContinue(line):
 				continue
 
-			mat, mat_ind = self.getMeshMaterial(line if line else pgettext(get_id("importer_name_nomat", data=True)))
+			mat, mat_ind = self.getMeshMaterial(line if line else "UndefinedMaterial")
 			mats.append(mat_ind)
 
 			# ***************************************************************
@@ -829,7 +818,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 				md.update()
 
 			if badWeights:
-				self.warning(get_id("importer_err_badweights", True).format(badWeights,smd.jobName))
+				self.warning("{} vertices weighted to invalid bones on {}".format(badWeights,smd.jobName))
 			print("- Imported {} polys".format(countPolys))
 
 	# vertexanimation block
@@ -850,26 +839,23 @@ class SmdImporter(bpy.types.Operator, Logger):
 							smd.m = obj
 				
 		if not smd.m:
-			self.error(get_id("importer_err_shapetarget")) # FIXME: this could actually be supported
+			self.error("Could not import shape keys: no valid target object found") # FIXME: this could actually be supported
 			return
-
-		if hasShapes(smd.m):
-			smd.m.active_shape_key_index = 0
+		
 		smd.m.show_only_shape_key = True # easier to view each shape, less confusion when several are active at once
-
+		
 		def vec_round(v):
 			return Vector([round(co,3) for co in v])
 		co_map = {}
 		mesh_cos = [vert.co for vert in smd.m.data.vertices]
-		mesh_cos_rnd = None
-
+		mesh_cos_rnd = [vec_round(co) for co in mesh_cos]
+		
 		smd.vta_ref = None
 		vta_cos = []
 		vta_ids = []
 		
 		making_base_shape = True
-		bad_vta_verts = []
-		num_shapes = 0
+		bad_vta_verts = num_shapes = 0
 		md = smd.m.data
 		
 		for line in smd.file:
@@ -885,51 +871,36 @@ class SmdImporter(bpy.types.Operator, Logger):
 			if values[0] == "time":
 				shape_name = smd.shapeNames.get(values[1])
 				if smd.vta_ref == None:
-					if not hasShapes(smd.m, False): smd.m.shape_key_add(shape_name if shape_name else "Basis")
-					vd = bpy.data.meshes.new(name="VTA vertices")
-					vta_ref = smd.vta_ref = bpy.data.objects.new(name=vd.name,object_data=vd)
-					vta_ref.matrix_world = smd.m.matrix_world
+					smd.m.shape_key_add(shape_name if shape_name else "Basis")
+					vta_ref = smd.vta_ref = smd.m.copy()
+					vta_ref.name = "VTA vertices"
 					bpy.context.scene.objects.link(vta_ref)
-
-					vta_err_vg = vta_ref.vertex_groups.new(get_id("importer_name_unmatchedvta"))
+					vd = vta_ref.data = bpy.data.meshes.new(vta_ref.name)
 				elif making_base_shape:
 					vd.vertices.add(len(vta_cos)/3)
 					vd.vertices.foreach_set("co",vta_cos)
-					num_vta_verts = len(vd.vertices)
 					del vta_cos
 					
-					mod = vta_ref.modifiers.new(name="VTA Shrinkwrap",type='SHRINKWRAP')
-					mod.target = smd.m
-					mod.wrap_method = 'NEAREST_VERTEX'
+					#mod = vta_ref.modifiers.new(name="VTA Shrinkwrap",type='SHRINKWRAP')
+					#mod.target = smd.m
+					#mod.wrap_method = 'NEAREST_VERTEX'
 					
 					vd = vta_ref.to_mesh(bpy.context.scene, True, 'PREVIEW')
 					
-					vta_ref.modifiers.remove(mod)
-					del mod
-
 					for i in range(len(vd.vertices)):
-						id = vta_ids[i]
-						co =  vd.vertices[i].co
-						map_id = None
 						try:
-							map_id = mesh_cos.index(co)
+							co_map[vta_ids[i]] = mesh_cos.index(vd.vertices[i].co)
 						except ValueError:
-							if not mesh_cos_rnd:
-								mesh_cos_rnd = [vec_round(co) for co in mesh_cos]
 							try:
-								map_id = mesh_cos_rnd.index(vec_round(co))
+								co_map[vta_ids[i]] = mesh_cos_rnd.index(vec_round(vd.vertices[i].co))
 							except ValueError:
-								bad_vta_verts.append(i)
-								continue
-						co_map[id] = map_id
+								bad_vta_verts += 1
 					
 					bpy.data.meshes.remove(vd)
-					del vd
-
-					if len(bad_vta_verts) > 0:
-						err_ratio = len(bad_vta_verts) / num_vta_verts
-						vta_err_vg.add(bad_vta_verts,1.0,'REPLACE')
-						message = get_id("importer_err_unmatched_mesh", True).format(len(bad_vta_verts), int(err_ratio * 100))
+					
+					if bad_vta_verts > 0:
+						err_ratio = bad_vta_verts/len(vta_ids)
+						message = "{} VTA vertices ({}%) were not matched to a mesh vertex! An object has been created to show where the VTA file's vertices are.".format(bad_vta_verts, int(err_ratio * 100))
 						if err_ratio == 1:
 							self.error(message)
 							return
@@ -1002,7 +973,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 			
 			# Skip macros
 			if line[0] == "$definemacro":
-				self.warning(get_id("importer_qc_macroskip", True).format(filename))
+				self.warning("Skipping macro in QC {}".format(filename))
 				while line[-1] == "\\\\":
 					line = self.parseQuoteBlockedLine( file.readline())
 
@@ -1026,7 +997,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 
 			# up axis
 			if line[0] == "$upaxis":
-				qc.upAxis = bpy.context.scene.vs.up_axis = line[1].upper()
+				qc.upAxis = bpy.context.scene.smd_up_axis = line[1].upper()
 				qc.upAxisMat = getUpAxisMat(line[1])
 				continue
 		
@@ -1042,6 +1013,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 						if loadSMD(word_index,"dmx",type,append,layer,True):
 							return True
 						else:
+							self.error("Could not open file",path)
 							return False
 				if not path in qc.imported_smds: # FIXME: an SMD loaded once relatively and once absolutely will still pass this test
 					qc.imported_smds.append(path)
@@ -1187,7 +1159,8 @@ class SmdImporter(bpy.types.Operator, Logger):
 				try:
 					self.readQC(path,False, doAnim, makeCamera, rotMode)
 				except IOError:
-					self.warning(get_id("importer_err_qci", True).format(path))
+					message = 'Could not open QC $include file "%s"' % path
+					self.warning(message + " - skipping!")
 
 		file.close()
 
@@ -1231,12 +1204,13 @@ class SmdImporter(bpy.types.Operator, Logger):
 		try:
 			smd.file = file = open(filepath, 'r')
 		except IOError as err: # TODO: work out why errors are swallowed if I don't do this!
-			self.error(get_id("importer_err_smd", True).format(smd.jobName,err))
+			message = "Could not open SMD file \"{}\": {}".format(smd.jobName,err)
+			self.error(message)
 			return 0
 
 		if newscene:
 			bpy.context.screen.scene = bpy.data.scenes.new(smd.jobName) # BLENDER BUG: this currently doesn't update bpy.context.scene
-		elif bpy.context.scene.name == pgettext("Scene"):
+		elif bpy.context.scene.name == "Scene":
 			bpy.context.scene.name = smd.jobName
 
 		print("\nSMD IMPORTER: now working on",smd.jobName)
@@ -1246,7 +1220,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 			if len(header): break
 		
 		if header != ["version" ,"1"]:
-			self.warning (get_id("importer_err_smd_ver"))
+			self.warning ("Unrecognised/invalid SMD file. Import will proceed, but may fail!")
 
 		if smd.jobType == None:
 			self.scanSMD() # What are we dealing with?
@@ -1258,6 +1232,13 @@ class SmdImporter(bpy.types.Operator, Logger):
 			if line == "vertexanimation\n": self.readShapes()
 
 		file.close()
+		'''
+		if smd.m and smd.upAxisMat and smd.upAxisMat != 1:
+			smd.m.rotation_euler = smd.upAxisMat.to_euler()
+			smd.m.select = True
+			bpy.context.scene.update()
+			ops.object.transform_apply(rotation=True)
+		'''
 		printTimeMessage(smd.startTime,smd.jobName,"import")
 
 		return 1
@@ -1265,14 +1246,11 @@ class SmdImporter(bpy.types.Operator, Logger):
 	def readDMX(self, filepath, upAxis, rotMode,newscene = False, smd_type = None, append = True, target_layer = 0):
 		smd = self.initSMD(filepath,smd_type,append,upAxis,rotMode,target_layer)
 		smd.isDMX = 1
-
-		bench = BenchMarker(1,"DMX")
-		
 		target_arm = self.findArmature() if append else None
 		if target_arm:
 			smd.a = target_arm
 			arm_hide = target_arm.hide
-		
+		benchReset()
 		ob = bone = restData = smd.atch = None
 		smd.layer = target_layer
 		starting_objects = set(bpy.context.scene.objects)
@@ -1281,11 +1259,11 @@ class SmdImporter(bpy.types.Operator, Logger):
 		print( "\nDMX IMPORTER: now working on",os.path.basename(filepath) )	
 		
 		from . import datamodel
+		benchReset()
 		error = None
 		try:
-			print("- Loading DMX...")
 			dm = datamodel.load(filepath)
-			bench.report("Load DMX")
+			bench("Load DMX")
 			
 			if bpy.context.scene.name.startswith("Scene"):
 				bpy.context.scene.name = smd.jobName
@@ -1314,9 +1292,8 @@ class SmdImporter(bpy.types.Operator, Logger):
 			# Skeleton
 			if target_arm:
 				missing_bones = []
-
-				def validateSkeleton(elem_array, parent_elem):
-					for elem in [item for item in elem_array if (item.type == "DmeJoint" and item.name != "blender_implicit") or (item.type == "DmeDag" and item.get("shape") == None)]:
+				def validateSkeleton(elem,parent_elem):
+					if elem.type == "DmeJoint" or (elem.type == "DmeDag" and elem["shape"] == None):
 						bone = smd.a.data.bones.get(elem.name)
 						if not bone:
 							if smd.jobType == REF: missing_bones.append(elem.name)
@@ -1324,19 +1301,20 @@ class SmdImporter(bpy.types.Operator, Logger):
 							scene_parent = bone.parent.name if bone.parent else "<None>"
 							dmx_parent = parent_elem.name if parent_elem else "<None>"
 							if scene_parent != dmx_parent:
-								self.warning(get_id('importer_bone_parent_miss',True).format(elem.name,scene_parent,dmx_parent,smd.jobName))
+								self.warning("Parent mismatch for bone \"{}\": \"{}\" in Blender, \"{}\" in {}.".format(elem.name,scene_parent,dmx_parent,smd.jobName))
 							
 							smd.boneIDs[elem.id] = bone.name
 							smd.boneTransformIDs[elem["transform"].id] = bone.name
 						
 						if elem.get("children"):
-							validateSkeleton(elem["children"], elem)
+							for child in elem["children"]:
+								validateSkeleton(child,elem)
 				
-				validateSkeleton(DmeModel["children"], None)
-
+				for child in DmeModel["children"]:
+					validateSkeleton(child,None)
 				if len(missing_bones):
-					self.warning(get_id("importer_err_missingbones", True).format(smd.jobName,len(missing_bones),smd.a.name,", ".join(missing_bones)))
-			elif len([child for child in DmeModel["children"] if child.type == "DmeJoint"]):
+					self.warning("{} contains {} bones not present in {}:\n{}".format(smd.jobName,len(missing_bones),smd.a.name,", ".join(missing_bones)))
+			else:
 				if smd.jobType == ANIM: smd.jobType = ANIM_SOLO
 				restData = {}
 				smd.append = False
@@ -1348,31 +1326,32 @@ class SmdImporter(bpy.types.Operator, Logger):
 				smd.a.matrix_world = getUpAxisMat(smd.upAxis)
 				
 				bone_matrices = {}
-				def parseSkeleton(elem_array, parent_bone):
-					for elem in elem_array:
-						if elem.type =="DmeDag" and elem.get("shape") and elem["shape"].type == "DmeAttachment":
-							atch = smd.atch = bpy.data.objects.new(name=elem["shape"].name, object_data=None)
-							bpy.context.scene.objects.link(atch)
-							atch.show_x_ray = True
-							atch.empty_draw_type = 'ARROWS'
+				def parseSkeleton(elem,parent_bone):
+					if elem.type =="DmeDag" and elem.get("shape") and elem["shape"].type == "DmeAttachment":
+						atch = smd.atch = bpy.data.objects.new(name=elem["shape"].name, object_data=None)
+						bpy.context.scene.objects.link(atch)
+						atch.show_x_ray = True
+						atch.empty_draw_type = 'ARROWS'
 
-							atch.parent = smd.a
-							if parent_bone:
-								atch.parent_type = 'BONE'
-								atch.parent_bone = parent_bone.name
+						atch.parent = smd.a
+						if parent_bone:
+							atch.parent_type = 'BONE'
+							atch.parent_bone = parent_bone.name
 						
-							atch.matrix_local = get_transform_matrix(elem)
-						elif (elem.type == "DmeJoint" and elem.name != "blender_implicit") and not elem.get("shape"): # don't import Dags which simply wrap meshes
-							bone = smd.a.data.edit_bones.new(elem.name)
-							bone.parent = parent_bone
-							bone.tail = (0,5,0)
-							bone_matrices[bone.name] = get_transform_matrix(elem)
-							smd.boneIDs[elem.id] = bone.name
-							smd.boneTransformIDs[elem["transform"].id] = bone.name
-							if elem.get("children"):
-								parseSkeleton(elem["children"], bone)
+						atch.matrix_local = get_transform_matrix(elem)
+					elif elem.type == "DmeJoint" or elem.get("shape") == None: # don't import Dags which simply wrap meshes
+						bone = smd.a.data.edit_bones.new(elem.name)
+						bone.parent = parent_bone
+						bone.tail = (0,5,0)
+						bone_matrices[bone.name] = get_transform_matrix(elem)
+						smd.boneIDs[elem.id] = bone.name
+						smd.boneTransformIDs[elem["transform"].id] = bone.name
+						if elem.get("children"):
+							for child in elem["children"]:
+								parseSkeleton(child,bone)
 				
-				parseSkeleton(DmeModel["children"], None)
+				for child in DmeModel["children"]:
+					parseSkeleton(child,None)
 					
 				ops.object.mode_set(mode='POSE')
 				for bone in smd.a.pose.bones:
@@ -1395,8 +1374,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 						parseModel(subelem,matrix)
 				elif elem.type == "DmeMesh":
 					DmeMesh = elem
-					if bpy.context.active_object:
-						ops.object.mode_set(mode='OBJECT')
+					ops.object.mode_set(mode='OBJECT')
 					ob = smd.m = bpy.data.objects.new(name=DmeMesh.name, object_data=bpy.data.meshes.new(name=DmeMesh.name))
 					bpy.context.scene.objects.link(ob)
 					self.setLayer()
@@ -1426,7 +1404,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 					skipfaces = []
 					for face_set in DmeMesh["faceSets"]:
 						mat_path = face_set["material"]["mtlName"]
-						bpy.context.scene.vs.material_path = os.path.dirname(mat_path).replace("\\","/")
+						bpy.context.scene.smd_material_path = os.path.dirname(mat_path).replace("\\","/")
 						mat, mat_ind = self.getMeshMaterial(os.path.basename(mat_path))
 						face_verts = []
 						dmx_face = 0
@@ -1479,24 +1457,6 @@ class SmdImporter(bpy.types.Operator, Logger):
 						for vg,verts in iter(full_weights.items()):
 							vg.add(verts,1,'REPLACE')
 					
-					# Stereo balance
-					if "balance" in DmeVertexData["vertexFormat"]:
-						vg = ob.vertex_groups.new(get_id("importer_balance_group", data=True))
-						balanceIndices = DmeVertexData["balanceIndices"]
-						balance = DmeVertexData["balance"]
-						ones = []
-						for i in balanceIndices:
-							val = balance[i]
-							if val == 0:
-								continue
-							elif val == 1:
-								ones.append(i)
-							else:
-								vg.add([i],val,'REPLACE')
-						vg.add(ones,1,'REPLACE')
-
-						ob.data.vs.flex_stereo_mode = 'VGROUP'
-						ob.data.vs.flex_stereo_vg = vg.name
 					# UV
 					if "textureCoordinates" in DmeVertexData["vertexFormat"]:
 						ob.data.uv_textures.new()
@@ -1540,7 +1500,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 				
 				animation = dm.root["animationList"]["animations"][0]
 				
-				frameRate = animation.get("frameRate",30) # very, very old DMXs don't have this
+				frameRate = animation["frameRate"] if dm.format_ver > 1 else 30 # very, very old DMXs don't have this
 				timeFrame = animation["timeFrame"]
 				scale = timeFrame.get("scale",1.0)
 				duration = timeFrame["duration" if dm.format_ver >= 11 else "durationTime"]
@@ -1573,7 +1533,7 @@ class SmdImporter(bpy.types.Operator, Logger):
 						frame_time = times[i]
 						if type(frame_time) == int: frame_time = datamodel.Time.from_int(frame_time)
 						frame_value = values[i]
-						frame = int(round(frame_time * frameRate,0))
+						frame = ceil(frame_time * frameRate)
 						keyframe = keyframes[bone][frame]
 						
 						if not (bone.parent or keyframe.pos or keyframe.rot):
@@ -1603,5 +1563,5 @@ class SmdImporter(bpy.types.Operator, Logger):
 					group.objects.link(ob)
 					
 		
-		bench.report("DMX imported in")
+		bench("DMX imported in")
 		return 1

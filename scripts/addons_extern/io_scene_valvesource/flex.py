@@ -1,4 +1,4 @@
-#  Copyright (c) 2014 Tom Edwards contact@steamreview.org
+#  Copyright (c) 2013 Tom Edwards contact@steamreview.org
 #
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
@@ -23,35 +23,53 @@ from . import datamodel
 from .utils import *
 
 class DmxWriteFlexControllers(bpy.types.Operator):
+	'''Generate a simple Flex Controller DMX block'''
 	bl_idname = "export_scene.dmx_flex_controller"
-	bl_label = get_id("gen_block")
-	bl_description = get_id("gen_block_tip")
-	bl_options = {'UNDO','INTERNAL'}
+	bl_label = "Generate DMX Flex Controller block"
 	
 	@classmethod
 	def poll(self, context):
-		return hasShapes(context.scene.vs.export_list[context.scene.vs.export_list_active].get_id(), valid_only=False)
+		if context.active_object:
+			group_index = -1
+			for i,g in enumerate(context.active_object.users_group):
+				if not g.smd_mute:
+					group_index = i
+					break
+			return hasShapes(context.active_object,group_index)
+		else:
+			return False
 	
-	@classmethod
-	def make_controllers(self,id):
+	def execute(self, context):
+		ob = bpy.context.active_object
 		dm = datamodel.DataModel("model",1)
 		
+		text_name = ob.name
 		objects = []
-		shapes = set()
-		
-		if type(id) == bpy.types.Group:
-			objects.extend(list([ob for ob in id.objects if ob.data and ob.type in shape_types and ob.data.shape_keys]))
+		shapes = []
+		target = ob
+		if len(ob.users_group) == 0:
+			objects.append(ob)
 		else:
-			objects.append(id)
+			for g in ob.users_group:
+				if g.smd_mute: continue
+				text_name = g.name
+				target = g
+				for g_ob in g.objects:
+					if g_ob.smd_export and hasShapes(g_ob):
+						objects.append(g_ob)
+				break
 		
-		name = "flex_{}".format(id.name)
-		root = dm.add_element(name,id=name)
-		DmeCombinationOperator = dm.add_element("combinationOperator","DmeCombinationOperator",id=id.name+"controllers")
+		text = bpy.data.texts.new( "flex_{}".format(text_name) )
+		
+		root = dm.add_element(text.name)
+		DmeCombinationOperator = dm.add_element("combinationOperator","DmeCombinationOperator",id=ob.name+"controllers")
 		root["combinationOperator"] = DmeCombinationOperator
 		controls = DmeCombinationOperator["controls"] = datamodel.make_array([],datamodel.Element)
 		
+		
 		for ob in objects:
-			for shape in [shape for shape in ob.data.shape_keys.key_blocks[1:] if not "_" in shape.name and shape.name not in shapes]:
+			for shape in ob.data.shape_keys.key_blocks[1:]:
+				if "_" in shape.name: continue
 				DmeCombinationInputControl = dm.add_element(shape.name,"DmeCombinationInputControl",id=ob.name+shape.name+"inputcontrol")
 				controls.append(DmeCombinationInputControl)
 				
@@ -63,7 +81,6 @@ class DmxWriteFlexControllers(bpy.types.Operator):
 				DmeCombinationInputControl["flexMin"] = 0.0
 				
 				DmeCombinationInputControl["wrinkleScales"] = datamodel.make_array([0.0],float)
-				shapes.add(shape.name)
 				
 		controlValues = DmeCombinationOperator["controlValues"] = datamodel.make_array( [ [0.0,0.0,0.5] ] * len(controls), datamodel.Vector3)
 		DmeCombinationOperator["controlValuesLagged"] = datamodel.make_array( controlValues, datamodel.Vector3)
@@ -71,31 +88,21 @@ class DmxWriteFlexControllers(bpy.types.Operator):
 		
 		DmeCombinationOperator["dominators"] = datamodel.make_array([],datamodel.Element)
 		targets = DmeCombinationOperator["targets"] = datamodel.make_array([],datamodel.Element)
-
-		return dm
-
-	def execute(self, context):
-		scene_update(context.scene, immediate=True)
-
-		id = context.scene.vs.export_list[context.scene.vs.export_list_active].get_id()
-		dm = self.make_controllers(id)
 		
-		text = bpy.data.texts.new(dm.root.name)
 		text.use_tabs_as_spaces = False
 		text.from_string(dm.echo("keyvalues2",1))
 		
-		if not id.vs.flex_controller_source or bpy.data.texts.get(id.vs.flex_controller_source):
-			id.vs.flex_controller_source = text.name
+		if not target.smd_flex_controller_source:
+			target.smd_flex_controller_source = text.name
 		
-		self.report({'INFO'},get_id("gen_block_success", True).format(text.name))		
+		self.report({'INFO'},"DMX written to text block \"{}\"".format(text.name))		
 		
 		return {'FINISHED'}
 
 class ActiveDependencyShapes(bpy.types.Operator):
+	'''Activates shapes found in the name of the current shape (underscore delimited)'''
 	bl_idname = "object.shape_key_activate_dependents"
-	bl_label = get_id("activate_dep_shapes")
-	bl_description = get_id("activate_dep_shapes_tip")
-	bl_options = {'UNDO'}
+	bl_label = "Activate Dependency Shapes"
 
 	@classmethod
 	def poll(cls, context):
@@ -115,14 +122,13 @@ class ActiveDependencyShapes(bpy.types.Operator):
 				num_activated += 1
 			else:
 				key.value = 0
-		self.report({'INFO'},get_id("activate_dep_shapes_success", True).format(num_activated - 1))
+		self.report({'INFO'},"Activated {} dependency shapes".format(num_activated - 1))
 		return {'FINISHED'}
 
 class AddCorrectiveShapeDrivers(bpy.types.Operator):
-	bl_idname = "object.sourcetools_generate_corrective_drivers"
-	bl_label = get_id("gen_drivers")
-	bl_description = get_id("gen_drivers_tip")
-	bl_options = {'UNDO'}
+	'''Adds Blender animation drivers to corrective Source engine shapes'''
+	bl_idname = "object.smd_generate_corrective_drivers"
+	bl_label = "Generate Corrective Shape Key Drivers"
 
 	@classmethod
 	def poll(cls, context):
@@ -145,29 +151,4 @@ class AddCorrectiveShapeDrivers(bpy.types.Operator):
 							var.targets[0].id_type = 'KEY'
 							var.targets[0].id = keys
 							var.targets[0].data_path = "key_blocks[\"{}\"].value".format(subkey)
-		return {'FINISHED'}
-
-class InsertUUID(bpy.types.Operator):
-	bl_idname = "text.insert_uuid"
-	bl_label = get_id("insert_uuid")
-	bl_description = get_id("insert_uuid_tip")
-
-	@classmethod
-	def poll(self,context):
-		return context.space_data.type == 'TEXT_EDITOR' and context.space_data.text
-
-	def execute(self,context):
-		text = context.space_data.text
-		line = text.current_line
-		if 0 and len(line.body) >= 36: # 2.69 https://developer.blender.org/T38386
-			sel_range = [max(0,text.current_character - 36),min(len(line.body),text.current_character + 36)]
-			sel_range.sort()
-
-			import re
-			m = re.search("[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}",line.body[sel_range[0]:sel_range[1]],re.I)
-			if m:
-				line.body = line.body[:m.start()] + str(datamodel.uuid.uuid4()) + line.body[m.end():]
-				return {'FINISHED'}
-		
-		text.write(str(datamodel.uuid.uuid4()))
 		return {'FINISHED'}

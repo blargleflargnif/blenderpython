@@ -21,7 +21,7 @@ bl_info = {
     "name": "Dynamic 3d View Menu",
     "author": "meta-androcto",
     "version": (3, 0, 0),
-    "blender": (2, 7, 1),
+    "blender": (2, 70, 1),
     "location": "View3D > Spacebar Key, Dynamic Tab",
     "description": "Context Sensitive Spacebar Menu",
     "warning": "",

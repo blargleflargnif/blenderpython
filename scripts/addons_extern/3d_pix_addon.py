@@ -5,7 +5,7 @@
 bl_info = {
     "name": "3D Pix",
     "author": "liero",
-    "version": (0, 5, 1),
+    "version": (0, 5, 2),
     "blender": (2, 6, 3),
     "api": 33333,
     "location": "View3D > Tool Shelf",

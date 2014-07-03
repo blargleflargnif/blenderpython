@@ -52,7 +52,7 @@ def pix(obj):
 
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.remove_doubles(mergedist=0.0001)
+    bpy.ops.mesh.remove_doubles(threshold=0.0001)
     bpy.ops.mesh.delete(type='EDGE_FACE')
     bpy.ops.object.mode_set()
     sca = wm.size * ( 100 - wm.gap ) * .005
@@ -72,6 +72,13 @@ class Pixelate(bpy.types.Operator):
         tipos = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT']
         return (context.object and context.object.type in tipos)
 
+    def draw(self, context):
+        layout = self.layout
+
+        column = layout.column(align=True)
+        column.prop(context.window_manager, "size")
+        column.prop(context.window_manager, "gap")
+        layout.prop(context.window_manager, "smooth")
     def execute(self, context):
         objeto = bpy.context.object
         pix(objeto)
@@ -85,10 +92,6 @@ class Boton(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator('object.pixelate')
-        column = layout.column(align=True)
-        column.prop(context.window_manager, "size")
-        column.prop(context.window_manager, "gap")
-        layout.prop(context.window_manager, "smooth")
 
 def register():
     bpy.utils.register_class(Pixelate)

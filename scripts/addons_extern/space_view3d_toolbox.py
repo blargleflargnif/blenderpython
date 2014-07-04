@@ -1180,19 +1180,21 @@ class VIEW3D_PT_tools_weightpaint_options(Panel, View3DPaintPanel):
         wpaint = tool_settings.weight_paint
 
         col = layout.column()
+        row = col.row()
 
-        col.prop(wpaint, "use_all_faces")
-        col.prop(wpaint, "use_normal")
-        col.prop(wpaint, "use_spray")
-        col.prop(wpaint, "use_group_restrict")
+        row.prop(wpaint, "use_normal")
+        col = layout.column()
+        row = col.row()
+        row.prop(wpaint, "use_spray")
+        row.prop(wpaint, "use_group_restrict")
 
         obj = context.weight_paint_object
         if obj.type == 'MESH':
             mesh = obj.data
             col.prop(mesh, "use_mirror_x")
-            col.prop(mesh, "use_mirror_topology")
-
-        col.prop(wpaint, "input_samples")
+            row = col.row()
+            row.active = mesh.use_mirror_x
+            row.prop(mesh, "use_mirror_topology")
 
         col.label("Show Zero Weights:")
         sub = col.row()
@@ -1200,6 +1202,7 @@ class VIEW3D_PT_tools_weightpaint_options(Panel, View3DPaintPanel):
         sub.prop(tool_settings, "vertex_group_user", expand=True)
 
         self.unified_paint_settings(col, context)
+
 
 # ********** default tools for vertex-paint ****************
 

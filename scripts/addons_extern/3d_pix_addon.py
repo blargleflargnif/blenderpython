@@ -6,8 +6,7 @@ bl_info = {
     "name": "3D Pix",
     "author": "liero",
     "version": (0, 5, 1),
-    "blender": (2, 6, 3),
-    "api": 33333,
+    "blender": (2, 71, 0),
     "location": "View3D > Tool Shelf",
     "description": "Creates a 3d pixelated version of the object.",
     "category": "Object"}
@@ -52,7 +51,7 @@ def pix(obj):
 
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.remove_doubles(mergedist=0.0001)
+    bpy.ops.mesh.remove_doubles(threshold=0.0001)
     bpy.ops.mesh.delete(type='EDGE_FACE')
     bpy.ops.object.mode_set()
     sca = wm.size * ( 100 - wm.gap ) * .005
@@ -69,8 +68,15 @@ class Pixelate(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        tipos = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT']
-        return (context.object and context.object.type in tipos)
+        return (context.active_object and context.active_object.type == 'MESH' and context.mode == 'OBJECT')
+
+    def draw(self, context):
+        layout = self.layout
+
+        column = layout.column(align=True)
+        column.prop(context.window_manager, "size")
+        column.prop(context.window_manager, "gap")
+        layout.prop(context.window_manager, "smooth")
 
     def execute(self, context):
         objeto = bpy.context.object
@@ -81,14 +87,15 @@ class Boton(bpy.types.Panel):
     bl_label = '3D Pix'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
+    bl_category = "Addons"
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object and context.active_object.type == 'MESH' and context.mode == 'OBJECT')
 
     def draw(self, context):
         layout = self.layout
         layout.operator('object.pixelate')
-        column = layout.column(align=True)
-        column.prop(context.window_manager, "size")
-        column.prop(context.window_manager, "gap")
-        layout.prop(context.window_manager, "smooth")
 
 def register():
     bpy.utils.register_class(Pixelate)

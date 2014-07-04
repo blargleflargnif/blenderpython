@@ -22,7 +22,7 @@ bl_info = {
     "name": "Petunia",
     "author": "Macouno, Meta-Androcto",
     "version": (0, 1),
-    "blender": (2, 6, 3),
+    "blender": (2, 7, 0),
     "location": "View3D > Add > Mesh > Mesh Objects",
     "description": "Add extra object types",
     "warning": "",

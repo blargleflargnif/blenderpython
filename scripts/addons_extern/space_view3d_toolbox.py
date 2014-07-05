@@ -1234,7 +1234,7 @@ class VIEW3D_PT_tools_vertexpaint1(Panel, View3DPaintPanel1):
 
         col = layout.column()
         #col.prop(vpaint, "mode", text="")
-        col.prop(vpaint, "use_all_faces")
+#        col.prop(vpaint, "use_all_faces")
         col.prop(vpaint, "use_normal")
         col.prop(vpaint, "use_spray")
 

@@ -1009,7 +1009,7 @@ class VIEW3D_PT_tools_brush_curve(Panel, View3DPaintPanel):
 
 
 class VIEW3D_PT_sculpt_topology(Panel, View3DPaintPanel):
-    bl_label = "Topology"
+    bl_label = "Dyntopo"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
 
@@ -1022,21 +1022,35 @@ class VIEW3D_PT_sculpt_topology(Panel, View3DPaintPanel):
 
         toolsettings = context.tool_settings
         sculpt = toolsettings.sculpt
+        settings = self.paint_settings(context)
+        brush = settings.brush
 
         if context.sculpt_object.use_dynamic_topology_sculpting:
-            layout.operator("sculpt.dynamic_topology_toggle", icon='X', text="Disable Dynamic")
+            layout.operator("sculpt.dynamic_topology_toggle", icon='X', text="Disable Dyntopo")
         else:
-            layout.operator("sculpt.dynamic_topology_toggle", icon='SCULPT_DYNTOPO', text="Enable Dynamic")
+            layout.operator("sculpt.dynamic_topology_toggle", icon='SCULPT_DYNTOPO', text="Enable Dyntopo")
 
         col = layout.column()
         col.active = context.sculpt_object.use_dynamic_topology_sculpting
-        col.prop(sculpt, "detail_size")
+        sub = col.column(align=True)
+        sub.active = (brush and brush.sculpt_tool != 'MASK')
+        if (sculpt.detail_type_method == 'CONSTANT'):
+            row = sub.row(align=True)
+            row.operator("sculpt.sample_detail_size", text="", icon='EYEDROPPER')
+            row.prop(sculpt, "constant_detail")
+        else:
+            sub.prop(sculpt, "detail_size")
+        sub.prop(sculpt, "detail_refine_method", text="")
+        sub.prop(sculpt, "detail_type_method", text="")
+        col.separator()
         col.prop(sculpt, "use_smooth_shading")
-        col.prop(sculpt, "use_edge_collapse")
         col.operator("sculpt.optimize")
+        if (sculpt.detail_type_method == 'CONSTANT'):
+            col.operator("sculpt.detail_flood_fill")
         col.separator()
         col.prop(sculpt, "symmetrize_direction")
         col.operator("sculpt.symmetrize")
+
 
 
 class VIEW3D_PT_sculpt_options(Panel, View3DPaintPanel):

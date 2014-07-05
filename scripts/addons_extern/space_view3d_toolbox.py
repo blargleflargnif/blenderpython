@@ -82,7 +82,7 @@ def draw_gpencil_tools(context, layout):
 
 # ********** default tools for object-mode ****************
 
-class VIEW3D_PT_tools_objectmode(View3DPanel, Panel):
+class VIEW3D_PT_tools_objectmode1(View3DPanel, Panel):
     bl_context = "objectmode"
     bl_label = "Object Tools"
     bl_category = "Toolbox"
@@ -128,7 +128,7 @@ class VIEW3D_PT_tools_objectmode(View3DPanel, Panel):
         col = layout.column(align=True)
 
 
-class VIEW3D_PT_tools_rigidbody(View3DPanel, Panel):
+class VIEW3D_PT_tools_rigidbody1(View3DPanel, Panel):
     bl_context = "objectmode"
     bl_label = "Rigid Body Tools"
     bl_options = {'DEFAULT_CLOSED'}
@@ -157,7 +157,7 @@ class VIEW3D_PT_tools_rigidbody(View3DPanel, Panel):
 # ********** default tools for editmode_mesh ****************
 
 
-class VIEW3D_PT_tools_meshedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_meshedit1(View3DPanel, Panel):
     bl_context = "mesh_edit"
     bl_label = "Mesh Tools"
     bl_category = "Toolbox"
@@ -230,7 +230,7 @@ class VIEW3D_PT_tools_meshedit(View3DPanel, Panel):
         draw_gpencil_tools(context, layout)
 
 
-class VIEW3D_PT_tools_meshedit_options(View3DPanel, Panel):
+class VIEW3D_PT_tools_meshedit_options1(View3DPanel, Panel):
     bl_context = "mesh_edit"
     bl_label = "Mesh Options"
     bl_category = "Toolbox"
@@ -269,7 +269,7 @@ class VIEW3D_PT_tools_meshedit_options(View3DPanel, Panel):
 # ********** default tools for editmode_curve ****************
 
 
-class VIEW3D_PT_tools_curveedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_curveedit1(View3DPanel, Panel):
     bl_context = "curve_edit"
     bl_label = "Curve Tools"
     bl_category = "Toolbox"
@@ -319,7 +319,7 @@ class VIEW3D_PT_tools_curveedit(View3DPanel, Panel):
 # ********** default tools for editmode_surface ****************
 
 
-class VIEW3D_PT_tools_surfaceedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_surfaceedit1(View3DPanel, Panel):
     bl_context = "surface_edit"
     bl_label = "Surface Tools"
     bl_category = "Toolbox"
@@ -352,7 +352,7 @@ class VIEW3D_PT_tools_surfaceedit(View3DPanel, Panel):
 # ********** default tools for editmode_text ****************
 
 
-class VIEW3D_PT_tools_textedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_textedit1(View3DPanel, Panel):
     bl_context = "text_edit"
     bl_label = "Text Tools"
     bl_category = "Toolbox"
@@ -383,7 +383,7 @@ class VIEW3D_PT_tools_textedit(View3DPanel, Panel):
 # ********** default tools for editmode_armature ****************
 
 
-class VIEW3D_PT_tools_armatureedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_armatureedit1(View3DPanel, Panel):
     bl_context = "armature_edit"
     bl_label = "Armature Tools"
     bl_category = "Toolbox"
@@ -413,7 +413,7 @@ class VIEW3D_PT_tools_armatureedit(View3DPanel, Panel):
         draw_gpencil_tools(context, layout)
 
 
-class VIEW3D_PT_tools_armatureedit_options(View3DPanel, Panel):
+class VIEW3D_PT_tools_armatureedit_options1(View3DPanel, Panel):
     bl_context = "armature_edit"
     bl_label = "Armature Options"
     bl_category = "Toolbox"
@@ -426,7 +426,7 @@ class VIEW3D_PT_tools_armatureedit_options(View3DPanel, Panel):
 # ********** default tools for editmode_mball ****************
 
 
-class VIEW3D_PT_tools_mballedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_mballedit1(View3DPanel, Panel):
     bl_context = "mball_edit"
     bl_label = "Meta Tools"
     bl_category = "Toolbox"
@@ -447,7 +447,7 @@ class VIEW3D_PT_tools_mballedit(View3DPanel, Panel):
 # ********** default tools for editmode_lattice ****************
 
 
-class VIEW3D_PT_tools_latticeedit(View3DPanel, Panel):
+class VIEW3D_PT_tools_latticeedit1(View3DPanel, Panel):
     bl_context = "lattice_edit"
     bl_label = "Lattice Tools"
     bl_category = "Toolbox"
@@ -472,7 +472,7 @@ class VIEW3D_PT_tools_latticeedit(View3DPanel, Panel):
 # ********** default tools for pose-mode ****************
 
 
-class VIEW3D_PT_tools_posemode(View3DPanel, Panel):
+class VIEW3D_PT_tools_posemode1(View3DPanel, Panel):
     bl_context = "posemode"
     bl_label = "Pose Tools"
     bl_category = "Toolbox"
@@ -515,7 +515,7 @@ class VIEW3D_PT_tools_posemode(View3DPanel, Panel):
         draw_gpencil_tools(context, layout)
 
 
-class VIEW3D_PT_tools_posemode_options(View3DPanel, Panel):
+class VIEW3D_PT_tools_posemode_options1(View3DPanel, Panel):
     bl_context = "posemode"
     bl_label = "Pose Options"
     bl_category = "Toolbox"
@@ -528,13 +528,13 @@ class VIEW3D_PT_tools_posemode_options(View3DPanel, Panel):
 # ********** default tools for paint modes ****************
 
 
-class View3DPaintPanel(UnifiedPaintPanel):
+class View3DPaintPanel1(UnifiedPaintPanel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "Toolbox"
 
 
-class VIEW3D_PT_tools_brush(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_brush1(Panel, View3DPaintPanel1):
     bl_label = "Brush"
     bl_category = "Toolbox"
 
@@ -810,7 +810,7 @@ class VIEW3D_PT_tools_brush(Panel, View3DPaintPanel):
             sub.prop(brush, "use_cursor_overlay_override", toggle=True, text="", icon='BRUSH_DATA')
 
 
-class VIEW3D_PT_tools_brush_texture(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_brush_texture1(Panel, View3DPaintPanel1):
     bl_label = "Texture"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -851,7 +851,7 @@ class VIEW3D_PT_tools_brush_texture(Panel, View3DPaintPanel):
         sub.prop(brush, "use_primary_overlay_override", toggle=True, text="", icon='BRUSH_DATA')
 
 
-class VIEW3D_PT_tools_mask_texture(View3DPanel, Panel):
+class VIEW3D_PT_tools_mask_texture1(View3DPanel, Panel):
     bl_context = "imagepaint"
     bl_label = "Texture Mask"
     bl_options = {'DEFAULT_CLOSED'}
@@ -890,7 +890,7 @@ class VIEW3D_PT_tools_mask_texture(View3DPanel, Panel):
         sub.prop(brush, "use_secondary_overlay_override", toggle=True, text="", icon='BRUSH_DATA')
 
 
-class VIEW3D_PT_tools_brush_stroke(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_brush_stroke1(Panel, View3DPaintPanel1):
     bl_label = "Stroke"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -980,7 +980,7 @@ class VIEW3D_PT_tools_brush_stroke(Panel, View3DPaintPanel):
             sub.prop(brush, "smooth_stroke_factor", text="Factor", slider=True)
 
 
-class VIEW3D_PT_tools_brush_curve(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_brush_curve1(Panel, View3DPaintPanel1):
     bl_label = "Curve"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1008,7 +1008,7 @@ class VIEW3D_PT_tools_brush_curve(Panel, View3DPaintPanel):
         row.operator("brush.curve_preset", icon='NOCURVE', text="").shape = 'MAX'
 
 
-class VIEW3D_PT_sculpt_topology(Panel, View3DPaintPanel):
+class VIEW3D_PT_sculpt_topology1(Panel, View3DPaintPanel1):
     bl_label = "Dyntopo"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1053,7 +1053,7 @@ class VIEW3D_PT_sculpt_topology(Panel, View3DPaintPanel):
 
 
 
-class VIEW3D_PT_sculpt_options(Panel, View3DPaintPanel):
+class VIEW3D_PT_sculpt_options1(Panel, View3DPaintPanel1):
     bl_label = "Options"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1084,7 +1084,7 @@ class VIEW3D_PT_sculpt_options(Panel, View3DPaintPanel):
         self.unified_paint_settings(layout, context)
 
 
-class VIEW3D_PT_sculpt_symmetry(Panel, View3DPaintPanel):
+class VIEW3D_PT_sculpt_symmetry1(Panel, View3DPaintPanel1):
     bl_label = "Symmetry"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1109,7 +1109,7 @@ class VIEW3D_PT_sculpt_symmetry(Panel, View3DPaintPanel):
         layout.prop(sculpt, "use_symmetry_feather", text="Feather")
 
 
-class VIEW3D_PT_tools_brush_appearance(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_brush_appearance1(Panel, View3DPaintPanel1):
     bl_label = "Appearance"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1157,7 +1157,7 @@ class VIEW3D_PT_tools_brush_appearance(Panel, View3DPaintPanel):
 # ********** default tools for weight-paint ****************
 
 
-class VIEW3D_PT_tools_weightpaint(View3DPanel, Panel):
+class VIEW3D_PT_tools_weightpaint1(View3DPanel, Panel):
     bl_context = "weightpaint"
     bl_label = "Weight Tools"
     bl_category = "Toolbox"
@@ -1182,7 +1182,7 @@ class VIEW3D_PT_tools_weightpaint(View3DPanel, Panel):
         col.operator("paint.weight_gradient")
 
 
-class VIEW3D_PT_tools_weightpaint_options(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_weightpaint_options1(Panel, View3DPaintPanel1):
     bl_context = "weightpaint"
     bl_label = "Options"
     bl_category = "Toolbox"
@@ -1221,7 +1221,7 @@ class VIEW3D_PT_tools_weightpaint_options(Panel, View3DPaintPanel):
 # ********** default tools for vertex-paint ****************
 
 
-class VIEW3D_PT_tools_vertexpaint(Panel, View3DPaintPanel):
+class VIEW3D_PT_tools_vertexpaint1(Panel, View3DPaintPanel1):
     bl_context = "vertexpaint"
     bl_label = "Options"
     bl_category = "Toolbox"
@@ -1251,7 +1251,7 @@ class VIEW3D_PT_tools_vertexpaint(Panel, View3DPaintPanel):
 # ********** default tools for texture-paint ****************
 
 
-class VIEW3D_PT_tools_projectpaint(View3DPanel, Panel):
+class VIEW3D_PT_tools_projectpaint1(View3DPanel, Panel):
     bl_context = "imagepaint"
     bl_label = "Project Paint"
     bl_category = "Toolbox"
@@ -1314,7 +1314,7 @@ class VIEW3D_PT_tools_projectpaint(View3DPanel, Panel):
         col.operator("image.save_dirty", text="Save All Edited")
 
 
-class VIEW3D_PT_imagepaint_options(View3DPaintPanel):
+class VIEW3D_PT_imagepaint_options1(View3DPaintPanel1):
     bl_label = "Options"
     bl_options = {'DEFAULT_CLOSED'}
     bl_category = "Toolbox"
@@ -1330,7 +1330,7 @@ class VIEW3D_PT_imagepaint_options(View3DPaintPanel):
         self.unified_paint_settings(col, context)
 
 
-class VIEW3D_MT_tools_projectpaint_clone(Menu):
+class VIEW3D_MT_tools_projectpaint_clone1(Menu):
     bl_label = "Clone Layer"
     bl_category = "Toolbox"
 
@@ -1343,7 +1343,7 @@ class VIEW3D_MT_tools_projectpaint_clone(Menu):
             props.value = i
 
 
-class VIEW3D_MT_tools_projectpaint_stencil(Menu):
+class VIEW3D_MT_tools_projectpaint_stencil1(Menu):
     bl_label = "Mask Layer"
     bl_category = "Toolbox"
 
@@ -1355,7 +1355,7 @@ class VIEW3D_MT_tools_projectpaint_stencil(Menu):
             props.value = i
 
 
-class VIEW3D_PT_tools_particlemode(View3DPanel, Panel):
+class VIEW3D_PT_tools_particlemode1(View3DPanel, Panel):
     """Default tools for particle mode"""
     bl_context = "particlemode"
     bl_label = "Options"

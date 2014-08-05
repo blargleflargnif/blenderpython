@@ -4,34 +4,22 @@ mqo reader
 """
 import io
 from .. import mqo
+from .. import common
 
-class Reader(object):
+
+class Reader(common.TextReader):
     """mqo reader
     """
     __slots__=[
             "has_mikoto",
-            "eof", "ios", "lines",
             "materials", "objects",
             ]
     def __init__(self, ios):
-        self.ios=ios
-        self.eof=False
-        self.lines=0
+        super(Reader, self).__init__(ios)
 
     def __str__(self):
         return "<MQO %d lines, %d materials, %d objects>" % (
                 self.lines, len(self.materials), len(self.objects))
-
-    def getline(self):
-        line=self.ios.readline()
-        self.lines+=1
-        if line==b"":
-            self.eof=True
-            return None
-        return line.strip()
-
-    def printError(self, method, msg):
-        print("%s:%s:%d" % (method, msg, self.lines))
 
     def readObject(self, name):
         obj=mqo.Obj(name)
@@ -157,6 +145,61 @@ class Reader(object):
         self.printError("readChunk", "invalid eof")
         return False
 
+    def read(self):
+        model=mqo.Model()
+
+        line=self.getline()
+        if line!=b"Metasequoia Document":
+            print("invalid signature")
+            return False
+
+        line=self.getline()
+        if line!=b"Format Text Ver 1.0":
+            print("unknown version: %s" % line)
+
+        while True:
+            line=self.getline()
+            if line==None:
+                # eof
+                break;
+            if line==b"":
+                # empty line
+                continue
+
+            tokens=line.split()
+            key=tokens[0]
+            if key==b"Eof":
+                # success !
+                return model
+            elif key==b"Scene":
+                if not self.readChunk():
+                    return
+            elif key==b"Material":
+                materials=self.readMaterial()
+                if not materials:
+                    return
+                model.materials=materials
+            elif key==b"Object":
+                firstQuote=line.find(b'"')
+                secondQuote=line.find(b'"', firstQuote+1)
+                obj=self.readObject(line[firstQuote+1:secondQuote])
+                if not obj:
+                    return
+                model.objects.append(obj)
+            elif key==b"BackImage":
+                if not self.readChunk():
+                    return
+            elif key==b"IncludeXml":
+                firstQuote=line.find(b'"')
+                secondQuote=line.find(b'"', firstQuote+1)
+                print("IncludeXml", line[firstQuote+1:secondQuote])
+            else:
+                print("unknown key: %s" % key)
+                if not self.readChunk():
+                    return
+        # error not reach here
+        raise ParseException("invalid eof")
+
 
 def read_from_file(path):
     """
@@ -179,57 +222,5 @@ def read(ios):
         input stream (in io.IOBase)
     """
     assert(isinstance(ios, io.IOBase))
-    reader=Reader(ios)
-    model=mqo.Model()
-
-    line=reader.getline()
-    if line!=b"Metasequoia Document":
-        print("invalid signature")
-        return False
-
-    line=reader.getline()
-    if line!=b"Format Text Ver 1.0":
-        print("unknown version: %s" % line)
-
-    while True:
-        line=reader.getline()
-        if line==None:
-            # eof
-            break;
-        if line==b"":
-            # empty line
-            continue
-
-        tokens=line.split()
-        key=tokens[0]
-        if key==b"Eof":
-            return model
-        elif key==b"Scene":
-            if not reader.readChunk():
-                return
-        elif key==b"Material":
-            materials=reader.readMaterial()
-            if not materials:
-                return
-            model.materials=materials
-        elif key==b"Object":
-            firstQuote=line.find(b'"')
-            secondQuote=line.find(b'"', firstQuote+1)
-            obj=reader.readObject(line[firstQuote+1:secondQuote])
-            if not obj:
-                return
-            model.objects.append(obj)
-        elif key==b"BackImage":
-            if not reader.readChunk():
-                return
-        elif key==b"IncludeXml":
-            firstQuote=line.find(b'"')
-            secondQuote=line.find(b'"', firstQuote+1)
-            print("IncludeXml", line[firstQuote+1:secondQuote])
-        else:
-            print("unknown key: %s" % key)
-            if not reader.readChunk():
-                return
-    # error not reach here
-    raise ParseException("invalid eof")
+    return Reader(ios).read()
 

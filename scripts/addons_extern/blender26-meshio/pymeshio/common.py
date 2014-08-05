@@ -330,6 +330,9 @@ class BinaryReader(object):
         ios.seek(current)
         self.ios=ios
 
+    def __str__(self):
+        return "<BinaryReader %d/%d>" % (self.ios.tell(), self.end)
+
     def is_end(self):
         #print(self.ios.tell(), self.end)
         return self.ios.tell()>=self.end
@@ -372,6 +375,22 @@ class BinaryReader(object):
         return Vector3(
                 self.read_float(), 
                 self.read_float(), 
+                self.read_float()
+                )
+
+    def read_quaternion(self):
+        return Quaternion(
+                self.read_float(), 
+                self.read_float(), 
+                self.read_float(),
+                self.read_float()
+                )
+
+    def read_quaternion(self):
+        return Quaternion(
+                self.read_float(), 
+                self.read_float(), 
+                self.read_float(),
                 self.read_float()
                 )
 
@@ -487,4 +506,30 @@ class Diff(object):
                     print(l)
                     print(r)
                     raise DifferenceException("{0}".format(key))
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+
+
+class TextReader(object):
+    """ base class for text format
+    """
+    __slots__=[
+            "eof", "ios", "lines",
+            ]
+    def __init__(self, ios):
+        self.ios=ios
+        self.eof=False
+        self.lines=0
+
+    def getline(self):
+        line=self.ios.readline()
+        self.lines+=1
+        if line==b"":
+            self.eof=True
+            return None
+        return line.strip()
+
+    def printError(self, method, msg):
+        print("%s:%s:%d" % (method, msg, self.lines))
 

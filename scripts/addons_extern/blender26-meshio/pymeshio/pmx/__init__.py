@@ -630,6 +630,37 @@ class VertexMorphOffset(common.Diff):
         self._diff(rhs, 'position_offset')
 
 
+class BoneMorphData(common.Diff):
+    """pmx bone morph data
+
+    Attributes:
+        bone_index:
+        position: Vector3
+        rotation: Quaternion
+    """
+    __slots__=[
+            'bone_index',
+            'position',
+            'rotation',
+            ]
+    def __init__(self, bone_index, position, rotation):
+        self.bone_index=bone_index
+        self.position=position
+        self.rotation=rotation
+
+    def __eq__(self, rhs):
+        return (
+                self.bone_index==rhs.bone_index 
+                and self.position==rhs.position
+                and self.rotation==rhs.rotation
+                )
+
+    def diff(self, rhs):
+        self._diff(rhs, 'bone_index')
+        self._diff(rhs, 'position')
+        self._diff(rhs, 'rotation')
+
+
 class MaterialMorphData(common.Diff):
     """pmx mateerial morph data
 
@@ -663,6 +694,20 @@ class MaterialMorphData(common.Diff):
         self.texture_factor=texture_factor
         self.sphere_texture_factor=sphere_texture_factor
         self.toon_texture_factor=toon_texture_factor
+
+
+class GroupMorphData(common.Diff):
+    """pmx group morph data
+
+    Attributes:
+    """
+    __slots__=[
+            'morph_index',
+            'value',
+            ]
+    def __init__(self, morph_index, value):
+        self.morph_index=morph_index
+        self.value=value
 
 
 class DisplaySlot(common.Diff):

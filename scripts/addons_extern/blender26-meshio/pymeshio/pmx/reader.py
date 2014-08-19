@@ -3,6 +3,7 @@
 pmx reader
 """
 import io
+import os
 from .. import common
 from .. import pmx
 
@@ -195,16 +196,14 @@ class Reader(common.BinaryReader):
         morph=pmx.Morph(name, english_name, 
                 panel, morph_type)
         if morph_type==0:
-            # todo
-            raise common.ParseException(
-                    "not implemented GroupMorph")
+            morph.offsets=[self.read_group_morph_data() 
+                    for _ in range(offset_size)]
         elif morph_type==1:
             morph.offsets=[self.read_vertex_position_morph_offset() 
                     for _ in range(offset_size)]
         elif morph_type==2:
-            # todo
-            raise common.ParseException(
-                    "not implemented BoneMorph")
+            morph.offsets=[self.read_bone_morph_data()
+                    for _ in range(offset_size)]
         elif morph_type==3:
             # todo
             raise common.ParseException(
@@ -233,9 +232,22 @@ class Reader(common.BinaryReader):
                     "unknown morph type: {0}".format(morph_type))
         return morph
 
+    def read_group_morph_data(self):
+        return pmx.GroupMorphData(
+                self.read_morph_index(), 
+                self.read_float()
+                )
+
     def read_vertex_position_morph_offset(self):
         return pmx.VertexMorphOffset(
                 self.read_vertex_index(), self.read_vector3())
+
+    def read_bone_morph_data(self):
+        return pmx.BoneMorphData(
+                self.read_bone_index(), 
+                self.read_vector3(),
+                self.read_quaternion()
+                )
 
     def read_material_morph_data(self):
         return pmx.MaterialMorphData(
@@ -318,6 +330,9 @@ def read_from_file(path):
     <pmx-2.0 "Miku Hatsune" 12354vertices>
 
     """
+    if not os.path.exists(path):
+        print("{0} is not exist !".format(path))
+        return
     pmx=read(io.BytesIO(common.readall(path)))
     pmx.path=path
     return pmx

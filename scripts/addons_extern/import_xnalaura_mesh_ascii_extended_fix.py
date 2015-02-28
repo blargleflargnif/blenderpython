@@ -1,5 +1,5 @@
 bl_info = {
-	"name": "Import XNALara Extended Mesh (.ascii)",
+	"name": "Import XNALara Extended Mesh (.ascii) fix",
 	"author": "FigureSculptor",
 	"version": (2, 0),
 	"blender": (2, 5, 7),
@@ -274,7 +274,7 @@ def importMesh(file, boneCount):
 					image = one_image
 
 			image.name = textureObjName
-			image.use_premultiply = True
+#			image.use_premultiply = True
 			# print("image: " + str(image))
 			imgTex = bpy.data.textures.new(textureFilename,type='IMAGE')
 			imgTex.name = textureObjName
@@ -299,11 +299,12 @@ def importMesh(file, boneCount):
 					print("normal map")
 					mtex.use = True
 					mtex.use_map_color_diffuse = False
-					mtex.normal_factor = 1.0
+					mtex.normal_factor = 0.001
 					mtex.normal_map_space = 'TANGENT'
 					mtex.use_map_normal = True
 					mtex.use_map_alpha = False
 					imgTex.use_normal_map = True
+					imgtex.normal_factor = 0.001
 				elif (mtex.name.lower().endswith("_s") or mtex.name.lower().find("_s.") != -1 or mtex.name.lower().endswith("_spec") or mtex.name.lower().find("_spec.") != -1):
 					print("specular map")
 					mtex.use = True

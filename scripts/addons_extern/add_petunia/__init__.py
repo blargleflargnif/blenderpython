@@ -16,13 +16,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 # Contributed to by
-# meta-androcto, macouno #
+# meta-androcto :code, macouno :petunia model #
 
 bl_info = {
     "name": "Petunia",
     "author": "Macouno, Meta-Androcto",
     "version": (0, 1),
-    "blender": (2, 7, 0),
+    "blender": (2, 7, 3),
     "location": "View3D > Add > Mesh > Mesh Objects",
     "description": "Add extra object types",
     "warning": "",
@@ -43,7 +43,7 @@ def import_object(obname):
     # DEBUG
     #print('import_object: ' + opath)
 
-    bpy.ops.wm.link_append(
+    bpy.ops.wm.append(
             filepath=opath,
             filename=obname,
             directory=dpath,
@@ -51,8 +51,7 @@ def import_object(obname):
             link=False,
             autoselect=True,
             active_layer=True,
-            instance_groups=False,
-            relative_path=True)
+            instance_groups=False)
 
     for ob in bpy.context.selected_objects:
         ob.location = bpy.context.scene.cursor_location

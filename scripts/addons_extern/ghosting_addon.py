@@ -139,9 +139,10 @@ class Boton(bpy.types.Panel):
         row.operator('object.borrar_fantasma', icon='X')
         obj = bpy.context.object
         if obj and obj.type == 'ARMATURE':
-            column = layout.column(align=True)
-            column.prop(obj.data, 'ghost_step')
-            column.prop(obj.data, 'ghost_size')
+            layout.label(text="Use Data Panel for Ghost settings")
+            #column = layout.column(align=True)
+            #column.prop(obj.data, 'ghost_step')
+            #column.prop(obj.data, 'ghost_size')
 
 def register():
     bpy.utils.register_class(Fantasma)

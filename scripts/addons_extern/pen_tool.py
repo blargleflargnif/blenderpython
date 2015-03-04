@@ -264,6 +264,7 @@ class pt_op0(bpy.types.Operator):
         for i in pt_buf.list_m_loc_3d:
             bme.verts.new(mtrx * i)
             bme.verts.index_update()
+            bme.verts.ensure_lookup_table()
             list_.append(bme.verts[-1])
 
         # -- -- -- -- add edges

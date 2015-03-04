@@ -125,6 +125,7 @@ def f4_(bme, list_, no, opp_):
 def get_direction_(bme, list_):
     n = len(list_)
     for i in range(n):
+        bme.verts.ensure_lookup_table()
         p = (bme.verts[list_[i]].co).copy()
         p1 = (bme.verts[list_[(i - 1) % n]].co).copy()
         p2 = (bme.verts[list_[(i + 1) % n]].co).copy()
@@ -140,6 +141,7 @@ def get_no_(bme, dict_0):
         if len(i[1]) < 2:
             pass
         else:
+            bme.verts.ensure_lookup_table()
             p = (bme.verts[i[0]].co).copy()
             p1 = (bme.verts[i[1][0]].co).copy()
             p2 = (bme.verts[i[1][1]].co).copy()
@@ -215,6 +217,7 @@ def inset_(bme, opp, b, list_1, loop):
         else:
             bme.verts.new(a_rot(-radians(90), p, ((p - (vec1.normalized() * adj)) - (p - (vec2.normalized() * adj))), p - (no * h)))
             bme.verts.index_update()
+            bme.verts.ensure_lookup_table()
             list_3.append(bme.verts[-1].index)
 
     if loop == True:
@@ -288,7 +291,7 @@ def extrude_(bme, list_0, list_1, ea, b):
         dict_1[vi] = []
         dict_1[vi].append(vi)
         bme.verts.new(p - (so_buf.list_1[0] * ea))
-
+        bme.verts.ensure_lookup_table()
         bme.verts.index_update()
         dict_1[vi].append(bme.verts[-1].index)
 
@@ -657,7 +660,7 @@ class so_op5(bpy.types.Operator):
                         return {'CANCELLED'}
                     elif no != None:
                         tmp = inset_(bme, opp, b, list_1, loop)
-
+        bme.edges.ensure_lookup_table()
         list_usel = [bme.edges[e.index].select_set(0) for e in bme.edges if e.select]
         del list_usel
 
@@ -788,7 +791,7 @@ class so_op7(bpy.types.Operator):
                 return {'CANCELLED'}
             else:
                 tmp = extrude_(bme, list_0, list_1, ea, b)
-
+        bme.edges.ensure_lookup_table()
         list_usel = [bme.edges[e.index].select_set(0) for e in bme.edges if e.select]
         del list_usel
         for i in tmp:

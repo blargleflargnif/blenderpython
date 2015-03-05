@@ -93,10 +93,11 @@ def f_(bme, e, list_1, n_, d, prc, b0, b1):
     ev1_tmp = None
 
     if n_ == 1:
+        bme.faces.ensure_lookup_table()
         f = bme.faces[list_1[0]]
         ek = tuple([v.index for v in e.verts])
         f_edge_keys = [ tuple([v.index for v in e.verts]) for e in f.edges ]
-
+        bme.verts.ensure_lookup_table()
         ev0 = (bme.verts[ek[0]].co).copy()
         ev1 = (bme.verts[ek[1]].co).copy()
 
@@ -176,12 +177,16 @@ def f_(bme, e, list_1, n_, d, prc, b0, b1):
     else:
         if b1 == True:
             tmp = []
+
             bme.verts.new(ev0_tmp)
+            bme.verts.ensure_lookup_table()
             bme.verts.index_update()
             tmp.append(bme.verts[-1])
 
             bme.verts.new(ev1_tmp)
+
             bme.verts.index_update()
+            bme.verts.ensure_lookup_table()
             tmp.append(bme.verts[-1])
 
             bme.edges.new(tmp)
@@ -254,6 +259,7 @@ class es_op0(bpy.types.Operator):
             return {'CANCELLED'}
         else:
             for ei in list_0:
+                bme.edges.ensure_lookup_table()
                 e = bme.edges[ei]
                 list_1 = [f.index for f in e.link_faces]      # list of faces (face indices) connected to this edge
                 n_ = len(list_1)

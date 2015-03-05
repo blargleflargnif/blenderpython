@@ -127,6 +127,7 @@ def f_(bme, e, list_1, n_, d, prc, b0, b1):
             val = d
 
         ek = tuple([v.index for v in e.verts])
+        bme.verts.ensure_lookup_table()
         ev0 = (bme.verts[ek[0]].co).copy()
         ev1 = (bme.verts[ek[1]].co).copy()
 

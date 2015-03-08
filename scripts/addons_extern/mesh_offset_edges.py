@@ -583,7 +583,7 @@ class OffsetEdges(bpy.types.Operator):
 
         layout.prop(self, 'mirror_modifier')
 
-        #layout.operator('mesh.offset_edges', text='Repeat')
+        layout.operator('mesh.offset_edges', text='Repeat')
 
         if self.follow_face:
             layout.separator()
@@ -762,6 +762,7 @@ class OffsetEdgesMenu(bpy.types.Menu):
 
         mov = layout.operator('mesh.offset_edges', text='Move')
         mov.geometry_mode = 'move'
+
 
 def draw_item(self, context):
     self.layout.menu("VIEW3D_MT_edit_mesh_offset_edges")

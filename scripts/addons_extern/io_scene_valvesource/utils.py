@@ -1,4 +1,4 @@
-#  Copyright (c) 2013 Tom Edwards contact@steamreview.org
+#  Copyright (c) 2014 Tom Edwards contact@steamreview.org
 #
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
@@ -18,7 +18,8 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy, struct, time, collections, os, subprocess
+import bpy, struct, time, collections, os, subprocess, sys, builtins
+from bpy.app.translations import pgettext
 from mathutils import *
 from math import *
 from . import datamodel
@@ -39,22 +40,25 @@ mat_BlenderToSMD = ry90 * rz90 # for legacy support only
 
 epsilon = Vector([0.0001] * 3)
 
+implicit_bone_name = "blender_implicit"
+
 # SMD types
-REF = 0x1 # $body, $model, $bodygroup->studio (if before a $body or $model)
-REF_ADD = 0x2 # $bodygroup, $lod->replacemodel
+REF = 0x1 # $body, $model, $bodygroup->studio (if before a $body or $model), $bodygroup, $lod->replacemodel
 PHYS = 0x3 # $collisionmesh, $collisionjoints
 ANIM = 0x4 # $sequence, $animation
-ANIM_SOLO = 0x5 # for importing animations to scenes without an existing armature
 FLEX = 0x6 # $model VTA
 
-mesh_compatible = [ 'MESH', 'TEXT', 'FONT', 'SURFACE', 'META', 'CURVE' ]
-exportable_types = mesh_compatible[:]
+mesh_compatible = ('MESH', 'TEXT', 'FONT', 'SURFACE', 'META', 'CURVE')
+shape_types = ('MESH' , 'SURFACE', 'CURVE')
+
+exportable_types = list(mesh_compatible)
 exportable_types.append('ARMATURE')
-shape_types = ['MESH' , 'SURFACE']
+exportable_types = tuple(exportable_types)
 
 axes = (('X','X',''),('Y','Y',''),('Z','Z',''))
+axes_lookup = { 'X':0, 'Y':1, 'Z':2 }
 
-dmx_model_versions = [1,15,18]
+dmx_model_versions = [1,15,18,22]
 
 dmx_versions = { # [encoding, format]
 'ep1':[0,0],
@@ -73,26 +77,52 @@ dmx_versions = { # [encoding, format]
 # and now back to 2/1 for some reason...
 'Half-Life 2':[2,1],
 'Source SDK Base 2013 Singleplayer':[2,1],
-'Source SDK Base 2013 Multiplayer':[2,1]
+'Source SDK Base 2013 Multiplayer':[2,1],
+# Source 2!
+'Dota 2 (Source 2)':[5,22],
 }
 
-def SPAM(*args):
-	print(*args)
+def print(*args, newline=True, debug_only=False):
+	if not debug_only or bpy.app.debug_value > 0:
+		builtins.print(" ".join([str(a) for a in args]).encode(sys.getdefaultencoding()).decode(sys.stdout.encoding), end= "\n" if newline else "", flush=True)
 
-def benchReset():
-	global benchLast
-	global benchStart
-	benchStart = benchLast = time.time()
-benchReset()
-def bench(label):
-	global benchLast
-	now = time.time()
-	print("{}: {:.4f}".format(label,now-benchLast))
-	benchLast = now
-def benchTotal():
-	global benchStart
-	return time.time() - benchStart
-	
+def get_id(id, format_string = False, data = False):
+	out = p_cache.ids[id]
+	if format_string or (data and bpy.context.user_preferences.system.use_translate_new_dataname):
+		return pgettext(out)
+	else:
+		return out
+
+def get_active_exportable(context = None):
+	if not context: context = bpy.context
+	return context.scene.vs.export_list[context.scene.vs.export_list_active].get_id()
+
+class BenchMarker:
+	def __init__(self,indent = 0, prefix = None):
+		self._indent = indent * 4
+		self._prefix = "{}{}".format(" " * self._indent,prefix if prefix else "")
+		self.quiet = bpy.app.debug_value <= 0
+		self.reset()
+
+	def reset(self):
+		self._last = self._start = time.time()
+		
+	def report(self,label = None, threshold = 0.0):
+		now = time.time()
+		elapsed = now - self._last
+		if threshold and elapsed < threshold: return
+
+		if not self.quiet:
+			prefix = "{} {}:".format(self._prefix, label if label else "")
+			pad = max(0, 10 - len(prefix) + self._indent)
+			print("{}{}{:.4f}".format(prefix," " * pad, now - self._last))
+		self._last = now
+
+	def current(self):
+		return time.time() - self._last
+	def total(self):
+		return time.time() - self._start
+
 def smdBreak(line):
 	line = line.rstrip('\n')
 	return line == "end" or line == ""
@@ -103,48 +133,67 @@ def smdContinue(line):
 def getDatamodelQuat(blender_quat):
 	return datamodel.Quaternion([blender_quat[1], blender_quat[2], blender_quat[3], blender_quat[0]])
 
-def studiomdlPathValid():
-	return os.path.exists(os.path.join(bpy.path.abspath(bpy.context.scene.smd_studiomdl_custom_path),"studiomdl.exe"))
-
 def getGamePath():
-	return os.path.abspath(os.path.join(bpy.path.abspath(bpy.context.scene.smd_game_path),'')) if len(bpy.context.scene.smd_game_path) else os.getenv('vproject')
-def gamePathValid():
-	return os.path.exists(os.path.join(getGamePath(),"gameinfo.txt"))
+	return os.path.abspath(os.path.join(bpy.path.abspath(bpy.context.scene.vs.game_path),'')) if len(bpy.context.scene.vs.game_path) else os.getenv('vproject')
 
 def DatamodelEncodingVersion():
 	ver = getDmxVersionsForSDK()
-	return ver[0] if ver else int(bpy.context.scene.smd_dmx_encoding)
+	return ver[0] if ver else int(bpy.context.scene.vs.dmx_encoding)
 def DatamodelFormatVersion():
 	ver = getDmxVersionsForSDK()
-	return ver[1] if ver else int(bpy.context.scene.smd_dmx_format)
+	return ver[1] if ver else int(bpy.context.scene.vs.dmx_format)
 
+def allowDMX():
+	return getDmxVersionsForSDK() != [0,0]
 def canExportDMX():
-	return (len(bpy.context.scene.smd_studiomdl_custom_path) == 0 or studiomdlPathValid()) and DatamodelEncodingVersion() != 0 and DatamodelFormatVersion() != 0
+	return (len(bpy.context.scene.vs.engine_path) == 0 or p_cache.enginepath_valid) and allowDMX()
 def shouldExportDMX():
-	return bpy.context.scene.smd_format == 'DMX' and canExportDMX()
+	return bpy.context.scene.vs.export_format == 'DMX' and canExportDMX()
 
 def getEngineBranchName():
-	path = bpy.context.scene.smd_studiomdl_custom_path
+	path = os.path.abspath(bpy.path.abspath(bpy.context.scene.vs.engine_path))
+	if not path: return None
+
 	if path.lower().find("sourcefilmmaker") != -1:
 		return "Source Filmmaker" # hack for weird SFM folder structure, add a space too
+	elif "dota2.exe" in os.listdir(path) and "resourcecompiler.exe" in os.listdir(path):
+		return "Dota 2 (Source 2)"
 	elif path.lower().find("dota 2 beta") != -1:
 		return "Dota 2"
 	else:
 		return os.path.basename(os.path.abspath(os.path.join(bpy.path.abspath(path),os.pardir))).title().replace("Sdk","SDK") # why, Python, why
 def getDmxVersionsForSDK():
+	if not p_cache.enginepath_valid: return
 	path_branch = getEngineBranchName().lower()
 	for branch in dmx_versions.keys():
 		if path_branch == branch.lower(): return dmx_versions[branch]
 
+def getDmxKeywords(format_version):
+	if format_version >= 22:
+		return { 'pos': "position$0", 'norm': "normal$0", 'texco':"texcoord$0", 'wrinkle':"wrinkle$0", 'balance':"balance$0", 'weight':"blendweights$0", 'weight_indices':"blendindices$0" }
+	else:
+		return { 'pos': "positions", 'norm': "normals", 'texco':"textureCoordinates", 'wrinkle':"wrinkle", 'balance':"balance", 'weight':"jointWeights", 'weight_indices':"jointIndices" }
+
 def count_exports(context):
 	num = 0
-	for exportable in context.scene.smd_export_list:
+	for exportable in context.scene.vs.export_list:
 		id = exportable.get_id()
-		if id and id.smd_export: num += 1
+		if id and id.vs.export and (type(id) != bpy.types.Group or not id.vs.mute):
+			num += 1
 	return num
 
+def animationLength(ad):
+	if ad.action:
+		return int(ad.action.frame_range[1])
+	else:
+		strips = [strip.frame_end for track in ad.nla_tracks if not track.mute for strip in track.strips]
+		if any(strips):
+			return int(max(strips))
+		else:
+			return 0
+	
 def getFileExt(flex=False):
-	if bpy.context.scene.smd_format == 'DMX':
+	if allowDMX() and bpy.context.scene.vs.export_format == 'DMX':
 		return ".dmx"
 	else:
 		if flex: return ".vta"
@@ -157,8 +206,9 @@ def isWild(in_str):
 
 # rounds to 6 decimal places, converts between "1e-5" and "0.000001", outputs str
 def getSmdFloat(fval):
-	val = "{:.6f}".format(float(fval))
-	return val
+	return "{:.6f}".format(float(fval))
+def getSmdVec(iterable):
+	return " ".join([getSmdFloat(val) for val in iterable])
 
 def appendExt(path,ext):
 	if not path.lower().endswith("." + ext) and not path.lower().endswith(".dmx"):
@@ -215,11 +265,11 @@ def MakeObjectIcon(object,prefix=None,suffix=None):
 		out += suffix
 	return out
 
+def GetCustomPropName(data,prop, suffix=""):
+	return "".join([pgettext(getattr(type(data), prop)[1]['name']), suffix])
+
 def getObExportName(ob):
-	if ob.get('smd_name'):
-		return ob['smd_name']
-	else:
-		return ob.name
+	return ob.name
 
 def removeObject(obj):
 	d = obj.data
@@ -230,7 +280,8 @@ def removeObject(obj):
 			if child.type == 'EMPTY':
 				removeObject(child)
 
-	bpy.context.scene.objects.unlink(obj)
+	if obj.name in bpy.context.scene.objects:
+		bpy.context.scene.objects.unlink(obj)
 	if obj.users == 0:
 		if type == 'ARMATURE' and obj.animation_data:
 			obj.animation_data.action = None # avoid horrible Blender bug that leads to actions being deleted
@@ -244,36 +295,179 @@ def removeObject(obj):
 
 	return None if d else type
 
-def hasShapes(ob,groupIndex = -1):
-	def _test(t_ob):
-		return t_ob.type in shape_types and t_ob.data.shape_keys and len(t_ob.data.shape_keys.key_blocks) > 1
+def calc_norms(mesh):
+	mesh.calc_normals_split(split_angle=mesh.auto_smooth_angle if mesh.use_auto_smooth else pi)
+	
+def select_only(ob):
+	bpy.context.scene.objects.active = ob
+	bpy.ops.object.select_all(action='DESELECT')
+	ob.select = True
 
-	if groupIndex != -1:
-		for g_ob in ob.users_group[groupIndex].objects:
-			if _test(g_ob): return True
-		return False
+def hasShapes(id, valid_only = True):
+	def _test(id_):
+		return id_.type in shape_types and id_.data.shape_keys and len(id_.data.shape_keys.key_blocks)
+	
+	if type(id) == bpy.types.Group:
+		for _ in [ob for ob in id.objects if ob.vs.export and (not valid_only or ob in p_cache.validObs) and _test(ob)]:
+			return True
 	else:
-		return _test(ob)
+		return _test(id)
 
+def countShapes(*objects):
+	num_shapes = 0
+	num_correctives = 0
+	flattened_objects = []
+	for ob in objects:
+		if type(ob) == bpy.types.Group:
+			flattened_objects.extend(ob.objects)
+		elif hasattr(ob,'__iter__'):
+			flattened_objects.extend(ob)
+		else:
+			flattened_objects.append(ob)
+	for ob in [ob for ob in flattened_objects if ob.vs.export and hasShapes(ob)]:
+		for shape in ob.data.shape_keys.key_blocks[1:]:
+			if "_" in shape.name: num_correctives += 1
+			else: num_shapes += 1
+	return num_shapes, num_correctives
+
+def hasCurves(id):
+	def _test(id_):
+		return id_.type in ['CURVE','SURFACE','FONT']
+
+	if type(id) == bpy.types.Group:
+		for _ in [ob for ob in id.objects if ob.vs.export and ob in p_cache.validObs and _test(ob)]:
+			return True
+	else:
+		return _test(id)
+
+def actionsForFilter(filter):
+	import fnmatch
+	return list([action for action in bpy.data.actions if action.users and fnmatch.fnmatch(action.name, filter)])
 def shouldExportGroup(group):
-	return group.smd_export and not group.smd_mute
+	return group.vs.export and not group.vs.mute
 
-def hasFlexControllerSource(item):
-	return bpy.data.texts.get(item.smd_flex_controller_source) or os.path.exists(bpy.path.abspath(item.smd_flex_controller_source))
+def hasFlexControllerSource(source):
+	return bpy.data.texts.get(source) or os.path.exists(bpy.path.abspath(source))
 
-def getValidObs():
-	validObs = []
+def getExportablesForId(id):
+	if not id: raise ValueError("id is null")
+	out = set()
+	for exportable in bpy.context.scene.vs.export_list:
+		if exportable.get_id() == id: return [exportable]
+		if exportable.ob_type == 'GROUP':
+			group = exportable.get_id()
+			if not group.vs.mute and id.name in group.objects:
+				out.add(exportable)
+	return list(out)
+
+def getSelectedExportables():
+	exportables = set()
+	for ob in bpy.context.selected_objects:
+		exportables.update(getExportablesForId(ob))
+	if len(exportables) == 0 and bpy.context.active_object:
+		a_e = getExportablesForId(bpy.context.active_object)
+		if a_e: exportables.update(a_e)
+	return exportables
+
+def make_export_list():
 	s = bpy.context.scene
-	for o in s.objects:
-		if o.type in exportable_types:
-			if s.smd_layer_filter:
-				for i in range( len(o.layers) ):
-					if o.layers[i] and s.layers[i]:
-						validObs.append(o)
-						break
+	s.vs.export_list.clear()
+	
+	def makeDisplayName(item,name=None):
+		return os.path.join(item.vs.subdir if item.vs.subdir != "." else None, (name if name else item.name) + getFileExt())
+	
+	if len(p_cache.validObs):
+		ungrouped_objects = p_cache.validObs.copy()
+		
+		groups_sorted = bpy.data.groups[:]
+		groups_sorted.sort(key=lambda g: g.name.lower())
+		
+		scene_groups = []
+		for group in groups_sorted:
+			valid = False
+			for object in [ob for ob in group.objects if ob in p_cache.validObs]:
+				if not group.vs.mute and object.type != 'ARMATURE' and object in ungrouped_objects:
+					ungrouped_objects.remove(object)
+				valid = True
+			if valid:
+				scene_groups.append(group)
+				
+		for g in scene_groups:
+			i = s.vs.export_list.add()
+			if g.vs.mute:
+				i.name = "{} {}".format(g.name,pgettext(get_id("exportables_group_mute_suffix",True)))
 			else:
-				validObs.append(o)
-	return validObs
+				i.name = makeDisplayName(g)
+			i.item_name = g.name
+			i.icon = i.ob_type = "GROUP"
+			
+		
+		ungrouped_objects = list(ungrouped_objects)
+		ungrouped_objects.sort(key=lambda ob: ob.name.lower())
+		for ob in ungrouped_objects:
+			if ob.type == 'FONT':
+				ob.vs.triangulate = True # preserved if the user converts to mesh
+			
+			i_name = i_type = i_icon = None
+			if ob.type == 'ARMATURE':
+				ad = ob.animation_data
+				if ad:
+					i_icon = i_type = "ACTION"
+					if ob.data.vs.action_selection == 'FILTERED':
+						i_name = get_id("exportables_arm_filter_result",True).format(ob.vs.action_filter,len(actionsForFilter(ob.vs.action_filter)))
+					elif ad.action:
+						i_name = makeDisplayName(ob,ad.action.name)
+					elif len(ad.nla_tracks):
+						i_name = makeDisplayName(ob)
+						i_icon = "NLA"
+			else:
+				i_name = makeDisplayName(ob)
+				i_icon = MakeObjectIcon(ob,prefix="OUTLINER_OB_")
+				i_type = "OBJECT"
+			if i_name:
+				i = s.vs.export_list.add()
+				i.name = i_name
+				i.ob_type = i_type
+				i.icon = i_icon
+				i.item_name = ob.name
+
+from bpy.app.handlers import scene_update_post, persistent
+need_export_refresh = True
+last_export_refresh = 0
+
+@persistent
+def scene_update(scene, immediate=False):
+	global need_export_refresh
+	global last_export_refresh
+	
+	if not (immediate or need_export_refresh or bpy.data.groups.is_updated or bpy.data.objects.is_updated or bpy.data.scenes.is_updated or bpy.data.actions.is_updated or bpy.data.groups.is_updated):
+		return
+
+	# "real" objects
+	p_cache.validObs = set([ob for ob in scene.objects if ob.type in exportable_types
+						 and not (ob.type == 'CURVE' and ob.data.bevel_depth == 0 and ob.data.extrude == 0)
+						 and not (scene.vs.layer_filter and len([i for i in range(20) if ob.layers[i] and scene.layers[i]]) == 0)])
+
+	# dupli groups etc.
+	p_cache.validObs = p_cache.validObs.union(set([ob for ob in scene.objects if (ob.type == 'MESH' and ob.dupli_type in ['VERTS','FACES'] and any(ob.children)) or (ob.dupli_type == 'GROUP' and ob.dupli_group)]))
+	
+	p_cache.validObs_version += 1
+
+	need_export_refresh = True
+	now = time.time()
+
+	if immediate or now - last_export_refresh > 0.25:
+		make_export_list()
+		need_export_refresh = False
+		last_export_refresh = now
+
+def hook_scene_update():
+	if not scene_update in scene_update_post:
+		scene_update_post.append(scene_update)
+
+def unhook_scene_update():
+	if scene_update in scene_update_post:
+		scene_update_post.remove(scene_update)
 
 class Logger:
 	def __init__(self):
@@ -290,23 +484,32 @@ class Logger:
 		message = " ".join(str(s) for s in string)
 		print(" ERROR:",message)
 		self.log_errors.append(message)
+	
+	def list_errors(self, menu, context):
+		l = menu.layout
+		if len(self.log_errors):
+			for msg in self.log_errors:
+				l.label("{}: {}".format(pgettext("Error").upper(), msg))
+			l.separator()
+		if len(self.log_warnings):
+			for msg in self.log_warnings:
+				l.label("{}: {}".format(pgettext("Warning").upper(), msg))
 
-	def errorReport(self, jobName, output, caller, numOut):
-		message = "{} {}{} {}".format(numOut,output,"s" if numOut != 1 else "",jobName)
-		if numOut:
-			message += " in {} seconds".format( round( time.time() - self.startTime, 1 ) )
+	def elapsed_time(self):
+		return round(time.time() - self.startTime, 1)
 
+	def errorReport(self,message):
 		if len(self.log_errors) or len(self.log_warnings):
-			message += " with {} errors and {} warnings:".format(len(self.log_errors),len(self.log_warnings))
-
-			for err in self.log_errors:
-				message += "\nERROR: " + err
-			for warn in self.log_warnings:
-				message += "\nWARNING: " + warn
-			caller.report({'ERROR'},message)
-		else:
-			caller.report({'INFO'},message)
-			print(message)
+			message += get_id("exporter_report_suffix",True).format(len(self.log_errors),len(self.log_warnings))
+			if not bpy.app.background:
+				bpy.context.window_manager.popup_menu(self.list_errors,title=get_id("exporter_report_menu"))
+			
+			print("{} Errors and {} Warnings".format(len(self.log_errors),len(self.log_warnings)))
+			for msg in self.log_errors: print("Error:",msg)
+			for msg in self.log_warnings: print("Warning:",msg)
+		
+		self.report({'INFO'},message)
+		print(message)
 
 class SmdInfo:
 	isDMX = 0 # version number, or 0 for SMD
@@ -318,15 +521,13 @@ class SmdInfo:
 	jobName = None
 	jobType = None
 	startTime = 0
-	uiTime = 0
 	started_in_editmode = None
-	append = False
 	in_block_comment = False
 	upAxis = 'Z'
 	rotMode = 'EULER' # for creating keyframes during import
 	
 	def __init__(self):
-		self.upAxis = bpy.context.scene.smd_up_axis
+		self.upAxis = bpy.context.scene.vs.up_axis
 		self.amod = {} # Armature modifiers
 		self.materials_used = set() # printed to the console for users' benefit
 
@@ -369,10 +570,8 @@ class QcInfo:
 		return os.path.join(self.root_filedir,*self.dir_stack)
 		
 class KeyFrame:
-	pos = False
-	rot = False
-	
 	def __init__(self):
+		self.pos = self.rot = False
 		self.matrix = Matrix()
 
 class Cache:
@@ -380,21 +579,74 @@ class Cache:
 	qc_paths = {}
 	qc_lastUpdate = 0
 	
-	scene_updated = False
 	action_filter = ""
-p_cache = Cache() # package cached data
+
+	@classmethod
+	def validate_engine_path(cls):
+		cls.enginepath_valid = os.path.exists(os.path.join(bpy.path.abspath(bpy.context.scene.vs.engine_path),"studiomdl.exe"))
+	enginepath_valid = True
+
+	@classmethod
+	def validate_game_path(cls):
+		game_path = getGamePath()
+		cls.gamepath_valid = game_path and os.path.exists(os.path.join(game_path,"gameinfo.txt"))
+	gamepath_valid = True
+
+	validObs = set()
+	validObs_version = 0
+
+	from . import translations
+	ids = translations.ids
+
+	@classmethod
+	def __del__(cls):
+		cls.validObs.clear()
+
+global p_cache
+if not "p_cache" in globals():
+	p_cache = Cache() # package cached data
 
 class SMD_OT_LaunchHLMV(bpy.types.Operator):
-	'''Launches Half-Life Model Viewer'''
 	bl_idname = "smd.launch_hlmv"
-	bl_label = "Launch HLMV"
+	bl_label = get_id("launch_hlmv")
+	bl_description = get_id("launch_hlmv_tip")
+
 	@classmethod
 	def poll(self,context):
-		return bool(context.scene.smd_studiomdl_custom_path)
+		return bool(context.scene.vs.engine_path)
 		
 	def execute(self,context):
-		args = [os.path.normpath(os.path.join(bpy.path.abspath(context.scene.smd_studiomdl_custom_path),"hlmv"))]
-		if context.scene.smd_game_path:
-			args.extend(["-game",os.path.normpath(bpy.path.abspath(context.scene.smd_game_path))])
+		args = [os.path.normpath(os.path.join(bpy.path.abspath(context.scene.vs.engine_path),"hlmv"))]
+		if context.scene.vs.game_path:
+			args.extend(["-game",os.path.normpath(bpy.path.abspath(context.scene.vs.game_path))])
 		subprocess.Popen(args)
+		return {'FINISHED'}
+
+class SMD_OT_Toggle_Group_Export_State(bpy.types.Operator):
+	bl_idname = "smd.toggle_export"
+	bl_label = get_id("exportstate")
+	bl_options = {'REGISTER','UNDO'}
+	
+	pattern = bpy.props.StringProperty(name=get_id("exportstate_pattern"),description=get_id("exportstate_pattern_tip"))
+	action = bpy.props.EnumProperty(name="Action",items= ( ('TOGGLE', "Toggle", ""), ('ENABLE', "Enable", ""), ('DISABLE', "Disable", "")),default='TOGGLE')
+	
+	@classmethod
+	def poll(self,context):
+		return len(context.visible_objects)
+	
+	def invoke(self, context, event):
+		context.window_manager.invoke_props_dialog(self)
+		return {'RUNNING_MODAL'}
+		
+	def execute(self,context):
+		if self.action == 'TOGGLE': target_state = None
+		elif self.action == 'ENABLE': target_state = True
+		elif self.action == 'DISABLE': target_state = False
+		
+		import fnmatch
+		
+		for ob in context.visible_objects:
+			if fnmatch.fnmatch(ob.name,self.pattern):
+				if target_state == None: target_state = not ob.vs.export
+				ob.vs.export = target_state
 		return {'FINISHED'}

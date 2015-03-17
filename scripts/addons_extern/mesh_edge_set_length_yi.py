@@ -9,7 +9,7 @@ bl_info = {
 	'api': 'a8282da',
 	'location': 'Shit+Alt+E or [Toolbar][Tools][Mesh Tools] Edges Length', # and Angle
 	'warning': "",
-	'category': 'Mesh',
+	'category': 'Edit Mesh',
 	"wiki_url": "mailto:yidanyang@gmail.com",
 	"tracker_url": "mailto:yidanyang@gmail.com",
 }

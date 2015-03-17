@@ -5,7 +5,7 @@ bl_info = {
     'blender': (2, 70, 0),
     'location': 'View3D > EditMode > (w) Specials', 
     'warning': "",
-    'category': 'Mesh'}
+    'category': 'Edit Mesh'}
 
 import bpy,bmesh
 from math import *

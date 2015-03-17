@@ -27,7 +27,7 @@ bl_info = {
     'description': 'Mesh editing script allowing edge rounding',
     'wiki_url': '',
     'tracker_url': '',
-    'category': 'Mesh'
+    'category': 'Edit Mesh'
 }
 
 import bmesh

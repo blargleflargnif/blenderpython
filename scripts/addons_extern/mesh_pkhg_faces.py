@@ -7,7 +7,7 @@ bl_info = {
     "description": "Faces selected will become added faces of different style",
     "warning": "not yet finished",
     "wiki_url": "",
-    "category": "Add Mesh",
+    "category": "Edit Mesh",
 }
 import bpy
 import bmesh

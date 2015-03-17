@@ -4,10 +4,10 @@ bl_info = {
     "version": (1, 4),
     "blender": (2, 73, 4),
     "location": "View3D > TOOLS > Mano-Wii > Dist_Mano",
-    "description": "Arranje Objetos ao longo de uma curva",
+    "description": "Arrange objects along a curve",
     "warning": "Select curve",
     "wiki_url" : "http://blenderartists.org/forum/showthread.php?361029-Specify-an-object-from-a-list-with-all-selectable-objects",
-    "category": "Scene"}
+    "category": "Object"}
 
 import bpy
 import winsound

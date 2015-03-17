@@ -1,1 +1,2 @@
-placeholder for folder addons_contrib
+download then unpack.
+copy paste into blender addons_contrib folder

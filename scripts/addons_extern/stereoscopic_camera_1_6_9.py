@@ -15,17 +15,14 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+
+
+
 #
-#
-#  Author: Sebastian Schneider
-#  Web: http://www.noeol.de
-#
-#  Update: Jun/11/2013
+#  Update: Oct/08/2014
 #
 #  tested with:
-#  Blender 2.62.0 r44136 
-#  MacOS 10.7.3 (64-Bit Intel)
-#  Linux (Ubuntu 11.10)
+#  Blender 2.72
 #  
 
 
@@ -33,9 +30,9 @@
 
 bl_info = {
     'name': "Stereoscopic Camera",
-    'author': "Sebastian Schneider <s.schneider@noeol.de>",
-    'version': (1, 6, 8),
-    'blender': (2, 6, 7),
+    'author': "Name <name@domain.com>",
+    'version': (1, 6, 9),
+    'blender': (2, 7, 2),
     'api': 44136,
     'location': "Select a Camera > Properties Panel > Camera Panel > Stereoscopic Camera",
     'description': "Adds an 'Off-Axis', 'Toe-In' or 'Parallel' stereo camera rig",
@@ -743,14 +740,14 @@ class OBJECT_OT_create_left_right_scene(bpy.types.Operator):
             
         # Create Left Scene
         bpy.ops.scene.new(type='LINK_OBJECTS')
-        left_scene = context.scene
+        left_scene = bpy.data.scenes[-1]
         left_scene.name = "Left_Camera"
         left_scene.camera = bpy.data.objects["L_"+center_cam_name]
         left_scene.background_set = center_scene
 
         # Create Right Scene
         bpy.ops.scene.new(type='LINK_OBJECTS')
-        right_scene = context.scene
+        right_scene = bpy.data.scenes[-1]
         right_scene.name = "Right_Camera"
         right_scene.camera = bpy.data.objects["R_"+center_cam_name]
         right_scene.background_set = center_scene

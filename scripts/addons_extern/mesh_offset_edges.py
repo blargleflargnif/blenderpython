@@ -27,7 +27,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Modeling/offset_edges",
     "tracker_url": "",
-    "category": "Mesh"}
+    "category": "Edit Mesh"}
 
 import math
 from math import sin, cos, pi, copysign, radians

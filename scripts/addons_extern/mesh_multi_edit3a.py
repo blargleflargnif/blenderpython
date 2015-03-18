@@ -27,7 +27,7 @@ bl_info = {
      "warning": "Alpha Version 0.3, more things to come...",  
      "wiki_url": "",  
      "tracker_url": "",  
-     "category": "Mesh"}  
+     "category": "Edit Mesh"}  
 
 #Imports:
 import bpy

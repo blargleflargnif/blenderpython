@@ -1,1 +1,2 @@
-placeholder for folder addons
+download then unpack.
+copy paste into blender addons folder

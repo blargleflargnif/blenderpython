@@ -7,7 +7,7 @@ bl_info = {
     "description": "Adds  a light/camera template to your scene",
     "warning": "",
     "wiki_url": "",
-    "category": "Scene"}
+    "category": "Camera"}
 
 
 import bpy
@@ -139,11 +139,11 @@ def add_object_button(self, context):
 def register():
     bpy.utils.register_class(OBJECT_OT_add_light_template)
     #bpy.utils.register_manual_map(add_object_manual_map)
-    bpy.types.INFO_MT_add.append(add_add_light_template)
+    bpy.types.INFO_MT_add.append(add_object_button)
 
 
 def unregister():
-    bpy.utils.unregister_class(OBJECT_OT_add_object)
+    bpy.utils.unregister_class(OBJECT_OT_add_light_template)
     #bpy.utils.unregister_manual_map(add_object_manual_map)
     bpy.types.INFO_MT_mesh_add.remove(add_object_button)
 

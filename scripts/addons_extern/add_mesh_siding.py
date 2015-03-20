@@ -1,11 +1,11 @@
 bl_info = {
-    "name": "Siding",
+    "name": "Architecture: Siding",
     "description": "Generates 11 Different Types Of Siding",
     "author": "Jacob Morris",
     "blender": (2, 72, 0),
     "location": "View3D > Add > Mesh",
     "version": (0, 5),
-    "category": "Add Mesh"
+    "category": "Add"
     }    
 import bpy
 from bpy.props import *

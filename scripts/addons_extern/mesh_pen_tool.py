@@ -21,17 +21,16 @@
 
 # ------ ------
 bl_info = {
-    'name': 'pen_tool',
+    'name': 'Mesh: Pen Tool',
     'author': '',
     'version': (0, 2, 8),
     'blender': (2, 6, 5),
-    'api': 53207,
     'location': 'View3D > Tool Shelf',
     'description': '',
     'warning': '',
     'wiki_url': '',
     'tracker_url': '',
-    'category': 'Mesh' }
+    'category': 'Edit' }
 
 # ------ ------
 import bpy, blf, bgl

@@ -1,11 +1,11 @@
 bl_info = {
-    'name': "Smart two edges intersect tool (cad VTX)",
+    'name': "Mesh: Smart two edges intersect tool (cad VTX)",
     'author': "luxuy blendercn",
     'version': (1, 0, 0),
     'blender': (2, 70, 0),
     'location': 'View3D > EditMode > (w) Specials', 
     'warning': "",
-    'category': 'Edit Mesh'}
+    'category': 'Edit'}
 
 import bpy,bmesh
 from math import *

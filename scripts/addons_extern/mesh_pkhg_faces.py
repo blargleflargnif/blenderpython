@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "PKHG faces",
+    "name": "Mesh: PKHG faces",
     "author": " PKHG ",
     "version": (0, 0, 5),
     "blender": (2, 7, 1),
@@ -7,7 +7,7 @@ bl_info = {
     "description": "Faces selected will become added faces of different style",
     "warning": "not yet finished",
     "wiki_url": "",
-    "category": "Edit Mesh",
+    "category": "Edit",
 }
 import bpy
 import bmesh

@@ -18,7 +18,7 @@
 # ***** END GPL LICENCE BLOCK *****
 
 bl_info = {
-    "name": "Edge Roundifier",
+    "name": "Mesh: Edge Roundifier",
     "category": "Mesh",
     'author': 'Piotr Komisarczyk (komi3D), PKHG',
     'version': (0, 0, 2),
@@ -27,7 +27,7 @@ bl_info = {
     'description': 'Mesh editing script allowing edge rounding',
     'wiki_url': '',
     'tracker_url': '',
-    'category': 'Edit Mesh'
+    'category': 'Edit'
 }
 
 import bmesh

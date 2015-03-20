@@ -19,7 +19,7 @@
 # Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter & cotejrp1#
 
 bl_info = {
-    "name": "Icicle/Snowflake",
+    "name": "Mesh: Icicle/Snowflake",
     "author":"Eoin Brennan (Mayeoin Bread)",
     "version": (0, 1, 0),
     "blender": (2, 74, 0),
@@ -28,7 +28,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Add_Mesh/Add_Extra",
-    "category": "Add Mesh",
+    "category": "Add",
 }
 
 if "bpy" in locals():

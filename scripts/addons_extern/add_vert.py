@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-	"name": "Add Vert & Empty",
+	"name": "Mesh: Vert & Empty",
 	"author": "Meta_Androcto",
 	"version": (1, 0),
 	"blender": (2, 6, 3),
@@ -26,7 +26,7 @@ bl_info = {
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
-	"category": "Add Mesh"}
+	"category": "Add"}
 import bpy
 import bmesh
 from bpy.props import StringProperty, FloatProperty, BoolProperty, FloatVectorProperty

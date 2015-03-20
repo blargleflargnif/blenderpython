@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "add surface plane/cone/star/wedge",
+    "name": "Surface: plane/cone/star/wedge",
     "description": "create a NURBS surface plane.",
     "author": "Folkert de Vries",
     "version": (1,0),
@@ -11,7 +11,7 @@ bl_info = {
         " ",
     "tracker_url": " "\
         " ",
-    "category": "Add Surface"
+    "category": "Add"
     }
 
 #info:

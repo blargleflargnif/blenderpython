@@ -19,16 +19,16 @@
 # Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter & cotejrp1#
 
 bl_info = {
-    "name": "Extra Objects",
+    "name": "Mesh: Extra Objects",
     "author": "Multiple Authors",
     "version": (0, 3, 0),
-    "blender": (2, 72, 0),
+    "blender": (2, 74, 0),
     "location": "View3D > Add > Mesh",
     "description": "Add extra mesh object types",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Add_Mesh/Add_Extra",
-    "category": "Add Mesh",
+    "category": "Add",
 }
 
 if "bpy" in locals():

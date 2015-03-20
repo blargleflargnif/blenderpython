@@ -21,7 +21,7 @@
 
 # ------ ------
 bl_info = {
-    'name': 'sire_o',
+    'name': 'Mesh: sire_o',
     'author': '',
     'version': (0, 2, 6),
     'blender': (2, 6, 5),
@@ -31,7 +31,7 @@ bl_info = {
     'warning': '',
     'wiki_url': '',
     'tracker_url': '',
-    'category': 'Edit Mesh' }
+    'category': 'Edit' }
 
 # ------ ------
 import bpy

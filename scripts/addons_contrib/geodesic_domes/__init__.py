@@ -17,16 +17,16 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Geodesic Domes",
+    "name": "Mesh: Geodesic Domes",
     "author": "Noctumsolis, updated from 2.5 PKHG now for 2.71, Meta Androcto, original for 2.49 from Andy Houston",
     "version": (0, 3, 2),
-    "blender": (2, 7, 1),
+    "blender": (2, 74, 0),
     "location": "View3D > UI > Geodesic...",
     "description": "Script, with GUI, to create geodesic dome objects.",
     "warning": "not yet finished",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Modeling/Geodesic_Domes",
     "tracker_url": "",
-    "category": "Add Mesh"}
+    "category": "Add"}
 
 if "bpy" in locals():
     import imp

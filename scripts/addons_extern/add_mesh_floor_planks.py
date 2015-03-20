@@ -22,7 +22,7 @@
 # <pep8 compliant>
 
 bl_info = {
-	"name": "Floor Generator",
+	"name": "Architecture: Floor Generator",
 	"author": "Michel Anders (varkenvarken) with contributions from Alain (Alain) and Floric (floric)",
 	"version": (0, 0, 15),
 	"blender": (2, 71, 0),
@@ -31,7 +31,7 @@ bl_info = {
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
-	"category": "Add Mesh"}
+	"category": "Add"}
 
 from random import random as rand, seed, uniform as randuni
 from math import pi as PI

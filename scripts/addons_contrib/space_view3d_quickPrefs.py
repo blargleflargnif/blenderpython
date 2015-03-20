@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "QuickPrefs",
+    "name": "Quick Prefs",
     "author": "Sean Olson",
     "version": (2, 2),
     "blender": (2, 66, 0),

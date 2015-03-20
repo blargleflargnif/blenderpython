@@ -21,7 +21,7 @@
 
 # ------ ------
 bl_info = {
-    'name': 'edge_slide',
+    'name': 'Mesh: Edge Slide',
     'author': '',
     'version': (0, 2, 0),
     'blender': (2, 6, 5),
@@ -31,7 +31,7 @@ bl_info = {
     'warning': '',
     'wiki_url': '',
     'tracker_url': '',
-    'category': 'Edit Mesh' }
+    'category': 'Edit' }
 
 # ------ ------
 import bpy

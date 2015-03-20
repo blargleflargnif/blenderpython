@@ -18,7 +18,7 @@
 # by meta-androcto, parts based on work by Erich Toven #
 
 bl_info = {
-    "name": "Scene Elements",
+    "name": "Objects: Test Scene Elements",
     "author": "Meta Androcto, ",
     "version": (0, 2),
     "blender": (2, 64, 0),
@@ -29,7 +29,7 @@ bl_info = {
         "/Py/Scripts",
     "tracker_url": "http://projects.blender.org/tracker/index.php?"\
         "func=detail&aid=32682",
-    "category": "Object"}
+    "category": "Add"}
 
 
 if "bpy" in locals():

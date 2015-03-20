@@ -1,12 +1,12 @@
 bl_info = {
-    "name": "Curve Tools 2",
+    "name": "Curve: Toolkit 2",
     "description": "Adds some functionality for bezier/nurbs curve/surface modeling",
     "author": "Mackraken, guy lateur",
     "version": (0, 2, 0),
     "blender": (2, 7, 4),
     "location": "Tool Panel",
     "warning": "WIP",
-    "category": "Edit Curve"}
+    "category": "Edit"}
     
     
 import bpy

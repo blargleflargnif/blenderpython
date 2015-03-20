@@ -26,7 +26,7 @@ bl_info = {
     "location": "3D View > Tools || Node Editor > Tools",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Import-Export/Blend_Library",
-    "category": "Import-Export"}
+    "category": "Tools"}
 
 import bpy
 import os.path

@@ -17,16 +17,16 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Simplify Curves",
+    "name": "Curve: Simplify",
     "author": "testscreenings",
-    "version": (1,),
-    "blender": (2, 59, 0),
+    "version": (1, 0, 0),
+    "blender": (2, 74, 0),
     "location": "Search > Simplify Curves",
     "description": "Simplifies 3D Curve objects and animation F-Curves",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Curve/Curve_Simplify",
-    "category": "Edit Curve",
+    "category": "Edit",
 }
 
 """

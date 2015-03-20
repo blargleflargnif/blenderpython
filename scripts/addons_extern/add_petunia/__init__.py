@@ -19,7 +19,7 @@
 # meta-androcto :code, macouno :petunia model #
 
 bl_info = {
-    "name": "Petunia",
+    "name": "Model: Petunia",
     "author": "Macouno, Meta-Androcto",
     "version": (0, 1),
     "blender": (2, 7, 3),
@@ -28,7 +28,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Object"}
+    "category": "Add"}
 
 import bpy
 from bpy.props import *

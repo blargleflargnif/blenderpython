@@ -21,7 +21,7 @@
 bl_info = {
     "name": "Floating Sliders",
     "author": "Bassam Kurdali",
-    "version": (0, 8),
+    "version": (0, 9, 1),
     "blender": (2, 7, 0),
     "location": "View3D",
     "description": "Sliders for 3D View",
@@ -171,10 +171,14 @@ def set_value(context, bone, prop, x_mouse, x_start, x_end):
 
 def fallback_interaction(context):
     '''Fall back in case pass through doesn't automatically '''
-    if context.user_preferences.inputs.select_mouse == 'LEFT':
-        bpy.ops.view3d.select('INVOKE_DEFAULT')
-    else:
-        bpy.ops.view3d.cursor3d('INVOKE_DEFAULT')
+    result = {'PASS_THROUGH'}
+    if bpy.ops.view3d.manipulator.poll():
+        result = bpy.ops.view3d.manipulator('INVOKE_DEFAULT')
+    if result == {'PASS_THROUGH'}:
+        if context.user_preferences.inputs.select_mouse == 'LEFT':
+            bpy.ops.view3d.select('INVOKE_DEFAULT')
+        else:
+            bpy.ops.view3d.cursor3d('INVOKE_DEFAULT')
 
 
 class EditProps(bpy.types.Operator):

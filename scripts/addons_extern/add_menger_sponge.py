@@ -6,7 +6,7 @@ bl_info = {
     "name": "Mesh: Menger Sponge",
     "author": "sugiany",
     "version": (1, 0, 0),
-    "blender": (2, 70, 0),
+    "blender": (2, 71, 0),
     "location": "View3D > Add > Mesh",
     "warning": "",
     "description": "Add a menger sponge",

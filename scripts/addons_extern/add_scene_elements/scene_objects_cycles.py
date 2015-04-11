@@ -70,7 +70,7 @@ class add_scene(bpy.types.Operator):
         cam = bpy.context.active_object.data
         cam.lens = 35
         cam.draw_size = 0.1
-        
+        bpy.ops.view3d.viewnumpad(type = 'CAMERA') 
 # add point lamp
         bpy.ops.object.lamp_add(type="POINT", location = (4.07625,1.00545,5.90386), rotation =(0.650328,0.055217,1.866391))
         lamp1 = bpy.context.active_object.data
@@ -201,10 +201,11 @@ class add_scene(bpy.types.Operator):
         monkeyMaterial.use_nodes=True
 # add plane
 
-        bpy.ops.mesh.primitive_plane_add(location = (0.0,0.0,-1.0))
-        bpy.ops.transform.rotate(value=(-0.820305), axis=(0, 0, 1))
-        bpy.ops.transform.resize(value=(22.0, 22.0, 0.0))
-        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        bpy.ops.mesh.primitive_plane_add(radius=22, view_align=False, enter_editmode=False, location=(0, 0, -1), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+ 
+        bpy.ops.transform.rotate(value=-0.698132, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
         plane = bpy.context.active_object
 # add new material
@@ -215,7 +216,8 @@ class add_scene(bpy.types.Operator):
 
             
 #Material settings
-        planeMaterial.preview_render_type = "CUBE"
+        planeMaterial.use_nodes=True
+
         planeMaterial.diffuse_color = (0.2, 0.2, 0.2)
         planeMaterial.specular_color = (0.604, 0.465, 0.136)
         planeMaterial.specular_intensity = 0.3
@@ -224,12 +226,8 @@ class add_scene(bpy.types.Operator):
         planeMaterial.use_transparency = False
         planeMaterial.alpha = 0
         planeMaterial.use_transparent_shadows = True
-        mats = bpy.data.materials
         sc = bpy.context.scene
-        planeMaterial.use_nodes=True
-        TreeNodes=planeMaterial.node_tree
-        links = TreeNodes.links
-        shader = TreeNodes.nodes.new('ShaderNodeBsdfGlossy') 
+
         return {'FINISHED'}
 class INFO_MT_add_scenesetup(bpy.types.Menu):
     bl_idname = "INFO_MT_objects_cycles.add_scene"

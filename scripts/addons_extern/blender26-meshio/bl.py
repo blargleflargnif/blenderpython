@@ -257,7 +257,7 @@ class object:
         pose=object.getPose(o)
         g=pose.bone_groups.active
         g.name=name
-        g.color_set=color_set
+#        g.color_set=color_set
         return g
 
     @staticmethod

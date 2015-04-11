@@ -67,7 +67,7 @@ class add_scene_camera(bpy.types.Operator):
         cam = bpy.context.active_object.data
         cam.lens = 35
         cam.draw_size = 0.1
-
+        bpy.ops.view3d.viewnumpad(type = 'CAMERA') 
         return {"FINISHED"}
 
 #### REGISTER ####

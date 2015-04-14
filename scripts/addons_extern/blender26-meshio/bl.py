@@ -614,7 +614,7 @@ class armature:
         SCENE.objects.link(armature_object)
 
         armature_object.show_x_ray=True
-        armature.show_names=True
+        armature.show_names=False
         #armature.draw_type='OCTAHEDRAL'
         armature.draw_type='STICK'
         #armature.use_deform_envelopes=False

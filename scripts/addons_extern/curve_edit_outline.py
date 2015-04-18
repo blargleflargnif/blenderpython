@@ -21,9 +21,9 @@ END GPL LICENCE BLOCK
 '''
 
 bl_info = {
-    "name": "Curve: Outline",
+    "name": "Edit Outline",
     "description": "creates an Outline",
-    "category": "Curve",
+    "category": "Add Curve",
     "author": "Yann Bertrand (jimflim)",
     "version": (0, 4),
     "blender": (2, 74, 0),

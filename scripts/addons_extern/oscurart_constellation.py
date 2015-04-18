@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Mesh: Constellation",
+    "name": "Constellation",
     "author": "Oscurart",
     "version": (1, 0),
     "blender": (2, 67, 0),
@@ -26,7 +26,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Add"}
+    "category": "Add Mesh"}
 
 import bpy
 import math

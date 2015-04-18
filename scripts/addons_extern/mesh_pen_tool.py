@@ -21,7 +21,7 @@
 
 # ------ ------
 bl_info = {
-    'name': 'Mesh: Pen Tool',
+    'name': 'Pen Tool',
     'author': '',
     'version': (0, 2, 8),
     'blender': (2, 6, 5),

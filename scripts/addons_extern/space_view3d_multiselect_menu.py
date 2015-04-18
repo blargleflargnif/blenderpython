@@ -34,7 +34,7 @@ bl_info = {
         'Scripts/3D_interaction/multiselect_Menu',
     'tracker_url': 'https://projects.blender.org/tracker/index.php?'
                    'func=detail&aid=22132',
-    'category': 'Interface'}
+    'category': '3D View'}
 
 import bpy
 

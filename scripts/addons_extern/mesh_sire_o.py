@@ -21,11 +21,10 @@
 
 # ------ ------
 bl_info = {
-    'name': 'Mesh: sire_o',
+    'name': 'Sire_o',
     'author': '',
     'version': (0, 2, 6),
-    'blender': (2, 6, 5),
-    'api': 53207,
+    'blender': (2, 7, 4),
     'location': 'View3D > Tool Shelf',
     'description': '',
     'warning': '',

@@ -1,10 +1,10 @@
 bl_info = {
-    "name" : "Mesh: Cut Faces",
+    "name" : "Cut Faces",
     "author" : "Stanislav Blinov",
     "version" : (1, 0, 0),
     "blender" : (2, 72, 0),
     "description" : "Cut Faces and Deselect Boundary operators",
-    "category" : "Edit",}
+    "category" : "Mesh",}
 
 import bpy
 import bmesh

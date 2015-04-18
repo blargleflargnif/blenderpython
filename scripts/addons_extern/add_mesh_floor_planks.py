@@ -31,7 +31,7 @@ bl_info = {
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
-	"category": "Add"}
+	"category": "Add Mesh"}
 
 from random import random as rand, seed, uniform as randuni
 from math import pi as PI

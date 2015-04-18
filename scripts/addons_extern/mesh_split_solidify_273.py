@@ -21,7 +21,7 @@
 
 # ------ ------
 bl_info = {
-    'name': 'split_solidify',
+    'name': 'Split Solidify',
     'author': 'zmj, updated by zeffii to bmesh ',
     'version': (0, 1, 2),
     'blender': (2, 7, 0),

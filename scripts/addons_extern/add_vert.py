@@ -20,13 +20,13 @@ bl_info = {
 	"name": "Mesh: Vert & Empty",
 	"author": "Meta_Androcto",
 	"version": (1, 0),
-	"blender": (2, 6, 3),
+	"blender": (2, 7, 4),
 	"location": "View3D > Add > Mesh > Single Vert",
 	"description": "Adds Single Vertice & empty to edit mode",
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
-	"category": "Add"}
+	"category": "Add Mesh"}
 import bpy
 import bmesh
 from bpy.props import StringProperty, FloatProperty, BoolProperty, FloatVectorProperty

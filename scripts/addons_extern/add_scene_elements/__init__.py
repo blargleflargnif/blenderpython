@@ -29,7 +29,7 @@ bl_info = {
         "/Py/Scripts",
     "tracker_url": "http://projects.blender.org/tracker/index.php?"\
         "func=detail&aid=32682",
-    "category": "Add"}
+    "category": "Object"}
 
 
 if "bpy" in locals():

@@ -18,7 +18,7 @@
 
 
 bl_info = {  
-     "name": "Mesh: MultiEdit",  
+     "name": "Multi Edit",  
      "author": "Antonis Karvelas",  
      "version": (0, 2),  
      "blender": (2, 7, 2),  
@@ -27,7 +27,7 @@ bl_info = {
      "warning": "Alpha Version 0.3, more things to come...",  
      "wiki_url": "",  
      "tracker_url": "",  
-     "category": "Edit"}  
+     "category": "Mesh"}  
 
 #Imports:
 import bpy

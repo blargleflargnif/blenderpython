@@ -19,7 +19,7 @@
 # Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter & cotejrp1#
 
 bl_info = {
-    "name": "Mesh: Extra Objects",
+    "name": "Extra Objects",
     "author": "Multiple Authors",
     "version": (0, 3, 0),
     "blender": (2, 74, 0),
@@ -28,7 +28,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Add_Mesh/Add_Extra",
-    "category": "Add",
+    "category": "Add Mesh",
 }
 
 if "bpy" in locals():
@@ -48,6 +48,7 @@ if "bpy" in locals():
     importlib.reload(add_mesh_solid)
     importlib.reload(add_mesh_round_brilliant)
     importlib.reload(add_mesh_cave_gen)
+    importlib.reload(add_menger_sponge)
 
 else:
     from . import add_mesh_extra_objects
@@ -65,6 +66,7 @@ else:
     from . import add_mesh_solid
     from . import add_mesh_round_brilliant
     from . import add_mesh_cave_gen
+    from . import add_menger_sponge
 
 import bpy
 
@@ -148,6 +150,8 @@ class INFO_MT_mesh_misc_add(bpy.types.Menu):
             text="Teapot+")
         layout.operator("mesh.primitive_cave_gen",
             text="Cave Generator")
+        layout.operator("mesh.menger_sponge_add",
+            text="Menger Sponge")
 
 
 class INFO_MT_mesh_pipe_joints_add(bpy.types.Menu):

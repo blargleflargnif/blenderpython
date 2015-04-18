@@ -16,10 +16,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 # Contributed to by
-# testscreenings, Alejandro Omar Chocano Vasquez, Jimmy Hazevoet, meta-androcto #
+# testscreenings, Alejandro Omar Chocano Vasquez, Jimmy Hazevoet, Adam Newgas, meta-androcto #
 
 bl_info = {
-    "name": "Curve: Extra Objects",
+    "name": "Extra Objects",
     "author": "Multiple Authors",
     "version": (0, 1),
     "blender": (2, 74, 0),
@@ -28,7 +28,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Curve/Curve_Objects",
-    "category": "Add"}
+    "category": "Add Curve"}
 
 if "bpy" in locals():
     import importlib
@@ -37,6 +37,7 @@ if "bpy" in locals():
     importlib.reload(add_curve_torus_knots)
     importlib.reload(add_curve_braid)
     importlib.reload(add_curve_curly)
+    importlib.reload(add_curve_celtic_links)
 
 else:
     from . import add_curve_aceous_galore
@@ -44,6 +45,7 @@ else:
     from . import add_curve_torus_knots
     from . import add_curve_braid
     from . import add_curve_curly
+    from . import add_curve_celtic_links
 
 import bpy
 
@@ -65,7 +67,8 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
             text="Braid Knot")
         layout.operator("curve.curlycurve",
             text="Curly Curve")
-
+        layout.operator("curve.celtic_links",
+            text="Celtic Links")
 # Define "Extras" menu
 def menu_func(self, context):
     self.layout.operator("mesh.curveaceous_galore",
@@ -82,6 +85,9 @@ def menu_func(self, context):
             icon="PLUGIN")
     self.layout.operator("curve.curlycurve",
             text="Curly Curve",
+            icon="PLUGIN")
+    self.layout.operator("curve.celtic_links",
+            text="Celtic Links",
             icon="PLUGIN")
 
 def register():

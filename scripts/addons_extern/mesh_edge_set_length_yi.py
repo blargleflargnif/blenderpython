@@ -1,7 +1,7 @@
 # 本工具遵循Blender使用协议
 
 bl_info = {
-	'name': "Mesh: edges set length", # and angle
+	'name': "Edges set length", # and angle
 	'description': "edges set length", # and angle
 	'author': "Yi Danyang",
 	'version': (0, 0, 1, 1),
@@ -9,7 +9,7 @@ bl_info = {
 	'api': 'a8282da',
 	'location': 'Shit+Alt+E or [Toolbar][Tools][Mesh Tools] Edges Length', # and Angle
 	'warning': "",
-	'category': 'Edit',
+	'category': 'Mesh',
 	"wiki_url": "mailto:yidanyang@gmail.com",
 	"tracker_url": "mailto:yidanyang@gmail.com",
 }

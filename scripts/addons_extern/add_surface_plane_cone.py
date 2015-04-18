@@ -11,7 +11,7 @@ bl_info = {
         " ",
     "tracker_url": " "\
         " ",
-    "category": "Add"
+    "category": "Add Mesh"
     }
 
 #info:

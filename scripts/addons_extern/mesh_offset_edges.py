@@ -18,7 +18,7 @@
 # ***** END GPL LICENCE BLOCK *****
 
 bl_info = {
-    "name": "Mesh: Offset Edges",
+    "name": "Offset Edges",
     "author": "Hidesato Ikeya",
     "version": (0, 2, 6),
     "blender": (2, 70, 0),
@@ -27,7 +27,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Modeling/offset_edges",
     "tracker_url": "",
-    "category": "Edit"}
+    "category": "Mesh"}
 
 import math
 from math import sin, cos, pi, copysign, radians

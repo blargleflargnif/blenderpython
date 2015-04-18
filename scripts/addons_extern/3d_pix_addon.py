@@ -6,7 +6,7 @@ bl_info = {
     "name": "3D Pix",
     "author": "liero",
     "version": (0, 5, 1),
-    "blender": (2, 71, 0),
+    "blender": (2, 74, 0),
     "location": "View3D > Tool Shelf",
     "description": "Creates a 3d pixelated version of the object.",
     "category": "Object"}

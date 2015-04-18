@@ -5,7 +5,7 @@ bl_info = {
     "blender": (2, 72, 0),
     "location": "View3D > Add > Mesh",
     "version": (0, 5),
-    "category": "Add"
+    "category": "Add Mesh"
     }    
 import bpy
 from bpy.props import *

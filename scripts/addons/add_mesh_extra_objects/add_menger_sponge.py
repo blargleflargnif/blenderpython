@@ -6,7 +6,7 @@ bl_info = {
     "name": "Mesh: Menger Sponge",
     "author": "sugiany",
     "version": (1, 0, 0),
-    "blender": (2, 71, 0),
+    "blender": (2, 70, 0),
     "location": "View3D > Add > Mesh",
     "warning": "",
     "description": "Add a menger sponge",
@@ -155,7 +155,7 @@ class AddMengerSponge(bpy.types.Operator):
     level = IntProperty(
         name="Level",
         description="Sponge Level",
-        min=0, max=5,
+        min=0, max=4,
         default=1,
         )
 

@@ -22,6 +22,7 @@ class AnimationNodesPerformance(bpy.types.Panel):
 		layout.prop(scene.mn_settings.update, "sceneUpdate", text = "Scene Update")
 		layout.prop(scene.mn_settings.update, "propertyChange", text = "Property Update")
 		layout.prop(scene.mn_settings.update, "skipFramesAmount")
+		layout.prop(scene.mn_settings.update, "redrawViewport")
 	
 class CustomAnimationNodes(bpy.types.Panel):
 	bl_idname = "mn.custom_nodes_panel"
@@ -128,6 +129,7 @@ class KeyframePanel(bpy.types.Panel):
 		elif type == "Transforms":
 			setTransformsKeyframe = layout.operator("mn.set_transforms_keyframe", text = "Set From Current", icon = "PASTEDOWN")
 			setTransformsKeyframe.keyframeName = name
+			layout.operator("mn.reset_object_transformations", text = "Set Initial Transforms on Object", icon = "PASTEFLIPUP")
 		elif type == "Vector":
 			layout.label("Set Vector From:")
 			row = layout.row(align = True)
@@ -255,9 +257,6 @@ def getCustomNodesInCategory(category):
 		if getattr(nodeClass, "node_category", "None") == category:
 			nodeClassesInCategory.append(nodeClass)
 	return nodeClassesInCategory
-
-def getCustomNodes(self, context):
-	return [("mn_TimeInfoNode", "Time Info", "")]
 	
 bpy.types.Scene.customNodeCategory = bpy.props.EnumProperty(items = getCustomNodeCategoryItems, name = "Custom Categories")
 

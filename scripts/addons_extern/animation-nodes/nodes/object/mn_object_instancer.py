@@ -29,10 +29,11 @@ class mn_ObjectInstancer(Node, AnimationNode):
 	resetInstances = bpy.props.BoolProperty(default = False, update = nodePropertyChanged)
 	
 	copyFromSource = bpy.props.BoolProperty(default = True, name = "Copy from Source", update = copyFromSourceChanged)
-	deepCopy = bpy.props.BoolProperty(default = False, update = resetInstancesEvent, name = "Deep Copy", description = "Use this to copy all data to the new object (to unlink it from the source mesh for example)")
+	deepCopy = bpy.props.BoolProperty(default = False, update = resetInstancesEvent, name = "Deep Copy", description = "Make the instances independent of the source object (e.g. copy mesh)")
 	objectType = bpy.props.EnumProperty(default = "Mesh", name = "Object Type", items = objectTypeItems, update = resetInstancesEvent)
+	copyObjectProperties = bpy.props.BoolProperty(default = False, update = resetInstancesEvent, description = "Enable this to copy modifiers/constrains/... from the source objec.)")
 	
-	parentInstances = bpy.props.BoolProperty(default = True, name = "Parent to Main Controler", update = resetInstancesEvent)
+	parentInstances = bpy.props.BoolProperty(default = True, name = "Parent to Main Container", update = resetInstancesEvent)
 	
 	def init(self, context):
 		forbidCompiling()
@@ -44,6 +45,7 @@ class mn_ObjectInstancer(Node, AnimationNode):
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "copyFromSource")
 		if self.copyFromSource:
+			layout.prop(self, "copyObjectProperties", text = "Copy Full Object")
 			layout.prop(self, "deepCopy")
 		else:
 			layout.prop(self, "objectType", text = "")
@@ -142,8 +144,14 @@ class mn_ObjectInstancer(Node, AnimationNode):
 		if object.users == 0:
 			data = object.data
 			type = object.type
+			action = None
+			try: action = object.animation_data.action
+			except: pass
 			bpy.data.objects.remove(object)
 			self.removeObjectData(data, type)
+			if action:
+				if action.users == 0:
+					bpy.data.actions.remove(action)
 			
 	def removeObjectData(self, data, type):
 		if data.users == 0:
@@ -173,8 +181,15 @@ class mn_ObjectInstancer(Node, AnimationNode):
 		return object
 			
 	def newInstance(self, sourceObject):
-		data = self.getSourceObjectData(sourceObject)
-		newObject = bpy.data.objects.new(getPossibleObjectName("instance"), data)
+		instanceData = self.getSourceObjectData(sourceObject)
+		if self.copyObjectProperties and self.copyFromSource:
+			newObject = sourceObject.copy()
+			newObject.data = instanceData
+			try: newObject.animation_data.action = sourceObject.animation_data.action.copy()
+			except: pass
+		else:
+			newObject = bpy.data.objects.new(getPossibleObjectName("instance"), instanceData)
+			
 		if self.parentInstances:
 			newObject.parent = getMainObjectContainer()
 		return newObject

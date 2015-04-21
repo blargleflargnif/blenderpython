@@ -28,7 +28,7 @@ bl_info = {
 	'wiki_url': 'https://github.com/domlysz/BlenderGIS/wiki',
 	'tracker_url': '',
 	'link': '',
-	"category": "Mesh"}
+	"category": "Add Mesh"}
 
 import bpy
 from .delaunayVoronoiBlender import ToolsPanelDelaunay
@@ -43,3 +43,7 @@ def register():
 
 def unregister():
 	bpy.utils.unregister_module(__name__)
+	
+
+if __name__ == "__main__":
+    register()

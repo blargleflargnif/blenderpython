@@ -29,7 +29,7 @@ bl_info = {
     "tracker_url": "",
     "category": "Add Mesh"}
 '''
-Adds an empty mesh with a mirror modifier.
+Adds an Object Origin with a mirror modifier.
 '''
 
 import bpy
@@ -57,8 +57,8 @@ def Add_Symmetrical_Empty():
 class AddSymmetricalEmpty(bpy.types.Operator):
 
     bl_idname = "mesh.primitive_symmetrical_empty_add"
-    bl_label = "Add Symmetrical Empty Mesh"
-    bl_description = "Add an empty mesh with a Mirror Modifier for quick symmetrical modeling"
+    bl_label = "Add Symmetrical Object Origin"
+    bl_description = "Object Origin with a Mirror Modifier for symmetrical modeling"
     bl_options = {'REGISTER', 'UNDO'}
 
     def draw(self, context):
@@ -82,7 +82,7 @@ def menu_item(self, context):
     # only in object mode
     if bpy.context.mode == "OBJECT":
         self.layout.operator("mesh.primitive_symmetrical_empty_add",
-            text="Symmetrical Empty", icon="EMPTY_DATA")
+            text="Symmetrical Origin", icon="EMPTY_DATA")
 
 ## register and add it on top of the list ##
 def register():

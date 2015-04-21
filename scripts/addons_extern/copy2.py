@@ -24,8 +24,8 @@ bl_info = {
     "blender": (2,71,0),
     "location": "3D View > Object > Copy 2",
     "description": "Copy one object to the selected vertices, edges or faces of another object",
-    "warning": ""
-    "category": "Object",
+    "warning": "",
+    "category": "Object"
 }
 
 import bpy
@@ -275,6 +275,14 @@ def face_copy(scene, obj, source_obj, axes):
         
 #-------------------------------------------------------------------
  
-if __name__ == "__main__" :
+def register():
+    bpy.utils.register_module(__name__)
+
+def unregister():
+    bpy.utils.unregister_module(__name__)
+
+
+if __name__ == "__main__":
     register()
+
 

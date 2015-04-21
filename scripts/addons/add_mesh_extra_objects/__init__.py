@@ -33,7 +33,7 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(add_mesh_extra_objects)
+    importlib.reload(add_mesh_star)
     importlib.reload(add_mesh_twisted_torus)
     importlib.reload(add_mesh_gemstones)
     importlib.reload(add_mesh_gears)
@@ -51,9 +51,10 @@ if "bpy" in locals():
     importlib.reload(add_menger_sponge)
     importlib.reload(add_vert)
     importlib.reload(add_mesh_symmetrical_empty)
+    importlib.reload(add_bound_box)
 
 else:
-    from . import add_mesh_extra_objects
+    from . import add_mesh_star
     from . import add_mesh_twisted_torus
     from . import add_mesh_gemstones
     from . import add_mesh_gears
@@ -71,6 +72,7 @@ else:
     from . import add_menger_sponge
     from . import add_vert
     from . import add_mesh_symmetrical_empty
+    from . import add_bound_box
 	
 import bpy
 
@@ -83,10 +85,26 @@ class INFO_MT_mesh_vert_add(bpy.types.Menu):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.operator("mesh.primitive_vert_add",
-            text="Add Single Vert")
+            text="Add Single Vert ")
         layout.operator("mesh.primitive_emptyvert_add",
-            text="Empty & Origin Only")
-        layout.operator("mesh.primitive_symmetrical_empty_add")
+            text="Object Origin Only")
+        layout.operator("mesh.primitive_symmetrical_empty_add",
+            text="Object Origin Mirrored")
+        layout.operator("object.parent_to_empty")
+
+class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
+    # Define the "Pipe Joints" menu
+    bl_idname = "INFO_MT_mesh_boundbox_add"
+    bl_label = "Bound Box"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("mesh.boundbox_add",
+            text="Create Bounding Box")
+        layout.operator("mesh.multi_boundbox_add",
+            text="Box Selected Objects")
+
 
 class INFO_MT_mesh_gears_add(bpy.types.Menu):
     # Define the "Gears" menu
@@ -101,6 +119,21 @@ class INFO_MT_mesh_gears_add(bpy.types.Menu):
         layout.operator("mesh.primitive_worm_gear",
             text="Worm")
 
+class INFO_MT_mesh_diamonnds_add(bpy.types.Menu):
+    # Define the "Gears" menu
+    bl_idname = "INFO_MT_mesh_diamonds_add"
+    bl_label = "Diamonds"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("mesh.primitive_brilliant_add",
+            text="Brilliant Diamond")
+        layout.operator("mesh.primitive_diamond_add",
+            text="Diamond")
+        layout.operator("mesh.primitive_gem_add",
+            text="Gem")
+
 class INFO_MT_mesh_math_add(bpy.types.Menu):
     # Define the "Math Function" menu
     bl_idname = "INFO_MT_mesh_math_add"
@@ -114,30 +147,19 @@ class INFO_MT_mesh_math_add(bpy.types.Menu):
         layout.operator("mesh.primitive_xyz_function_surface",
             text="XYZ Math Surface")
         self.layout.operator("mesh.primitive_solid_add", text="Solid")
-        layout.operator("mesh.menger_sponge_add",
-            text="Menger Sponge")
 
-class INFO_MT_mesh_basic_add(bpy.types.Menu):
+
+class INFO_MT_mesh_extras_add(bpy.types.Menu):
     # Define the "Simple Objects" menu
-    bl_idname = "INFO_MT_mesh_basic_add"
-    bl_label = "Simple Objects"
+    bl_idname = "INFO_MT_mesh_extras_add"
+    bl_label = "Extras"
 
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("mesh.primitive_brilliant_add",
-            text="Brilliant Diamond")
-        layout.operator("mesh.primitive_diamond_add",
-            text="Diamond")
-        layout.operator("mesh.primitive_gem_add",
-            text="Gem")
-        layout.operator("mesh.primitive_sqorus_add",
-            text="Sqorus")
-        layout.operator("mesh.primitive_wedge_add")
+        layout.menu("INFO_MT_mesh_diamonds_add", text="Diamonds", icon="PMARKER_SEL")
         layout.operator("mesh.primitive_star_add",
             text="Star")
-        layout.operator("mesh.primitive_trapezohedron_add",
-            text="Trapezohedron")
         layout.operator("mesh.primitive_steppyramid_add",
             text="Step Pyramid")
         layout.operator("mesh.honeycomb_add",
@@ -146,6 +168,8 @@ class INFO_MT_mesh_basic_add(bpy.types.Menu):
             text="Teapot+")
         layout.operator("mesh.primitive_cave_gen",
             text="Cave Generator")
+        layout.operator("mesh.menger_sponge_add",
+            text="Menger Sponge")
 
 class INFO_MT_mesh_torus_add(bpy.types.Menu):
     # Define the "Simple Objects" menu
@@ -189,11 +213,12 @@ class INFO_MT_mesh_pipe_joints_add(bpy.types.Menu):
 def menu_func(self, context):
     self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
     self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
+    self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
+    self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="BBOX")
     self.layout.menu("INFO_MT_mesh_pipe_joints_add", text="Pipe Joints", icon="SNAP_PEEL_OBJECT")
     self.layout.menu("INFO_MT_mesh_gears_add", text="Gears", icon="SCRIPTWIN")
-    self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
     self.layout.menu("INFO_MT_mesh_torus_add", text="Torus Objects", icon="MESH_TORUS")
-    self.layout.menu("INFO_MT_mesh_basic_add", text="Extras", icon="MESH_DATA")
+    self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
 
 
 def register():

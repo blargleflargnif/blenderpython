@@ -27,6 +27,7 @@ bl_info = {
 	"wiki_url": "",
 	"tracker_url": "",
 	"category": "Add Mesh"}
+
 import bpy
 import bmesh
 from bpy.props import StringProperty, FloatProperty, BoolProperty, FloatVectorProperty
@@ -41,7 +42,7 @@ def centro(objetos):
     return (x,y,z)
 class P2E(bpy.types.Operator):
     bl_idname = 'object.parent_to_empty'
-    bl_label = 'Parent to Empty'
+    bl_label = 'Parent Selected to Empty'
     bl_description = 'Parent selected objects to a new Empty'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -124,7 +125,7 @@ def empty_vert(width, height, depth):
 
 
 class AddVert(bpy.types.Operator):
-    '''Add a single vertice in object mode'''
+    '''Add a Single Vertice to Edit Mode'''
     bl_idname = "mesh.primitive_vert_add"
     bl_label = "Add Single Vert"
     bl_options = {'REGISTER', 'UNDO'}
@@ -187,9 +188,9 @@ class AddVert(bpy.types.Operator):
         return {'FINISHED'}
 
 class AddEmptyVert(bpy.types.Operator):
-    '''Add a single vertice in object mode'''
+    '''Add an Object Origin to Edit Mode'''
     bl_idname = "mesh.primitive_emptyvert_add"
-    bl_label = "Add Empty Object Origin"
+    bl_label = "Empty Object Origin"
     bl_options = {'REGISTER', 'UNDO'}
 
     width = FloatProperty(
@@ -248,47 +249,3 @@ class AddEmptyVert(bpy.types.Operator):
         mesh.update()
 
         return {'FINISHED'}
-		
-class INFO_MT_mesh_vert_add(bpy.types.Menu):
-    # Define the "Pipe Joints" menu
-    bl_idname = "INFO_MT_mesh_vert_add"
-    bl_label = "Single Vert"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("mesh.primitive_vert_add",
-            text="Add Single Vert")
-        layout.operator("mesh.primitive_emptyvert_add",
-            text="Empty & Origin Only")
-			
-class ParentPanel(bpy.types.Panel):
-    bl_label = 'Add Vert Parent'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator("mesh.primitive_vert_add")
-        layout.operator("mesh.primitive_emptyvert_add")
-        layout.operator("object.parent_to_empty")
-
-def menu_func(self, context):
-    self.layout.menu("INFO_MT_mesh_vert_add", icon="PLUGIN")
-
-def register():
-    bpy.utils.register_class(ParentPanel)
-    bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_mesh_add.append(menu_func)
-
-
-def unregister():
-    bpy.utils.unregister_class(ParentPanel)
-    bpy.utils.unregister_module(__name__)
-    bpy.types.INFO_MT_mesh_add.remove(menu_func)
-
-if __name__ == "__main__":
-    register()
-
-    # test call
-    bpy.ops.mesh.primitive_vert_add()

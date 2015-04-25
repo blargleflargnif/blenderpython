@@ -21,12 +21,12 @@ bl_info = {
     "name": "Blend Library",
     "author": "Vincent Gires",
     "description": "Asset Manager - Append or link materials/objects/groups/node groups of specific folder locations",
-    "version": (0, 3, 1),
-    "blender": (2, 7, 2),
+    "version": (0, 3, 2),
+    "blender": (2, 7, 4),
     "location": "3D View > Tools || Node Editor > Tools",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Import-Export/Blend_Library",
-    "category": "Tools"}
+    "category": "Import-Export"}
 
 import bpy
 import os.path
@@ -81,9 +81,18 @@ class library_addon_preferences(bpy.types.AddonPreferences):
             name="Groups",
             subtype='DIR_PATH',
             )
+    
+    list_display_filename = bpy.props.BoolProperty(
+        name = "display filename",
+        description = "Display the filename in library list",
+        default = 1,
+    )
 
     def draw(self, context):
         layout = self.layout
+        
+        layout.prop(self, "list_display_filename")
+        
         layout.prop(self, "folderpath_nodegroups_compositing")
         layout.prop(self, "folderpath_nodegroups_shading")
         layout.prop(self, "folderpath_nodegroups_texture")
@@ -304,15 +313,20 @@ def get_addon_preferences():
 
 
 def import_from_library(datablock, folderpath, file, selected, link, instance_group=False):
-      
+    
+    folderpath = bpy.path.abspath(folderpath)
+    
     if link:
-        bpy.ops.wm.link(directory=folderpath+"//"+file+"/"+datablock+"/", filepath="//"+file+"/"+datablock+"/"+selected, filename=selected)
+        bpy.ops.wm.link(directory=folderpath+"//"+file+"/"+datablock+"/", filepath=file, filename=selected)
         
     else:
-        bpy.ops.wm.append(directory=folderpath+"//"+file+"/"+datablock+"/", filepath="//"+file+"/"+datablock+"/"+selected, filename=selected, instance_groups=instance_group)
+        bpy.ops.wm.append(directory=folderpath+"//"+file+"/"+datablock+"/", filepath=file, filename=selected, instance_groups=instance_group)
     
 
 def scan_folder_nodes(folderpath, tree_type):
+    
+    folderpath = bpy.path.abspath(folderpath)
+    
     for file in os.listdir(folderpath):
         if file.endswith(".blend"):
         
@@ -335,9 +349,10 @@ def scan_folder_nodes(folderpath, tree_type):
 
 
 def scan_folder_files(folderpath, datablock):
-    
     exec("bpy.context.scene."+datablock+"_library_list.clear()")
     exec("bpy.context.scene."+datablock+"_library_index = 0")
+    
+    folderpath = bpy.path.abspath(folderpath)
     
     for file in os.listdir(folderpath):
         if file.endswith(".blend"):
@@ -401,24 +416,32 @@ def is_listChecked(list):
 
 class node_groups_library_UL(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.alignment = 'LEFT'
+        layout.alignment = 'EXPAND'
         layout.label(str(item.name))
+        if get_addon_preferences().list_display_filename:
+            layout.label(str(item.file))
 
 class materials_library_UL(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.alignment = 'LEFT'
+        layout.alignment = 'EXPAND'
         layout.label(str(item.name))
+        if get_addon_preferences().list_display_filename:
+            layout.label(str(item.file))
         
 class objects_library_UL(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.alignment = 'EXPAND'
         layout.label(str(item.name))
+        if get_addon_preferences().list_display_filename:
+            layout.label(str(item.file))
         layout.prop(item, "use", text="")
         
 class groups_library_UL(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        layout.alignment = 'LEFT'
+        layout.alignment = 'EXPAND'
         layout.label(str(item.name))
+        if get_addon_preferences().list_display_filename:
+            layout.label(str(item.file))
 
 
 
@@ -798,7 +821,7 @@ class groups_library_scan(bpy.types.Operator):
         
         if bpy.context.scene.library_customPaths_groups:
             if context.scene.customFolderpath_groups:
-                scan_folder_files(context.scene.customFolderpath_objects, "groups")
+                scan_folder_files(context.scene.customFolderpath_groups, "groups")
         else:
             addon_preferences = get_addon_preferences()
             if addon_preferences.folderpath_groups:

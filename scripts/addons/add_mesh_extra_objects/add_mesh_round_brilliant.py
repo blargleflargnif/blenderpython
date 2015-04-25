@@ -1,42 +1,10 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
-#  
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ##### END GPL LICENSE BLOCK #####
-
-#  Copyright (C) 2013  dommetysk
-
-bl_info = {
-    "name": "Brilliant",
-    "author": "Dominic Kröper, (dommetysk)",
-    "version": (0, 1, 5),
-    "blender": (2, 69, 0),
-    "location": "View3D > Add > Mesh > New Object",
-    "description": "Add a realistic diamond (brilliant) object",
-    "warning": "",
-    "wiki_url": "",
-    "tracker_url":
-         "http://projects.blender.org/tracker/index.php?func=detail&aid=35389",
-    "category": "Add Mesh"}
-
+# GPL "author": "Dominic Kröper, (dommetysk)"
 
 import bpy
 from math import pi, sin, cos, tan
 from bpy.types import Operator
 from bpy.props import IntProperty, FloatProperty, BoolProperty
 from mathutils import Vector, Euler 
-
 
 # mesh/object generating function, returns final object
 def addBrilliant(context, s, table_w, crown_h, girdle_t, pavi_d, bezel_f, 
@@ -395,21 +363,3 @@ class MESH_OT_primitive_brilliant_add(bpy.types.Operator):
                           self.pavi_f, self.culet, self.girdle_real, 
                           self.keep_lga, self.g_real_smooth)
         return {'FINISHED'}
-
-
-# make operator available in layout
-def menu_func(self, context):
-    self.layout.operator("mesh.primitive_brilliant_add", 
-        text="Brilliant", 
-        icon='SPACE3')
-
-
-# update layout on (un)registering addon
-def register():  
-    bpy.utils.register_module(__name__)  
-    bpy.types.INFO_MT_mesh_add.append(menu_func)  
-def unregister():
-    bpy.utils.unregister_module(__name__)  
-    bpy.types.INFO_MT_mesh_add.remove(menu_func) 
-if __name__ == "__main__":  
-    register()

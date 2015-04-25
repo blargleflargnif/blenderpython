@@ -1,32 +1,4 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
-#  of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# ##### END GPL LICENSE BLOCK #####
-
-bl_info = {
-	"name": "Mesh: Vert & Empty",
-	"author": "Meta_Androcto",
-	"version": (1, 0),
-	"blender": (2, 7, 4),
-	"location": "View3D > Add > Mesh > Single Vert",
-	"description": "Adds Single Vertice & empty to edit mode",
-	"warning": "",
-	"wiki_url": "",
-	"tracker_url": "",
-	"category": "Add Mesh"}
+# GPL # Originals by meta-androcto, Pablo Vazquez, Liero, Richard Wilks
 
 import bpy
 import bmesh
@@ -40,6 +12,139 @@ def centro(objetos):
     y = sum([obj.location[1] for obj in objetos])/len(objetos)
     z = sum([obj.location[2] for obj in objetos])/len(objetos)
     return (x,y,z)
+
+def object_origin(width, height, depth):
+    """
+    This function takes inputs and returns vertex and face arrays.
+    no actual mesh data creation is done here.
+    """
+
+    verts = [(+0.0, +0.0, +0.0)
+             ]
+
+    faces = []
+
+    # apply size
+    for i, v in enumerate(verts):
+        verts[i] = v[0] * width, v[1] * depth, v[2] * height
+
+    return verts, faces
+
+class AddVert(bpy.types.Operator):
+    '''Add a Single Vertice to Edit Mode'''
+    bl_idname = "mesh.primitive_vert_add"
+    bl_label = "Single Vert"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        mesh = bpy.data.meshes.new("Vert")
+        mesh.vertices.add(1)
+        
+        from bpy_extras import object_utils
+        object_utils.object_data_add(context, mesh, operator=None)
+        bpy.ops.object.mode_set(mode = 'EDIT')
+
+        return {'FINISHED'}
+
+class AddEmptyVert(bpy.types.Operator):
+    '''Add an Object Origin to Edit Mode'''
+    bl_idname = "mesh.primitive_emptyvert_add"
+    bl_label = "Empty Object Origin"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        mesh = bpy.data.meshes.new("Vert")
+        mesh.vertices.add(1)
+        
+        from bpy_extras import object_utils
+        object_utils.object_data_add(context, mesh, operator=None)
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.ops.mesh.delete(type='VERT')
+
+        return {'FINISHED'}
+
+def Add_Symmetrical_Empty():
+
+    bpy.ops.mesh.primitive_plane_add(enter_editmode = True)
+
+    sempty = bpy.context.object
+    sempty.name = "SymmEmpty"
+
+    # check if we have a mirror modifier, otherwise add
+    if (sempty.modifiers and sempty.modifiers['Mirror']):
+        pass
+    else:
+        bpy.ops.object.modifier_add(type ='MIRROR')
+
+    # Delete all!
+    bpy.ops.mesh.select_all(action='TOGGLE')
+    bpy.ops.mesh.select_all(action='TOGGLE')
+    bpy.ops.mesh.delete(type ='VERT')
+
+def Add_Symmetrical_Vert():
+
+    bpy.ops.mesh.primitive_plane_add(enter_editmode = True)
+
+    sempty = bpy.context.object
+    sempty.name = "SymmVert"
+
+    # check if we have a mirror modifier, otherwise add
+    if (sempty.modifiers and sempty.modifiers['Mirror']):
+        pass
+    else:
+        bpy.ops.object.modifier_add(type ='MIRROR')
+
+    # Delete all!
+    bpy.ops.mesh.select_all(action='TOGGLE')
+    bpy.ops.mesh.select_all(action='TOGGLE')
+    bpy.ops.mesh.merge(type='CENTER')
+
+class AddSymmetricalEmpty(bpy.types.Operator):
+
+    bl_idname = "mesh.primitive_symmetrical_empty_add"
+    bl_label = "Add Symmetrical Object Origin"
+    bl_description = "Object Origin with a Mirror Modifier for symmetrical modeling"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def draw(self, context):
+        layout = self.layout
+        mirror = bpy.context.object.modifiers['Mirror']
+
+        layout.prop(mirror,'use_clip', text="Use Clipping")
+
+        layout.label("Mirror Axis")
+        row = layout.row(align=True)
+        row.prop(mirror, "use_x")
+        row.prop(mirror, "use_y")
+        row.prop(mirror, "use_z")
+
+    def execute(self, context):
+        Add_Symmetrical_Empty()
+        return {'FINISHED'}
+
+class AddSymmetricalVert(bpy.types.Operator):
+
+    bl_idname = "mesh.primitive_symmetrical_vert_add"
+    bl_label = "Add Symmetrical Origin & Vert"
+    bl_description = "Object Origin with a Mirror Modifier for symmetrical modeling"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def draw(self, context):
+        layout = self.layout
+        mirror = bpy.context.object.modifiers['Mirror']
+
+        layout.prop(mirror,'use_clip', text="Use Clipping")
+
+        layout.label("Mirror Axis")
+        row = layout.row(align=True)
+        row.prop(mirror, "use_x")
+        row.prop(mirror, "use_y")
+        row.prop(mirror, "use_z")
+
+    def execute(self, context):
+        Add_Symmetrical_Vert()
+        return {'FINISHED'}
+
 class P2E(bpy.types.Operator):
     bl_idname = 'object.parent_to_empty'
     bl_label = 'Parent Selected to Empty'
@@ -85,167 +190,4 @@ class P2E(bpy.types.Operator):
         for o in objs:
             if self.renombrar:
                 o.name = self.nombre+'_'+o.name
-        return {'FINISHED'}
-
-
-
-def add_vert(width, height, depth):
-    """
-    This function takes inputs and returns vertex and face arrays.
-    no actual mesh data creation is done here.
-    """
-
-    verts = [(+0.0, +0.0, +0.0)
-             ]
-
-    faces = []
-
-    # apply size
-    for i, v in enumerate(verts):
-        verts[i] = v[0] * width, v[1] * depth, v[2] * height
-
-    return verts, faces
-
-def empty_vert(width, height, depth):
-    """
-    This function takes inputs and returns vertex and face arrays.
-    no actual mesh data creation is done here.
-    """
-
-    verts = [(+0.0, +0.0, +0.0)
-             ]
-
-    faces = []
-
-    # apply size
-    for i, v in enumerate(verts):
-        verts[i] = v[0] * width, v[1] * depth, v[2] * height
-
-    return verts, faces
-
-
-class AddVert(bpy.types.Operator):
-    '''Add a Single Vertice to Edit Mode'''
-    bl_idname = "mesh.primitive_vert_add"
-    bl_label = "Add Single Vert"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    width = FloatProperty(
-            name="Width",
-            description="Box Width",
-
-            )
-    height = FloatProperty(
-            name="Height",
-            description="Box Height",
-
-            )
-    depth = FloatProperty(
-            name="Depth",
-            description="Box Depth",
-
-            )
-
-    # generic transform props
-    view_align = BoolProperty(
-            name="Align to View",
-            default=False,
-            )
-    location = FloatVectorProperty(
-            name="Location",
-            subtype='TRANSLATION',
-            )
-    rotation = FloatVectorProperty(
-            name="Rotation",
-            subtype='EULER',
-            )
-
-    def execute(self, context):
-
-        verts_loc, faces = add_vert(self.width,
-                                     self.height,
-                                     self.depth,
-                                     )
-
-        mesh = bpy.data.meshes.new("Single_Vert")
-
-        bm = bmesh.new()
-
-        for v_co in verts_loc:
-            bm.verts.new(v_co)
-
-        for f_idx in faces:
-            bm.faces.new([bm.verts[i] for i in f_idx])
-
-
-        bm.to_mesh(mesh)
-        mesh.update()
-        object_utils.object_data_add(context, mesh, operator=self)
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.ops.mesh.select_all()
-        mesh.update()
-
-        return {'FINISHED'}
-
-class AddEmptyVert(bpy.types.Operator):
-    '''Add an Object Origin to Edit Mode'''
-    bl_idname = "mesh.primitive_emptyvert_add"
-    bl_label = "Empty Object Origin"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    width = FloatProperty(
-            name="Width",
-            description="Box Width",
-
-            )
-    height = FloatProperty(
-            name="Height",
-            description="Box Height",
-
-            )
-    depth = FloatProperty(
-            name="Depth",
-            description="Box Depth",
-
-            )
-
-    # generic transform props
-    view_align = BoolProperty(
-            name="Align to View",
-            default=False,
-            )
-    location = FloatVectorProperty(
-            name="Location",
-            subtype='TRANSLATION',
-            )
-    rotation = FloatVectorProperty(
-            name="Rotation",
-            subtype='EULER',
-            )
-
-    def execute(self, context):
-
-        verts_loc, faces = add_vert(self.width,
-                                     self.height,
-                                     self.depth,
-                                     )
-
-        mesh = bpy.data.meshes.new("Object_Origin")
-
-        bm = bmesh.new()
-
-        for v_co in verts_loc:
-            bm.verts.new(v_co)
-
-        for f_idx in faces:
-            bm.faces.new([bm.verts[i] for i in f_idx])
-
-        bm.to_mesh(mesh)
-        mesh.update()
-        object_utils.object_data_add(context, mesh, operator=self)
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.ops.mesh.select_all()
-        bpy.ops.mesh.delete(type='VERT')
-        mesh.update()
-
         return {'FINISHED'}

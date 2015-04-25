@@ -1,13 +1,4 @@
-bl_info = {
-    'name': 'CaveGen',
-    'author': 'sdfgeoff',
-    'version': (0, 0),
-    "blender": (2, 6, 3),
-    'location': 'View3D > Add > Mesh',
-    'description': 'Makes Caves using metaballs converted to mesh',
-    'warning': 'Murrently WIP',  # used for warning icon and text in addons panel
-    'category': 'Add Mesh'}
-
+# GPL # Original by 'sdfgeoff' #
 
 import bpy
 import random
@@ -53,14 +44,7 @@ def addCave(self, context):
             ob_light = bpy.data.objects.new(passedName,la_lamp)
             ob_light.location = oldLoc
             passedScene.objects.link(ob_light)
-            '''
-            bpy.ops.object.editmode_toggle()
-            bpy.ops.object.lamp_add(type='POINT', view_align=False, location=oldLoc)
-            #cave = bpy.data.objects['Mball.001']
-            print (bpy.data.objects)
-            #bpy.context.scene.objects.active = cave
-            #bpy.ops.object.editmode_toggle()
-            '''            
+         
 
     def generateNew(oldLoc, oldScale, run,passedScene):
         newLoc = randLoc()*oldScale[0]+oldLoc[0], randLoc()*oldScale[1]+oldLoc[1], randLoc()*oldScale[2]+oldLoc[2]
@@ -142,20 +126,3 @@ class caveGen(bpy.types.Operator, AddObjectHelper):
     def execute(self, context):
         addCave(self, context)
         return {'FINISHED'}
-
-
-def menu_func(self, context):
-    self.layout.operator(caveGen.bl_idname, text="Metaball Cave", icon="PLUGIN")
-
-
-def register():
-    bpy.utils.register_class(caveGen)
-    bpy.types.INFO_MT_mesh_add.append(menu_func)
-
-
-def unregister():
-    bpy.utils.unregister_class(caveGen)
-    bpy.types.INFO_MT_mesh_add.remove(menu_func)
-
-if __name__ == "__main__":
-    register()

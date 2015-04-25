@@ -50,8 +50,8 @@ if "bpy" in locals():
     importlib.reload(add_mesh_cave_gen)
     importlib.reload(add_menger_sponge)
     importlib.reload(add_vert)
-    importlib.reload(add_mesh_symmetrical_empty)
-    importlib.reload(add_bound_box)
+
+
 
 else:
     from . import add_mesh_star
@@ -71,8 +71,8 @@ else:
     from . import add_mesh_cave_gen
     from . import add_menger_sponge
     from . import add_vert
-    from . import add_mesh_symmetrical_empty
-    from . import add_bound_box
+
+
 	
 import bpy
 
@@ -88,22 +88,12 @@ class INFO_MT_mesh_vert_add(bpy.types.Menu):
             text="Add Single Vert ")
         layout.operator("mesh.primitive_emptyvert_add",
             text="Object Origin Only")
+        layout.operator("mesh.primitive_symmetrical_vert_add",
+            text="Origin & Vert Mirrored")
         layout.operator("mesh.primitive_symmetrical_empty_add",
             text="Object Origin Mirrored")
+
         layout.operator("object.parent_to_empty")
-
-class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
-    # Define the "Pipe Joints" menu
-    bl_idname = "INFO_MT_mesh_boundbox_add"
-    bl_label = "Bound Box"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("mesh.boundbox_add",
-            text="Create Bounding Box")
-        layout.operator("mesh.multi_boundbox_add",
-            text="Box Selected Objects")
 
 
 class INFO_MT_mesh_gears_add(bpy.types.Menu):
@@ -214,7 +204,6 @@ def menu_func(self, context):
     self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
     self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
     self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
-    self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="BBOX")
     self.layout.menu("INFO_MT_mesh_pipe_joints_add", text="Pipe Joints", icon="SNAP_PEEL_OBJECT")
     self.layout.menu("INFO_MT_mesh_gears_add", text="Gears", icon="SCRIPTWIN")
     self.layout.menu("INFO_MT_mesh_torus_add", text="Torus Objects", icon="MESH_TORUS")

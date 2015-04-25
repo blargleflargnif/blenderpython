@@ -2,19 +2,6 @@
 # Copyright (c) 2015 sugiany
 # This file is distributed under the MIT License. See the LICENSE.md for more details.
 
-bl_info = {
-    "name": "Mesh: Menger Sponge",
-    "author": "sugiany",
-    "version": (1, 0, 0),
-    "blender": (2, 70, 0),
-    "location": "View3D > Add > Mesh",
-    "warning": "",
-    "description": "Add a menger sponge",
-    "wiki_url": "",
-    "category": "Add",
-}
-
-
 import bpy
 
 from bpy.props import IntProperty, BoolProperty, FloatVectorProperty, FloatProperty
@@ -196,20 +183,3 @@ class AddMengerSponge(bpy.types.Operator):
         object_utils.object_data_add(context, mesh, operator=self)
 
         return {'FINISHED'}
-
-
-def menu_func(self, context):
-    self.layout.operator(AddMengerSponge.bl_idname, icon='MESH_CUBE')
-
-
-def register():
-    bpy.utils.register_class(AddMengerSponge)
-    bpy.types.INFO_MT_mesh_add.append(menu_func)
-
-
-def unregister():
-    bpy.utils.unregister_class(AddMengerSponge)
-    bpy.types.INFO_MT_mesh_add.remove(menu_func)
-
-if __name__ == "__main__":
-    register()

@@ -1,36 +1,4 @@
-# ***** BEGIN GPL LICENSE BLOCK *****
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# ***** END GPL LICENCE BLOCK *****
-
-#
-# add_mesh_round_cube.py Copyright (c) 2014, Alain Ducharme
-#
-
-bl_info = {
-    'name': 'Round Cube',
-    'author': 'Alain Ducharme (Phymec)',
-    'version': (0, 1),
-    'blender': (2, 65, 0),
-    'location': 'View3D > Add > Mesh > Round Cube',
-    'description': 'Add mesh primitives: Quadsphere, Capsule, Rounded Cuboid, 3D Grid',
-    'warning': '',
-    'wiki_url': '',
-    'category': 'Add Mesh',
-}
+# GPL #     'author': 'Alain Ducharme (Phymec)'
 
 import bpy
 from bpy_extras import object_utils
@@ -509,13 +477,3 @@ class INFO_MT_mesh_round_cube_add(bpy.types.Menu):
         layout.operator(AddRoundCube.bl_idname, text = 'Cube', icon='META_CUBE').preset = 'CUBOID'
         layout.operator(AddRoundCube.bl_idname, text = 'Grid', icon='META_CUBE').preset = '3DGRID'
 
-def menu_func(self, context):
-    self.layout.menu('INFO_MT_mesh_round_cube_add', icon='MOD_SUBSURF')
-
-def register():
-    bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_mesh_add.append(menu_func)
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
-    bpy.types.INFO_MT_mesh_add.remove(menu_func)

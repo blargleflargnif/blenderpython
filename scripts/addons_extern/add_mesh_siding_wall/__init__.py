@@ -21,7 +21,7 @@
 bl_info = {
     "name": "Siding & Floor",
     "author":"Various",
-    "version": (0, 2, 0),
+    "version": (0, 1, 0),
     "blender": (2, 74, 0),
     "location": "View3D > Add > Mesh",
     "description": "Add Siding & Floor Types",

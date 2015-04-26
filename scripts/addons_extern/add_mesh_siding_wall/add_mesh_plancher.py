@@ -420,7 +420,7 @@ class PlancherPanel(bpy.types.Panel):
     bl_idname = "mesh.plancher"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_category = "Plancher"
+    bl_category = "Addons"
     bl_label = "Plancher"
 
     #------------------------------------------------------------

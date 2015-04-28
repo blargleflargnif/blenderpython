@@ -1,4 +1,4 @@
-# GPL # "author": "Kayo Phoenix <kayo@illumium.org>"
+# GPL # "author": "Kayo Phoenix"
 
 from math import pi, sin, cos
 

@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 # Contributed to by
-# Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter & cotejrp1#
+# Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter, cotejrp1#
 
 bl_info = {
     "name": "Extra Objects",
@@ -47,9 +47,9 @@ if "bpy" in locals():
     importlib.reload(add_mesh_pipe_joint)
     importlib.reload(add_mesh_solid)
     importlib.reload(add_mesh_round_brilliant)
-    importlib.reload(add_mesh_cave_gen)
-    importlib.reload(add_menger_sponge)
+    importlib.reload(add_mesh_menger_sponge)
     importlib.reload(add_vert)
+    importlib.reload(add_empty_as_parent)
 
 
 
@@ -68,9 +68,9 @@ else:
     from . import add_mesh_pipe_joint
     from . import add_mesh_solid
     from . import add_mesh_round_brilliant
-    from . import add_mesh_cave_gen
-    from . import add_menger_sponge
+    from . import add_mesh_menger_sponge
     from . import add_vert
+    from . import add_empty_as_parent
 
 
 	
@@ -92,9 +92,6 @@ class INFO_MT_mesh_vert_add(bpy.types.Menu):
             text="Origin & Vert Mirrored")
         layout.operator("mesh.primitive_symmetrical_empty_add",
             text="Object Origin Mirrored")
-
-        layout.operator("object.parent_to_empty")
-
 
 class INFO_MT_mesh_gears_add(bpy.types.Menu):
     # Define the "Gears" menu
@@ -136,7 +133,7 @@ class INFO_MT_mesh_math_add(bpy.types.Menu):
             text="Z Math Surface")
         layout.operator("mesh.primitive_xyz_function_surface",
             text="XYZ Math Surface")
-        self.layout.operator("mesh.primitive_solid_add", text="Solid")
+        self.layout.operator("mesh.primitive_solid_add", text="Regular Solid")
 
 
 class INFO_MT_mesh_extras_add(bpy.types.Menu):
@@ -149,15 +146,13 @@ class INFO_MT_mesh_extras_add(bpy.types.Menu):
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.menu("INFO_MT_mesh_diamonds_add", text="Diamonds", icon="PMARKER_SEL")
         layout.operator("mesh.primitive_star_add",
-            text="Star")
+            text="Simple Star")
         layout.operator("mesh.primitive_steppyramid_add",
             text="Step Pyramid")
         layout.operator("mesh.honeycomb_add",
             text="Honeycomb")
         layout.operator("mesh.primitive_teapot_add",
             text="Teapot+")
-        layout.operator("mesh.primitive_cave_gen",
-            text="Cave Generator")
         layout.operator("mesh.menger_sponge_add",
             text="Menger Sponge")
 
@@ -201,6 +196,7 @@ class INFO_MT_mesh_pipe_joints_add(bpy.types.Menu):
 
 # Define "Extras" menu
 def menu_func(self, context):
+    self.layout.separator()
     self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
     self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
     self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
@@ -208,6 +204,9 @@ def menu_func(self, context):
     self.layout.menu("INFO_MT_mesh_gears_add", text="Gears", icon="SCRIPTWIN")
     self.layout.menu("INFO_MT_mesh_torus_add", text="Torus Objects", icon="MESH_TORUS")
     self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
+    self.layout.separator()
+    self.layout.operator("object.parent_to_empty", text="Parent To Empty", icon="LINK_AREA")
+    self.layout.separator()
 
 
 def register():

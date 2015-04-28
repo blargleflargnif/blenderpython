@@ -137,7 +137,7 @@ def add_star(points, outer_radius, inner_radius, height):
 class AddStar(bpy.types.Operator):
     """Add a star mesh"""
     bl_idname = "mesh.primitive_star_add"
-    bl_label = "Add Star"
+    bl_label = "Simple Star"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
 
     points = IntProperty(name="Points",

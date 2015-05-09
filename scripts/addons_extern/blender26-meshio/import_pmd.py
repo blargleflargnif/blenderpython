@@ -374,9 +374,9 @@ def __importArmature(l):
         if not name:
             name=b.name.decode('cp932')
         boneNameMap[name]=b
-#    for b in armature.bones.values():
-#        if boneNameMap[b.name].type==pmd.Bone.UNVISIBLE:
-#            b.hide=True
+    for b in armature.bones.values():
+        if boneNameMap[b.name].type==pmd.Bone.UNVISIBLE:
+            b.hide=True
  
     # create bone group
     for i, g in enumerate(l.bone_group_list):
@@ -395,7 +395,7 @@ def __importArmature(l):
         group_name=get_group_name(g.name)
 
         # assign
-#        pose.bones[bone_name].bone_group=pose.bone_groups[group_name]
+        pose.bones[bone_name].bone_group=pose.bone_groups[group_name]
 
     bl.enterObjectMode()
 

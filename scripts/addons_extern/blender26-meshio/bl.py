@@ -257,7 +257,7 @@ class object:
         pose=object.getPose(o)
         g=pose.bone_groups.active
         g.name=name
-#        g.color_set=color_set
+        g.color_set=color_set
         return g
 
     @staticmethod
@@ -614,7 +614,7 @@ class armature:
         SCENE.objects.link(armature_object)
 
         armature_object.show_x_ray=True
-        armature.show_names=False
+        armature.show_names=True
         #armature.draw_type='OCTAHEDRAL'
         armature.draw_type='STICK'
         #armature.use_deform_envelopes=False

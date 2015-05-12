@@ -174,7 +174,7 @@ class MakeSurfaceCone(bpy.types.Operator):
                 
         # select non-middle points and delete them
         bpy.ops.curve.select_all(action='INVERT')
-        bpy.ops.curve.delete(type='SELECTED')
+        bpy.ops.curve.delete(type='VERT')
         #declaring this again seems necesary...
         point = ao.data.splines[0].points
         #list of points to be in center, and 2 bu'' s higher
@@ -363,20 +363,20 @@ class MakeSurfacePlane(bpy.types.Operator):
         bpy.context.active_object.data.splines[0].points[1].select = True
         bpy.context.active_object.data.splines[0].points[2].select = True
         bpy.context.active_object.data.splines[0].points[3].select = True
-        bpy.ops.curve.delete(type='SELECTED')
+        bpy.ops.curve.delete(type='VERT')
 
         bpy.context.active_object.data.splines[0].points[8].select = True
         bpy.context.active_object.data.splines[0].points[9].select = True
         bpy.context.active_object.data.splines[0].points[10].select = True
         bpy.context.active_object.data.splines[0].points[11].select = True
-        bpy.ops.curve.delete(type='SELECTED')
+        bpy.ops.curve.delete(type='VERT')
 
         bpy.context.active_object.data.splines[0].points[0].select = True
         bpy.context.active_object.data.splines[0].points[4].select = True
-        bpy.ops.curve.delete(type='SELECTED')
+        bpy.ops.curve.delete(type='VERT')
         bpy.context.active_object.data.splines[0].points[2].select = True
         bpy.context.active_object.data.splines[0].points[5].select = True
-        bpy.ops.curve.delete(type='SELECTED')
+        bpy.ops.curve.delete(type='VERT')
 
         #assigning name
         bpy.context.active_object.name = 'SurfacePlane'

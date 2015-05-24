@@ -35,26 +35,36 @@ from bpy.props import *
 import os
 
 def import_object(obname):
-    opath = "//petunia_original.blend\\Group\\" + obname
-    s = os.sep
-    dpath = bpy.utils.script_paths()[0] + \
-        '%saddons_extern%sadd_petunia%spetunia_original.blend\\Group\\' % (s, s, s)
+	opath = "//petunia_original.blend\\Group\\" + obname
+	s = os.sep
+	#dpath = bpy.utils.script_paths()[0] + \
+	#	 '%saddons%sobject_fracture%sdata.blend\\Object\\' % (s, s, s)
+	dpath=''
+	fpath=''
+	for p in bpy.utils.script_paths():
+		
+		testfname= p + '%saddons_extern%sadd_petunia%spetunia_original.blend' % (s,s,s)
+		print(testfname)
+		if os.path.isfile(testfname):
+			fname=testfname
+			dpath = p + \
+			'%saddons_extern%sadd_petunia%spetunia_original.blend\\Group\\' % (s, s, s)
+			break
+	# DEBUG
+	#print('import_object: ' + opath)
 
-    # DEBUG
-    #print('import_object: ' + opath)
+	bpy.ops.wm.append(
+			filepath=opath,
+			filename=obname,
+			directory=dpath,
+			filemode=1,
+			link=False,
+			autoselect=True,
+			active_layer=True,
+			instance_groups=False)
 
-    bpy.ops.wm.append(
-            filepath=opath,
-            filename=obname,
-            directory=dpath,
-            filemode=1,
-            link=False,
-            autoselect=True,
-            active_layer=True,
-            instance_groups=False)
-
-    for ob in bpy.context.selected_objects:
-        ob.location = bpy.context.scene.cursor_location
+	for ob in bpy.context.selected_objects:
+		ob.location = bpy.context.scene.cursor_location
 
 class Import_Petunia(bpy.types.Operator):
     '''Imports a rigidbody recorder'''

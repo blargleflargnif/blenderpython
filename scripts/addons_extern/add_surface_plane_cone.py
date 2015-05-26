@@ -3,7 +3,8 @@ bl_info = {
     "description": "create a NURBS surface plane.",
     "author": "Folkert de Vries",
     "version": (1,0),
-    "blender": (2, 7, 4),
+    "blender": (2, 5, 9),
+    "api": 31236,
     "location": "View3D > Add> Surface",
     "warning": '', # used for warning icon and text in addons panel
     "wiki_url": " "\

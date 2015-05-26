@@ -34,7 +34,7 @@ bl_info = {
     "warning": "This is a parametric object.",
     "wiki_url":"",
     "tracker_url": "",
-    "category": "Add"}
+    "category": "Add Curve"}
 
 modules = ("util", "properties", "operators", "events", "ui")
 if "bpy" in locals():

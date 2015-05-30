@@ -1,4 +1,13 @@
 # GPL # Original by 'sdfgeoff' #
+bl_info = {
+    'name': 'CaveGen',
+    'author': 'sdfgeoff',
+    'version': (0, 0),
+    "blender": (2, 6, 3),
+    'location': 'View3D > Add > Mesh',
+    'description': 'Makes Caves using metaballs converted to mesh',
+    'warning': 'Murrently WIP',  # used for warning icon and text in addons panel
+    'category': 'Add Mesh'}
 
 import bpy
 import random
@@ -122,7 +131,23 @@ class caveGen(bpy.types.Operator, AddObjectHelper):
     lightProb = FloatProperty(name="Light Probability", default=0.1, min=0.001, max=1.0, description="Chance of a light being placed at any given point")
     random_seed = IntProperty(name="Random Seed", description="Set the random seed for this cave object", default = 101, min = -420, max = 420)
 
-
     def execute(self, context):
         addCave(self, context)
         return {'FINISHED'}
+
+
+def menu_func(self, context):
+    self.layout.operator(caveGen.bl_idname, text="Metaball Cave", icon="PLUGIN")
+
+
+def register():
+    bpy.utils.register_class(caveGen)
+    bpy.types.INFO_MT_mesh_add.append(menu_func)
+
+
+def unregister():
+    bpy.utils.unregister_class(caveGen)
+    bpy.types.INFO_MT_mesh_add.remove(menu_func)
+
+if __name__ == "__main__":
+    register()

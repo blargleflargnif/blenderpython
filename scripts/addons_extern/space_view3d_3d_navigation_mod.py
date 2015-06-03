@@ -275,7 +275,7 @@ class VIEW3D_PT_3dnavigationPanel(bpy.types.Panel):
 
 class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 	bl_idname = 'pan.navigation'
-	bl_label = 'Pan Zoom Orbit'
+	bl_label = 'Orbit Pan Zoom Roll'
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
 	bl_category = 'Navigation'
@@ -289,50 +289,24 @@ class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 		
 		row = box.row(align = True)
 		
-		rowr = row.row()
-		rowr = row.row()
-		rowr.operator('opr.orbit_up_view', text = '', icon = 'TRIA_UP')
-		rowr = row.row()
-		
-		row = box.row(align = True)
-		
-		rowr = row.row()
+		rowr = box.row()
 		rowr.operator('opr.orbit_left_view',	text = '', icon = 'TRIA_LEFT')
-		rowr = row.row()
-		rowr = row.row()
 		rowr.operator('opr.orbit_right_view',	text = '', icon = 'TRIA_RIGHT')
-		
-		row = box.row(align = True)
-		
-		rowr = row.row()
-		rowr = row.row()
-		rowr.operator('opr.orbit_down_view', text = '', icon = 'TRIA_DOWN')
-		rowr = row.row()
+		rowr.operator('opr.orbit_up_view', text = '', icon = 'TRIA_DOWN')
+		rowr.operator('opr.orbit_down_view', text = '', icon = 'TRIA_UP')
+		rowr = box.row()
 		
 		box = layout.box()
 		box.label(text = 'User Ortho/Perspective Pan')
 		
 		row = box.row(align = True)
 		
-		rowr = row.row()
-		rowr = row.row()
-		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_UP')
-		rowr = row.row()
-		
-		row = box.row(align = True)
-		
-		rowr = row.row()
+		rowr = box.row()
 		rowr.operator('opr.pan_left_view',	text = '', icon = 'TRIA_LEFT')
-		rowr = row.row()
-		rowr = row.row()
 		rowr.operator('opr.pan_right_view',	text = '', icon = 'TRIA_RIGHT')
-		
-		row = box.row(align = True)
-		
-		rowr = row.row()
-		rowr = row.row()
-		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_DOWN')
-		rowr = row.row()
+		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_DOWN')
+		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_UP')
+		rowr = box.row()
 		
 		row = layout.row()
 		

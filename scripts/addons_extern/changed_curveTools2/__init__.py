@@ -6,7 +6,7 @@ bl_info = {
     "blender": (2, 6, 8),
     "location": "Tool Panel",
     "warning": "WIP",
-    "category": "User Interface"}
+    "category": "Add Curve"}
     
     
 import bpy

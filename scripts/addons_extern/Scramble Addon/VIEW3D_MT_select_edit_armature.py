@@ -8,23 +8,23 @@ import bpy
 
 class SelectAxisOver(bpy.types.Operator):
 	bl_idname = "armature.select_axis_over"
-	bl_label = "Choose the right half"
-	bl_description = "Choose the right half of the group Bone (other settings available)"
+	bl_label = "右半分を選択"
+	bl_description = "ボーン群の右半分を選択します(その他設定も有)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("0", "X Axis", "", 1),
-		("1", "Y Axis", "", 2),
-		("2", "Z Axis", "", 3),
+		("0", "X軸", "", 1),
+		("1", "Y軸", "", 2),
+		("2", "Z軸", "", 3),
 		]
-	axis = bpy.props.EnumProperty(items=items, name="Axis")
+	axis = bpy.props.EnumProperty(items=items, name="軸")
 	items = [
-		("-1", "-(Minus)", "", 1),
-		("1", "+(Plus)", "", 2),
+		("-1", "-(マイナス)", "", 1),
+		("1", "+(プラス)", "", 2),
 		]
-	direction = bpy.props.EnumProperty(items=items, name="Direction")
-	offset = bpy.props.FloatProperty(name="Offset", default=0, step=10, precision=3)
-	threshold = bpy.props.FloatProperty(name="Threshold", default=-0.0001, step=0.01, precision=4)
+	direction = bpy.props.EnumProperty(items=items, name="方向")
+	offset = bpy.props.FloatProperty(name="オフセット", default=0, step=10, precision=3)
+	threshold = bpy.props.FloatProperty(name="しきい値", default=-0.0001, step=0.01, precision=4)
 	
 	def execute(self, context):
 		bpy.ops.object.mode_set(mode="OBJECT")

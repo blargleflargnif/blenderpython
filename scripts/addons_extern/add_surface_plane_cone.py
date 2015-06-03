@@ -28,7 +28,7 @@ from bpy.props import FloatProperty, IntProperty
 
 class UserInterface(bpy.types.Menu):
      
-    bl_label = 'Surface Plane'
+    bl_label = 'Surface Object'
     bl_description = 'Add NURBS Surface Plane'
     bl_idname = 'INFO_MT_surface_plane_add'
 

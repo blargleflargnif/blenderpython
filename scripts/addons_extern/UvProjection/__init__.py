@@ -25,7 +25,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": ""}
+    "category": "UV"}
 
 if "bpy" in locals():
     import imp

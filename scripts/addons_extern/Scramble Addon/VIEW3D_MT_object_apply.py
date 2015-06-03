@@ -8,8 +8,8 @@ import bpy
 
 class TransformApplyAll(bpy.types.Operator):
 	bl_idname = "object.transform_apply_all"
-	bl_label = "Apply position / rotation / scaling"
-	bl_description = "I apply the position / rotation / scaling of objects"
+	bl_label = "位置/回転/拡縮を適用"
+	bl_description = "オブジェクトの位置/回転/拡縮を適用します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -33,7 +33,7 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		operator = self.layout.operator(TransformApplyAll.bl_idname, text="Position and rotation and scaling", icon="PLUGIN")
+		operator = self.layout.operator(TransformApplyAll.bl_idname, text="位置と回転と拡縮", icon="PLUGIN")
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='CANCEL').id = __name__.split('.')[-1]

@@ -8,18 +8,18 @@ import bpy
 
 class SelectAxisLimit(bpy.types.Operator):
 	bl_idname = "mesh.select_axis_limit"
-	bl_label = "X=Select vertices 0"
-	bl_description = "I choose the vertex of X = 0"
+	bl_label = "X=0の頂点を選択"
+	bl_description = "X=0の頂点を選択する"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("0", "X Axis", "", 1),
-		("1", "Y Axis", "", 2),
-		("2", " Axis", "", 3),
+		("0", "X軸", "", 1),
+		("1", "Y軸", "", 2),
+		("2", "Z軸", "", 3),
 		]
-	axis = bpy.props.EnumProperty(items=items, name="Axis")
-	offset = bpy.props.FloatProperty(name="Offset", default=0.0, step=10, precision=3)
-	threshold = bpy.props.FloatProperty(name="Threshold", default=0.0000001, min=0.0, soft_min=0.0, step=0.1, precision=10)
+	axis = bpy.props.EnumProperty(items=items, name="軸")
+	offset = bpy.props.FloatProperty(name="オフセット", default=0.0, step=10, precision=3)
+	threshold = bpy.props.FloatProperty(name="しきい値", default=0.0000001, min=0.0, soft_min=0.0, step=0.1, precision=10)
 	
 	def execute(self, context):
 		bpy.ops.object.mode_set(mode="OBJECT")
@@ -38,23 +38,23 @@ class SelectAxisLimit(bpy.types.Operator):
 
 class SelectAxisOver(bpy.types.Operator):
 	bl_idname = "mesh.select_axis_over"
-	bl_label = "Choose the right half"
-	bl_description = "Choose the right half of the mesh (other settings available)"
+	bl_label = "右半分を選択"
+	bl_description = "メッシュの右半分を選択します(その他設定も有)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("0", "X Axis", "", 1),
-		("1", "Y Axis", "", 2),
-		("2", "Z Axis", "", 3),
+		("0", "X軸", "", 1),
+		("1", "Y軸", "", 2),
+		("2", "Z軸", "", 3),
 		]
-	axis = bpy.props.EnumProperty(items=items, name="Axis")
+	axis = bpy.props.EnumProperty(items=items, name="軸")
 	items = [
-		("-1", "- (Minus)", "", 1),
-		("1", "+ (Plus)", "", 2),
+		("-1", "-(マイナス)", "", 1),
+		("1", "+(プラス)", "", 2),
 		]
-	direction = bpy.props.EnumProperty(items=items, name="Direction")
-	offset = bpy.props.FloatProperty(name="Offset", default=0, step=10, precision=3)
-	threshold = bpy.props.FloatProperty(name="Threshold", default=0.0000001, step=0.1, precision=10)
+	direction = bpy.props.EnumProperty(items=items, name="方向")
+	offset = bpy.props.FloatProperty(name="オフセット", default=0, step=10, precision=3)
+	threshold = bpy.props.FloatProperty(name="しきい値", default=0.0000001, step=0.1, precision=10)
 	
 	def execute(self, context):
 		bpy.ops.object.mode_set(mode="OBJECT")

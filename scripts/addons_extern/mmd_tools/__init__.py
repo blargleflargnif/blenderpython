@@ -7,7 +7,7 @@ from . import operators
 from . import panels
 
 bl_info= {
-    "name": "mmd_tools",
+    "name": "MMD Tools",
     "author": "sugiany",
     "version": (0, 5, 0),
     "blender": (2, 70, 0),
@@ -16,7 +16,7 @@ bl_info= {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Object"}
+    "category": "Import-Export"}
 
 # if "bpy" in locals():
 #     import imp

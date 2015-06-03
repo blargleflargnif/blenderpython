@@ -8,8 +8,8 @@ import bpy, bmesh
 
 class MakeLinkObjectName(bpy.types.Operator):
 	bl_idname = "object.make_link_object_name"
-	bl_label = "The object name is the same"
-	bl_description = "I will link the name of the active object to other selected objects"
+	bl_label = "オブジェクト名を同じに"
+	bl_description = "他の選択オブジェクトにアクティブオブジェクトの名前をリンクします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -23,8 +23,8 @@ class MakeLinkObjectName(bpy.types.Operator):
 
 class MakeLinkLayer(bpy.types.Operator):
 	bl_idname = "object.make_link_layer"
-	bl_label = "The layer to the same"
-	bl_description = "I will link the layers of active objects to other selected objects"
+	bl_label = "レイヤーを同じに"
+	bl_description = "他の選択オブジェクトにアクティブオブジェクトのレイヤーをリンクします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -35,22 +35,22 @@ class MakeLinkLayer(bpy.types.Operator):
 
 class MakeLinkDisplaySetting(bpy.types.Operator):
 	bl_idname = "object.make_link_display_setting"
-	bl_label = "The display settings of objects to the same"
-	bl_description = "I will copy the settings of the display panel of the active object to other selected objects"
+	bl_label = "オブジェクトの表示設定を同じに"
+	bl_description = "他の選択オブジェクトにアクティブオブジェクトの表示パネルの設定をコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isSameType = bpy.props.BoolProperty(name="The same type of object only", default=True)
-	show_name = bpy.props.BoolProperty(name="Given names", default=True)
-	show_axis = bpy.props.BoolProperty(name="Coordinate axes", default=True)
-	show_wire = bpy.props.BoolProperty(name="Wire frame", default=True)
-	show_all_edges = bpy.props.BoolProperty(name="View all sides", default=True)
-	show_bounds = bpy.props.BoolProperty(name="Bound", default=True)
-	show_texture_space = bpy.props.BoolProperty(name="Texture space", default=True)
-	show_x_ray = bpy.props.BoolProperty(name="X-ray", default=True)
-	show_transparent = bpy.props.BoolProperty(name="Transmission", default=True)
-	draw_bounds_type = bpy.props.BoolProperty(name="Bound type of", default=True)
-	draw_type = bpy.props.BoolProperty(name="Best drawing type", default=True)
-	color = bpy.props.BoolProperty(name="Object color", default=True)
+	isSameType = bpy.props.BoolProperty(name="同タイプのオブジェクトのみ", default=True)
+	show_name = bpy.props.BoolProperty(name="名前", default=True)
+	show_axis = bpy.props.BoolProperty(name="座標軸", default=True)
+	show_wire = bpy.props.BoolProperty(name="ワイヤーフレーム", default=True)
+	show_all_edges = bpy.props.BoolProperty(name="すべての辺を表示", default=True)
+	show_bounds = bpy.props.BoolProperty(name="バウンド", default=True)
+	show_texture_space = bpy.props.BoolProperty(name="テクスチャ スペース", default=True)
+	show_x_ray = bpy.props.BoolProperty(name="レントゲン", default=True)
+	show_transparent = bpy.props.BoolProperty(name="透過", default=True)
+	draw_bounds_type = bpy.props.BoolProperty(name="バウンドのタイプ", default=True)
+	draw_type = bpy.props.BoolProperty(name="最高描画タイプ", default=True)
+	color = bpy.props.BoolProperty(name="オブジェクトカラー", default=True)
 	
 	def execute(self, context):
 		activeObj = context.active_object
@@ -83,21 +83,21 @@ class MakeLinkDisplaySetting(bpy.types.Operator):
 
 class MakeLinkUVNames(bpy.types.Operator):
 	bl_idname = "object.make_link_uv_names"
-	bl_label = "Link an empty UV map"
-	bl_description = "Add in the UV of the active object in the sky to the other selected objects"
+	bl_label = "空のUVマップをリンク"
+	bl_description = "他の選択オブジェクトにアクティブオブジェクトのUVを空にして追加します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		active_obj = context.active_object
 		if (active_obj.type != 'MESH'):
-			self.report(type={'ERROR'}, message="Active object must be mesh")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトはメッシュである必要があります")
 			return {'CANCELLED'}
 		target_objs = []
 		for obj in context.selected_objects:
 			if (obj.type == 'MESH' and active_obj.name != obj.name):
 				target_objs.append(obj)
 		if (len(target_objs) <= 0):
-			self.report(type={'ERROR'}, message="There is no mesh object to be linked")
+			self.report(type={'ERROR'}, message="リンクすべきメッシュオブジェクトがありません")
 			return {'CANCELLED'}
 		for obj in target_objs:
 			for uv in active_obj.data.uv_layers:
@@ -106,21 +106,21 @@ class MakeLinkUVNames(bpy.types.Operator):
 
 class MakeLinkArmaturePose(bpy.types.Operator):
 	bl_idname = "object.make_link_armature_pose"
-	bl_label = "Link the movement of the armature"
-	bl_description = "By constraint, and to imitate the movement of the active armature to other selection armature"
+	bl_label = "アーマチュアの動きをリンク"
+	bl_description = "コンストレイントによって、他の選択アーマチュアにアクティブアーマチュアの動きを真似させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		active_obj = context.active_object
 		if (active_obj.type != 'ARMATURE'):
-			self.report(type={'ERROR'}, message="Active object must be the armature")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトはアーマチュアである必要があります")
 			return {'CANCELLED'}
 		target_objs = []
 		for obj in context.selected_objects:
 			if (obj.type == 'ARMATURE' and active_obj.name != obj.name):
 				target_objs.append(obj)
 		if (len(target_objs) <= 0):
-			self.report(type={'ERROR'}, message="There is no armature object to be imitated")
+			self.report(type={'ERROR'}, message="真似させるアーマチュアオブジェクトがありません")
 			return {'CANCELLED'}
 		for obj in target_objs:
 			for bone in active_obj.pose.bones:
@@ -138,14 +138,14 @@ class MakeLinkArmaturePose(bpy.types.Operator):
 
 class MakeLinkSoftbodySettings(bpy.types.Operator):
 	bl_idname = "object.make_link_softbody_settings"
-	bl_label = "Link the setting of soft body"
-	bl_description = "The setting of the soft body of active objects, I will copy it to the other selected objects"
+	bl_label = "ソフトボディの設定をリンク"
+	bl_description = "アクティブオブジェクトのソフトボディの設定を、他の選択オブジェクトにコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		active_obj = context.active_object
 		if (not active_obj):
-			self.report(type={'ERROR'}, message="There is no active object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
 			return {'CANCELLED'}
 		active_softbody = None
 		for mod in active_obj.modifiers:
@@ -153,10 +153,10 @@ class MakeLinkSoftbodySettings(bpy.types.Operator):
 				active_softbody = mod
 				break
 		else:
-			self.report(type={'ERROR'}, message="Soft body is not set in the Active Object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトにソフトボディが設定されていません")
 			return {'CANCELLED'}
 		if (len(context.selected_objects) < 2):
-			self.report(type={'ERROR'}, message="Run by selecting two or more objects")
+			self.report(type={'ERROR'}, message="2つ以上のオブジェクトを選択して実行して下さい")
 			return {'CANCELLED'}
 		target_objs = []
 		for obj in context.selected_objects:
@@ -188,14 +188,14 @@ class MakeLinkSoftbodySettings(bpy.types.Operator):
 
 class MakeLinkClothSettings(bpy.types.Operator):
 	bl_idname = "object.make_link_cloth_settings"
-	bl_label = "Link cross-setting of"
-	bl_description = "The cloth simulation setting of active objects, I will copy it to the other selected objects"
+	bl_label = "クロスの設定をリンク"
+	bl_description = "アクティブオブジェクトのクロスシミュレーション設定を、他の選択オブジェクトにコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		active_obj = context.active_object
 		if (not active_obj):
-			self.report(type={'ERROR'}, message="There is no active object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
 			return {'CANCELLED'}
 		active_cloth = None
 		for mod in active_obj.modifiers:
@@ -203,10 +203,10 @@ class MakeLinkClothSettings(bpy.types.Operator):
 				active_cloth = mod
 				break
 		else:
-			self.report(type={'ERROR'}, message="Cross has not been set in the Active Object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトにクロスが設定されていません")
 			return {'CANCELLED'}
 		if (len(context.selected_objects) < 2):
-			self.report(type={'ERROR'}, message="Run by selecting two or more objects")
+			self.report(type={'ERROR'}, message="2つ以上のオブジェクトを選択して実行して下さい")
 			return {'CANCELLED'}
 		target_objs = []
 		for obj in context.selected_objects:
@@ -252,15 +252,15 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(MakeLinkObjectName.bl_idname, text="Object name", icon="PLUGIN")
-		self.layout.operator(MakeLinkLayer.bl_idname, text="Layer", icon="PLUGIN")
-		self.layout.operator(MakeLinkDisplaySetting.bl_idname, text="Display Settings", icon="PLUGIN")
+		self.layout.operator(MakeLinkObjectName.bl_idname, text="オブジェクト名", icon="PLUGIN")
+		self.layout.operator(MakeLinkLayer.bl_idname, text="レイヤー", icon="PLUGIN")
+		self.layout.operator(MakeLinkDisplaySetting.bl_idname, text="表示設定", icon="PLUGIN")
 		self.layout.separator()
-		self.layout.operator(MakeLinkSoftbodySettings.bl_idname, text="Soft body set", icon="PLUGIN")
-		self.layout.operator(MakeLinkClothSettings.bl_idname, text="Cross set", icon="PLUGIN")
+		self.layout.operator(MakeLinkSoftbodySettings.bl_idname, text="ソフトボディ設定", icon="PLUGIN")
+		self.layout.operator(MakeLinkClothSettings.bl_idname, text="クロス設定", icon="PLUGIN")
 		self.layout.separator()
-		self.layout.operator(MakeLinkUVNames.bl_idname, text="Sky UV", icon="PLUGIN")
-		self.layout.operator(MakeLinkArmaturePose.bl_idname, text="Movement of the armature", icon="PLUGIN")
+		self.layout.operator(MakeLinkUVNames.bl_idname, text="空UV", icon="PLUGIN")
+		self.layout.operator(MakeLinkArmaturePose.bl_idname, text="アーマチュアの動き", icon="PLUGIN")
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='CANCEL').id = __name__.split('.')[-1]

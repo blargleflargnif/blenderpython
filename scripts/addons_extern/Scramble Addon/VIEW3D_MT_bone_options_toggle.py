@@ -12,11 +12,11 @@ import bpy
 
 class SetBoneNames(bpy.types.Operator):
 	bl_idname = "pose.set_bone_names"
-	bl_label = "Setting summarizes the bone names"
-	bl_description = "Set together the name of the bone of the selected"
+	bl_label = "ボーン名をまとめて設定"
+	bl_description = "選択中のボーンの名前をまとめて設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	name =  bpy.props.StringProperty(name="Bone names", default="Bone")
+	name =  bpy.props.StringProperty(name="ボーン名", default="Bone")
 	
 	def execute(self, context):
 		context.active_bone.name = "temp"
@@ -31,13 +31,13 @@ class SetBoneNames(bpy.types.Operator):
 
 class SetCurvedBones(bpy.types.Operator):
 	bl_idname = "pose.set_curved_bones"
-	bl_label = "Setting summarizes the curve bone"
-	bl_description = "I make the curve bone setting of bone in selection"
+	bl_label = "カーブボーンをまとめて設定"
+	bl_description = "選択中のボーンのカーブボーン設定をします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	bbone_segments = bpy.props.IntProperty(name="Segment", default=1, min=1, soft_min=1)
-	bbone_in = bpy.props.FloatProperty(name="Ease", default=1.0, min=0, max=2, soft_min=0, soft_max=2, step=10, precision=3)
-	bbone_out = bpy.props.FloatProperty(name="Ease Out", default=1.0, min=0, max=2, soft_min=0, soft_max=2, step=10, precision=3)
+	bbone_segments = bpy.props.IntProperty(name="セグメント", default=1, min=1, soft_min=1)
+	bbone_in = bpy.props.FloatProperty(name="イーズイン", default=1.0, min=0, max=2, soft_min=0, soft_max=2, step=10, precision=3)
+	bbone_out = bpy.props.FloatProperty(name="イーズアウト", default=1.0, min=0, max=2, soft_min=0, soft_max=2, step=10, precision=3)
 	
 	def execute(self, context):
 		obj = bpy.context.active_object
@@ -50,11 +50,11 @@ class SetCurvedBones(bpy.types.Operator):
 
 class SetBoneRoll(bpy.types.Operator):
 	bl_idname = "pose.set_bone_roll"
-	bl_label = "Setting summarizes the roll"
-	bl_description = "I set the bone of role in selection"
+	bl_label = "ロールをまとめて設定"
+	bl_description = "選択中のボーンのロールを設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	roll = bpy.props.FloatProperty(name="Roll ", default=0, step=10, precision=3)
+	roll = bpy.props.FloatProperty(name="ロール", default=0, step=10, precision=3)
 	
 	def execute(self, context):
 		for bone in context.selected_bones:
@@ -63,14 +63,14 @@ class SetBoneRoll(bpy.types.Operator):
 
 class LinkIKSetting(bpy.types.Operator):
 	bl_idname = "pose.link_ik_setting"
-	bl_label = "Copy active IK setting (rotation limit, etc.)"
-	bl_description = "I will copy the active bone IK settings (such as rotation limit) to other selected bone"
+	bl_label = "アクティブのIK設定(回転制限等)をコピー"
+	bl_description = "アクティブなボーンのIK設定(回転制限など)を他の選択ボーンにコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isX = bpy.props.BoolProperty(name="X Setting of axis", default=True)
-	isY = bpy.props.BoolProperty(name="Y Setting of axis", default=True)
-	isZ = bpy.props.BoolProperty(name="Z Setting of axis", default=True)
-	isStretch = bpy.props.BoolProperty(name="Stretch setting of", default=True)
+	isX = bpy.props.BoolProperty(name="X軸の設定", default=True)
+	isY = bpy.props.BoolProperty(name="Y軸の設定", default=True)
+	isZ = bpy.props.BoolProperty(name="Z軸の設定", default=True)
+	isStretch = bpy.props.BoolProperty(name="ストレッチの設定", default=True)
 	
 	def execute(self, context):
 		activeBone = context.active_pose_bone
@@ -100,15 +100,15 @@ class LinkIKSetting(bpy.types.Operator):
 
 class SetIKPoleTarget(bpy.types.Operator):
 	bl_idname = "pose.set_ik_pole_target"
-	bl_label = "Set IK Pole target of"
-	bl_description = "I set the pole target of active bone of IK to second selection bone"
+	bl_label = "IKのポールターゲットを設定"
+	bl_description = "アクティブなボーンのIKのポールターゲットを第二選択ボーンに設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		activeObj = context.active_object
 		activeBone = context.active_pose_bone
 		if (len(context.selected_pose_bones) != 2):
-			self.report(type={"ERROR"}, message="Please run by two select the bone")
+			self.report(type={"ERROR"}, message="ボーンを二つ選択して実行してください")
 			return {"CANCELLED"}
 		for bone in context.selected_pose_bones:
 			if (activeBone.name != bone.name):
@@ -117,7 +117,7 @@ class SetIKPoleTarget(bpy.types.Operator):
 					if (const.type == "IK"):
 						ik = const
 				if (ik == None):
-					self.report(type={"ERROR"}, message="There is no IK constraint to active bone")
+					self.report(type={"ERROR"}, message="アクティブボーンにIKコンストレイントがありません")
 					return {"CANCELLED"}
 				ik.pole_target = activeObj
 				ik.pole_subtarget = bone.name
@@ -125,14 +125,14 @@ class SetIKPoleTarget(bpy.types.Operator):
 
 class SetIKChainLength(bpy.types.Operator):
 	bl_idname = "pose.set_ik_chain_length"
-	bl_label = "Set the length of the IK chain"
-	bl_description = "I set and the length of the active bone of IK chain to the length of the second selection bone"
+	bl_label = "IKのチェーンの長さを設定"
+	bl_description = "アクティブなボーンのIKのチェーンの長さを第二選択ボーンへの長さへと設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		activeBone = context.active_pose_bone
 		if (len(context.selected_pose_bones) != 2):
-			self.report(type={"ERROR"}, message="Please run by two select the bone")
+			self.report(type={"ERROR"}, message="ボーンを二つ選択して実行してください")
 			return {"CANCELLED"}
 		targetBone = None
 		for bone in context.selected_pose_bones:
@@ -151,7 +151,7 @@ class SetIKChainLength(bpy.types.Operator):
 				i = 0
 				break
 		if (i == 0):
-			self.report(type={"ERROR"}, message="It was not possible to get a good number of chain")
+			self.report(type={"ERROR"}, message="上手くチェーン数を取得出来ませんでした")
 			return {"CANCELLED"}
 		ik = None
 		for const in activeBone.constraints:

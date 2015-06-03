@@ -31,7 +31,7 @@ bl_info = {
     'location': 'Properties Editor, Text Context',
     'description': 'Text scrambler effect. Based on Bassam Kurdali\'s Typewriter Text effect',
     'url': 'mailto:martas@imm.cz',
-    'category': 'Text'}
+    'category': 'Animation'}
 
 __bpydoc__ = """
 Text scrambler For Font Objects

@@ -56,37 +56,37 @@ if flag is False:
 # Import modules
 # ----------------------------------------------
 if "bpy" in locals():
-    import imp
-    imp.reload(room_maker)
-    imp.reload(door_maker)
-    imp.reload(window_maker)
-    imp.reload(roof_maker)
-    imp.reload(column_maker)
-    imp.reload(stairs_maker)
-    imp.reload(kitchen_maker)
-    imp.reload(shelves_maker)
-    imp.reload(books_maker)
-    imp.reload(lamp_maker)
-    imp.reload(curtain_maker)
-    imp.reload(venetian_maker)
-    imp.reload(main_panel)
-    imp.reload(window_panel)
+    import importlib
+    importlib.reload(room_maker)
+    importlib.reload(door_maker)
+    importlib.reload(window_maker)
+    importlib.reload(roof_maker)
+    importlib.reload(column_maker)
+    importlib.reload(stairs_maker)
+    importlib.reload(kitchen_maker)
+    importlib.reload(shelves_maker)
+    importlib.reload(books_maker)
+    importlib.reload(lamp_maker)
+    importlib.reload(curtain_maker)
+    importlib.reload(venetian_maker)
+    importlib.reload(main_panel)
+    importlib.reload(window_panel)
     print("archimesh: Reloaded multifiles")
 else:
-    import books_maker
-    import column_maker
-    import curtain_maker
-    import venetian_maker
-    import door_maker
-    import kitchen_maker
-    import lamp_maker
-    import main_panel
-    import roof_maker
-    import room_maker
-    import shelves_maker
-    import stairs_maker
-    import window_maker
-    import window_panel
+    from . import books_maker
+    from . import column_maker
+    from . import curtain_maker
+    from . import venetian_maker
+    from . import door_maker
+    from . import kitchen_maker
+    from . import lamp_maker
+    from . import main_panel
+    from . import roof_maker
+    from . import room_maker
+    from . import shelves_maker
+    from . import stairs_maker
+    from . import window_maker
+    from . import window_panel
 
     print("archimesh: Imported multifiles")
 

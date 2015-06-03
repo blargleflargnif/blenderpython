@@ -8,8 +8,8 @@ import bpy
 
 class ViewSelectedEX(bpy.types.Operator):
 	bl_idname = "view3d.view_selected_ex"
-	bl_label = "View selected portion (non-zoom)"
-	bl_description = "Align the center of the 3D perspective to those of the currently selected (zoom will not be)"
+	bl_label = "選択部分を表示 (非ズーム)"
+	bl_description = "選択中の物に3D視点の中心を合わせます(ズームはしません)"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -31,8 +31,8 @@ class ViewSelectedEX(bpy.types.Operator):
 
 class ResetView(bpy.types.Operator):
 	bl_idname = "view3d.reset_view"
-	bl_label = "The origin point of view"
-	bl_description = "I will move the point of view of the 3D view in the center of the coordinate"
+	bl_label = "視点を原点に"
+	bl_description = "3Dビューの視点を座標の中心に移動します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -44,17 +44,17 @@ class ResetView(bpy.types.Operator):
 
 class SelectAndView(bpy.types.Operator):
 	bl_idname = "view3d.select_and_view"
-	bl_label = "In the center of the selection + perspective"
-	bl_description = "Select the ones under the mouse to the center of the view (additional selection in while holding down the Shift)"
+	bl_label = "選択+視点の中心に"
+	bl_description = "マウス下の物を選択し視点の中心にします (Shiftを押しながらで追加選択)"
 	bl_options = {'REGISTER'}
 	
 	items = [
-		("view_selected_ex", "Not zoom", "", 1),
-		("view_selected", "To zoom", "", 2),
+		("view_selected_ex", "ズームしない", "", 1),
+		("view_selected", "ズームする", "", 2),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Point of view how to change")
-	mouse_loc = bpy.props.IntVectorProperty(name="Mouse position", size=2)
-	isExtend = bpy.props.BoolProperty(name="Additional selection", default=False)
+	mode = bpy.props.EnumProperty(items=items, name="視点変更方法")
+	mouse_loc = bpy.props.IntVectorProperty(name="マウス位置", size=2)
+	isExtend = bpy.props.BoolProperty(name="追加選択", default=False)
 	
 	def execute(self, context):
 		bpy.ops.view3d.select(location=self.mouse_loc, extend=self.isExtend)
@@ -71,11 +71,11 @@ class SelectAndView(bpy.types.Operator):
 
 class SnapMeshView(bpy.types.Operator):
 	bl_idname = "view3d.snap_mesh_view"
-	bl_label = "Snap a perspective to mesh"
-	bl_description = "On the mesh surface under the mouse to move the center of perspective (Please use registered in the shortcut)"
+	bl_label = "メッシュに視点をスナップ"
+	bl_description = "マウス下のメッシュ面上に視点の中心を移動させます(ショートカットに登録してお使い下さい)"
 	bl_options = {'REGISTER'}
 	
-	mouse_co = bpy.props.IntVectorProperty(name="Mouse position", size=2)
+	mouse_co = bpy.props.IntVectorProperty(name="マウス位置", size=2)
 	
 	def execute(self, context):
 		preGp = context.scene.grease_pencil
@@ -107,8 +107,8 @@ class SnapMeshView(bpy.types.Operator):
 
 class ReverseView(bpy.types.Operator):
 	bl_idname = "view3d.reverse_view"
-	bl_label = "On the other side of the view"
-	bl_description = "I crowded around to the opposite side of the current view"
+	bl_label = "ビューの反対側に"
+	bl_description = "現在のビューの逆側へ回りこみます"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -119,8 +119,8 @@ class ReverseView(bpy.types.Operator):
 
 class ResetViewAndCursor(bpy.types.Operator):
 	bl_idname = "view3d.reset_view_and_cursor"
-	bl_label = "To the origin point of view and the 3D cursor"
-	bl_description = "I will move the position of the viewpoint and 3D cursor to the origin (XYZ = 0.0)"
+	bl_label = "視点と3Dカーソルを原点に"
+	bl_description = "視点と3Dカーソルの位置を原点(XYZ=0.0)に移動させます"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -130,11 +130,11 @@ class ResetViewAndCursor(bpy.types.Operator):
 
 class SnapMeshViewAndCursor(bpy.types.Operator):
 	bl_idname = "view3d.snap_mesh_view_and_cursor"
-	bl_label = "And to snap a point of view and the 3D cursor to mesh"
-	bl_description = "On the mesh surface under the mouse to move the viewpoint and the 3D cursor (please use registered in the shortcut)"
+	bl_label = "メッシュに視点と3Dカーソルをスナップ"
+	bl_description = "マウス下のメッシュ面上に視点と3Dカーソルを移動させます (ショートカットに登録してお使い下さい)"
 	bl_options = {'REGISTER'}
 	
-	mouse_co = bpy.props.IntVectorProperty(name="Mouse position", size=2)
+	mouse_co = bpy.props.IntVectorProperty(name="マウス位置", size=2)
 	
 	def execute(self, context):
 		preGp = context.scene.grease_pencil

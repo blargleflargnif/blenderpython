@@ -8,8 +8,8 @@ import bpy
 
 class RemoveNoAssignMaterial(bpy.types.Operator):
 	bl_idname = "material.remove_no_assign_material"
-	bl_label = "Remove assignment without material"
-	bl_description = "I will remove all the material that is not one is also assigned to the surface"
+	bl_label = "割り当てのないマテリアルを削除"
+	bl_description = "面に一つも割り当てられてないマテリアルを全て削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -38,8 +38,8 @@ class RemoveNoAssignMaterial(bpy.types.Operator):
 
 class RemoveAllMaterialSlot(bpy.types.Operator):
 	bl_idname = "material.remove_all_material_slot"
-	bl_label = "Materials slot Delete all"
-	bl_description = "I will remove all the material slot of this object"
+	bl_label = "マテリアルスロット全削除"
+	bl_description = "このオブジェクトのマテリアルスロットを全て削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -54,8 +54,8 @@ class RemoveAllMaterialSlot(bpy.types.Operator):
 
 class RemoveEmptyMaterialSlot(bpy.types.Operator):
 	bl_idname = "material.remove_empty_material_slot"
-	bl_label = "Empty material slot Delete"
-	bl_description = "I will remove all the material slot that material has not been assigned to this object"
+	bl_label = "空のマテリアルスロット削除"
+	bl_description = "このオブジェクトのマテリアルが割り当てられていないマテリアルスロットを全て削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -73,28 +73,28 @@ class RemoveEmptyMaterialSlot(bpy.types.Operator):
 
 class MoveMaterialSlot(bpy.types.Operator):
 	bl_idname = "material.move_material_slot"
-	bl_label = "Move material slot"
-	bl_description = "I will move the active material slot"
+	bl_label = "マテリアルスロットを移動"
+	bl_description = "アクティブなマテリアルスロットを移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("UP", "Up", "", 1),
-		("DOWN", "Down", "", 2),
+		("UP", "上へ", "", 1),
+		("DOWN", "下へ", "", 2),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Mode")
+	mode = bpy.props.EnumProperty(items=items, name="モード")
 	
 	def execute(self, context):
 		activeObj = context.active_object
 		if (self.mode == "UP"):
 			sourceIndex = activeObj.active_material_index
 			if (sourceIndex <= 0):
-				self.report(type={"WARNING"}, message="It is already the top")
+				self.report(type={"WARNING"}, message="既に一番上です")
 				return {"CANCELLED"}
 			targetIndex = sourceIndex - 1
 		elif (self.mode == "DOWN"):
 			sourceIndex = activeObj.active_material_index
 			if (len(activeObj.material_slots)-1 <= sourceIndex):
-				self.report(type={"WARNING"}, message="It is under already most")
+				self.report(type={"WARNING"}, message="既に一番下です")
 				return {"CANCELLED"}
 			targetIndex = sourceIndex + 1
 		sourceLink = activeObj.material_slots[sourceIndex].link
@@ -115,8 +115,8 @@ class MoveMaterialSlot(bpy.types.Operator):
 
 class MoveMaterialSlotTop(bpy.types.Operator):
 	bl_idname = "material.move_material_slot_top"
-	bl_label = "To the top slot"
-	bl_description = "I will move the active material slot at the top"
+	bl_label = "スロットを一番上へ"
+	bl_description = "アクティブなマテリアルスロットを一番上に移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -126,8 +126,8 @@ class MoveMaterialSlotTop(bpy.types.Operator):
 		return {'FINISHED'}
 class MoveMaterialSlotBottom(bpy.types.Operator):
 	bl_idname = "material.move_material_slot_bottom"
-	bl_label = "To the bottom slot"
-	bl_description = "I will move the active material slot at the bottom"
+	bl_label = "スロットを一番下へ"
+	bl_description = "アクティブなマテリアルスロットを一番下に移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -157,8 +157,8 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(MoveMaterialSlot.bl_idname, icon="PLUGIN", text="Up").mode = 'UP'
-		self.layout.operator(MoveMaterialSlot.bl_idname, icon="PLUGIN", text="Down").mode = 'DOWN'
+		self.layout.operator(MoveMaterialSlot.bl_idname, icon="PLUGIN", text="上へ").mode = 'UP'
+		self.layout.operator(MoveMaterialSlot.bl_idname, icon="PLUGIN", text="下へ").mode = 'DOWN'
 		self.layout.separator()
 		self.layout.operator(MoveMaterialSlotTop.bl_idname, icon="PLUGIN")
 		self.layout.operator(MoveMaterialSlotBottom.bl_idname, icon="PLUGIN")

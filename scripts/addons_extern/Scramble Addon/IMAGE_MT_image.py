@@ -9,11 +9,11 @@ import os
 
 class RenameImageFileName(bpy.types.Operator):
 	bl_idname = "image.rename_image_file_name"
-	bl_label = "Using the name of the image file name"
-	bl_description = "External images are using the name of the active image file name"
+	bl_label = "画像名を使用するファイル名に"
+	bl_description = "アクティブな画像の名前を、使用している外部画像のファイル名にします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isExt = bpy.props.BoolProperty(name="Including the extension", default=True)
+	isExt = bpy.props.BoolProperty(name="拡張子も含む", default=True)
 	
 	def invoke(self, context, event):
 		wm = context.window_manager
@@ -30,11 +30,11 @@ class RenameImageFileName(bpy.types.Operator):
 
 class AllRenameImageFileName(bpy.types.Operator):
 	bl_idname = "image.all_rename_image_file_name"
-	bl_label = "In the file name to use for all image names"
-	bl_description = "The names of all images using external image file name"
+	bl_label = "全ての画像名を使用するファイル名に"
+	bl_description = "全ての画像の名前を、使用している外部画像のファイル名にします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isExt = bpy.props.BoolProperty(name="Including the extension", default=True)
+	isExt = bpy.props.BoolProperty(name="拡張子も含む", default=True)
 	
 	def execute(self, context):
 		for img in  bpy.data.images:
@@ -48,8 +48,8 @@ class AllRenameImageFileName(bpy.types.Operator):
 
 class ReloadAllImage(bpy.types.Operator):
 	bl_idname = "image.reload_all_image"
-	bl_label = "Load all images"
-	bl_description = "Reloads all the image data referring to external file"
+	bl_label = "全ての画像を再読み込み"
+	bl_description = "外部ファイルを参照している画像データを全て読み込み直します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -66,12 +66,12 @@ class ReloadAllImage(bpy.types.Operator):
 
 class FillColor(bpy.types.Operator):
 	bl_idname = "image.fill_color"
-	bl_label = "Fill with color"
-	bl_description = "All fill in the color you specify the active image"
+	bl_label = "指定色で塗り潰し"
+	bl_description = "アクティブな画像を指定した色で全て塗り潰します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	color = bpy.props.FloatVectorProperty(name="colors", description="Color fill", default=(1, 1, 1), min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3, subtype='COLOR')
-	alpha = bpy.props.FloatProperty(name="Transparency (optical)", description="Transparency (optical)", default=1, min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3)
+	color = bpy.props.FloatVectorProperty(name="色", description="塗り潰す色", default=(1, 1, 1), min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3, subtype='COLOR')
+	alpha = bpy.props.FloatProperty(name="透明度", description="透明度", default=1, min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3)
 	
 	def invoke(self, context, event):
 		wm = context.window_manager
@@ -91,16 +91,16 @@ class FillColor(bpy.types.Operator):
 
 class RenameImageFile(bpy.types.Operator):
 	bl_idname = "image.rename_image_file"
-	bl_label = "Change the name of the image file"
-	bl_description = "Change the file name of the active image"
+	bl_label = "画像ファイル名を変更"
+	bl_description = "アクティブな画像のファイル名を変更します"
 	bl_options = {'REGISTER'}
 	
-	new_name = bpy.props.StringProperty(name="New file name")
+	new_name = bpy.props.StringProperty(name="新しいファイル名")
 	
 	def invoke(self, context, event):
 		self.new_name = bpy.path.basename(context.edit_image.filepath_raw)
 		if (self.new_name == ""):
-			self.report(type={"ERROR"}, message="External file does not exist on this image")
+			self.report(type={"ERROR"}, message="この画像には外部ファイルが存在しません")
 			return {"CANCELLED"}
 		return context.window_manager.invoke_props_dialog(self)
 	def execute(self, context):
@@ -108,7 +108,7 @@ class RenameImageFile(bpy.types.Operator):
 		dir = os.path.dirname(bpy.path.abspath(context.edit_image.filepath_raw))
 		name = bpy.path.basename(context.edit_image.filepath_raw)
 		if (self.new_name == name):
-			self.report(type={"ERROR"}, message="The image file name is the same as the original")
+			self.report(type={"ERROR"}, message="画像ファイル名が元と同じです")
 			return {"CANCELLED"}
 		bpy.ops.image.save_as(filepath=os.path.join(dir, self.new_name))
 		context.edit_image.name = self.new_name

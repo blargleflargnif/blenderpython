@@ -8,11 +8,11 @@ import bpy
 
 class PaintSelectedVertexColor(bpy.types.Operator):
 	bl_idname = "mesh.paint_selected_vertex_color"
-	bl_label = "I fill the vertex color for selected vertex"
-	bl_description = "I will fill the active vertex color of selected vertices in the specified color"
+	bl_label = "選択頂点の頂点カラーを塗り潰す"
+	bl_description = "選択中の頂点のアクティブ頂点カラーを指定色で塗り潰します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	color = bpy.props.FloatVectorProperty(name="Color", default=(1, 1, 1), step=1, precision=3, subtype='COLOR', min=0, max=1, soft_min=0, soft_max=1)
+	color = bpy.props.FloatVectorProperty(name="色", default=(1, 1, 1), step=1, precision=3, subtype='COLOR', min=0, max=1, soft_min=0, soft_max=1)
 	
 	def execute(self, context):
 		activeObj = context.active_object
@@ -29,8 +29,8 @@ class PaintSelectedVertexColor(bpy.types.Operator):
 
 class SelectTopShape(bpy.types.Operator):
 	bl_idname = "mesh.select_top_shape"
-	bl_label = "Choose the shape of the top"
-	bl_description = "I will select the shape key at the top of the list"
+	bl_label = "一番上のシェイプを選択"
+	bl_description = "リストの一番上にあるシェイプキーを選択します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -39,8 +39,8 @@ class SelectTopShape(bpy.types.Operator):
 
 class ToggleShowCage(bpy.types.Operator):
 	bl_idname = "mesh.toggle_show_cage"
-	bl_label = "Switch the modifier application to edit cage"
-	bl_description = "You can switch whether to apply the modifier to the mesh cage being edited"
+	bl_label = "編集ケージへのモディファイア適用を切り替え"
+	bl_description = "編集中のメッシュケージにモディファイアを適用するかを切り替えます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -65,29 +65,29 @@ class ToggleShowCage(bpy.types.Operator):
 				modi.show_in_editmode = True
 				modi.show_on_cage = True
 		if (newMode == 0):
-			self.report(type={'INFO'}, message="I had a display / adaptation of the cage in both off")
+			self.report(type={'INFO'}, message="ケージの表示/適応を両方オフにしました")
 		if (newMode == 1):
-			self.report(type={'INFO'}, message="I was on display only of the cage")
+			self.report(type={'INFO'}, message="ケージの表示のみオンにしました")
 		if (newMode == 2):
-			self.report(type={'INFO'}, message="I was in both on the display / adaptation of the cage")
+			self.report(type={'INFO'}, message="ケージの表示/適応を両方オンにしました")
 		return {'FINISHED'}
 
 class ToggleMirrorModifier(bpy.types.Operator):
 	bl_idname = "mesh.toggle_mirror_modifier"
-	bl_label = "Switch the mirror modifier"
-	bl_description = "Added if there is no mirror modifier, I will remove any"
+	bl_label = "ミラーモディファイアを切り替え"
+	bl_description = "ミラーモディファイアが無ければ追加、有れば削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	use_x = bpy.props.BoolProperty(name="X-axis", default=True)
-	use_y = bpy.props.BoolProperty(name="Y-axis", default=False)
-	use_z = bpy.props.BoolProperty(name="Z-axis", default=False)
-	use_mirror_merge = bpy.props.BoolProperty(name="Join", default=True)
-	use_clip = bpy.props.BoolProperty(name="Clipping", default=False)
-	use_mirror_vertex_groups = bpy.props.BoolProperty(name="Vertex group mirror", default=False)
-	use_mirror_u = bpy.props.BoolProperty(name="Texture U mirror", default=False)
-	use_mirror_v = bpy.props.BoolProperty(name="Texture V mirror", default=False)
-	merge_threshold = bpy.props.FloatProperty(name="Bond distance", default=0.001, min=0, max=1, soft_min=0, soft_max=1, step=0.01, precision=6)
-	is_top = bpy.props.BoolProperty(name="Add to the top", default=True)
+	use_x = bpy.props.BoolProperty(name="X軸", default=True)
+	use_y = bpy.props.BoolProperty(name="Y軸", default=False)
+	use_z = bpy.props.BoolProperty(name="Z軸", default=False)
+	use_mirror_merge = bpy.props.BoolProperty(name="結合", default=True)
+	use_clip = bpy.props.BoolProperty(name="クリッピング", default=False)
+	use_mirror_vertex_groups = bpy.props.BoolProperty(name="頂点グループミラー", default=False)
+	use_mirror_u = bpy.props.BoolProperty(name="テクスチャUミラー", default=False)
+	use_mirror_v = bpy.props.BoolProperty(name="テクスチャVミラー", default=False)
+	merge_threshold = bpy.props.FloatProperty(name="結合距離", default=0.001, min=0, max=1, soft_min=0, soft_max=1, step=0.01, precision=6)
+	is_top = bpy.props.BoolProperty(name="一番上に追加", default=True)
 	
 	def execute(self, context):
 		activeObj = context.active_object
@@ -125,11 +125,11 @@ class ToggleMirrorModifier(bpy.types.Operator):
 
 class SelectedVertexGroupAverage(bpy.types.Operator):
 	bl_idname = "mesh.selected_vertex_group_average"
-	bl_label = "I fill the selection vertex on average weight"
-	bl_description = "The average of the weight of the selected vertex, I will fill the selection vertex"
+	bl_label = "選択頂点を平均ウェイトで塗り潰す"
+	bl_description = "選択頂点のウェイトの平均で、選択頂点を塗り潰します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	strength = bpy.props.FloatProperty(name="Mix strength", default=1, min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3)
+	strength = bpy.props.FloatProperty(name="ミックス強度", default=1, min=0, max=1, soft_min=0, soft_max=1, step=10, precision=3)
 	
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_dialog(self)
@@ -171,7 +171,7 @@ class SelectedVertexGroupAverage(bpy.types.Operator):
 				i += 1
 			bpy.ops.object.mode_set(mode=pre_mode)
 		else:
-			self.report(type={"ERROR"}, message="Not a mesh object")
+			self.report(type={"ERROR"}, message="メッシュオブジェクトではありません")
 			return {'CANCELLED'}
 		return {'FINISHED'}
 
@@ -192,7 +192,7 @@ def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.operator(SelectTopShape.bl_idname, icon="PLUGIN")
 		self.layout.separator()
-		self.layout.prop(context.object.data, "use_mirror_x", icon="PLUGIN", text="Edit X-axis mirror")
+		self.layout.prop(context.object.data, "use_mirror_x", icon="PLUGIN", text="X軸ミラー編集")
 		self.layout.operator(ToggleMirrorModifier.bl_idname, icon="PLUGIN")
 		self.layout.operator(ToggleShowCage.bl_idname, icon="PLUGIN")
 		self.layout.separator()

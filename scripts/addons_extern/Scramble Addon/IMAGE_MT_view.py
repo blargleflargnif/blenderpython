@@ -8,22 +8,22 @@ import bpy
 
 class Reset2DCursor(bpy.types.Operator):
 	bl_idname = "image.reset_2d_cursor"
-	bl_label = "Reset the position of the cursor"
-	bl_description = "2D cursor moves in the lower left"
+	bl_label = "カーソルの位置をリセット"
+	bl_description = "2Dカーソルの位置を左下に移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("C", "Center", "", 1),
-		("U", "Vertical direction", "", 2),
-		("RU", "Top Right", "", 3),
-		("R", "Relative direction", "", 4),
+		("C", "中央", "", 1),
+		("U", "上", "", 2),
+		("RU", "右上", "", 3),
+		("R", "右", "", 4),
 		("RD", "右下", "", 5),
-		("D", "Subscript", "", 6),
-		("LD", "Bottom Left", "", 7),
-		("L", "Relative direction", "", 8),
-		("LU", "Padding Top", "", 9),
+		("D", "下", "", 6),
+		("LD", "左下", "", 7),
+		("L", "左", "", 8),
+		("LU", "左上", "", 9),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Position", default="LD")
+	mode = bpy.props.EnumProperty(items=items, name="位置", default="LD")
 	
 	def execute(self, context):
 		if (bpy.context.edit_image):

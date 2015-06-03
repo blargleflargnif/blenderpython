@@ -8,8 +8,8 @@ import bpy
 
 class Viewnumpad7AlignEX(bpy.types.Operator):
 	bl_idname = "view3d.viewnumpad_7_align_ex"
-	bl_label = "I see a face from the front"
-	bl_description = "I will watch the plane from the normal direction of the surface of the selected"
+	bl_label = "面を正面から見る"
+	bl_description = "選択中の面の法線方向から面を注視します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):

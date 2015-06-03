@@ -1,20 +1,21 @@
-# Initially this file is loaded when you load the add-on.
-
-# Add-on information
+# アドオンを読み込む時に最初にこのファイルが読み込まれます
+import os, csv, codecs
+from .add_mesh_objects import INFO_MT_mesh_add
+# アドオン情報
 bl_info = {
-	"name" : "Scramble Addon",
+	"name" : "Scramble Menu's",
 	"author" : "さいでんか(saidenka)",
 	"version" : (0,1),
-	"blender" : (2, 7),
-	"location" : "At the end of a varied menu",
-	"description" : "An assortment of extended functions of saidenn production",
+	"blender" : (2, 75, 0),
+	"location" : "様々なメニューの末尾",
+	"description" : "さいでんか制作の拡張機能群の詰め合わせ",
 	"warning" : "",
 	"wiki_url" : "http://github.com/saidenka/Blender-Scramble-Addon",
 	"tracker_url" : "http://github.com/saidenka/Blender-Scramble-Addon/issues",
 	"category" : "3D View"
 }
 
-# Import a set of subscript
+# サブスクリプト群をインポート
 if "bpy" in locals():
 	import imp
 	imp.reload(IMAGE_MT_image)
@@ -100,14 +101,15 @@ else:
 	from . import VIEW3D_MT_view_align_selected
 	from . import VIEW3D_MT_snap
 	from . import VIEW3D_MT_uv_map
+
 import bpy
 
 # アドオン設定
 class AddonPreferences(bpy.types.AddonPreferences):
 	bl_idname = __name__
 	
-	disabled_menu = bpy.props.StringProperty(name="Invalid menu", default="")
-	use_disabled_menu = bpy.props.BoolProperty(name="Turn on/off additional items hidden", default=True)
+	disabled_menu = bpy.props.StringProperty(name="無効なメニュー", default="")
+	use_disabled_menu = bpy.props.BoolProperty(name="「追加項目のオン/オフ」の非表示", default=True)
 	
 	def draw(self, context):
 		layout = self.layout
@@ -117,7 +119,7 @@ class AddonPreferences(bpy.types.AddonPreferences):
 # 追加メニューの有効/無効
 class ToggleMenuEnable(bpy.types.Operator):
 	bl_idname = "wm.toggle_menu_enable"
-	bl_label = "Turn on or off additional items"
+	bl_label = "追加項目のオン/オフ"
 	bl_description = "ScrambleAddonによる追加メニューを有効/無効に切り替えます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -141,9 +143,25 @@ class ToggleMenuEnable(bpy.types.Operator):
 		context.user_preferences.addons["Scramble Addon"].preferences.disabled_menu = recovery
 		return {'FINISHED'}
 
+# 翻訳辞書の取得
+def GetTranslationDict():
+	dict = {'en':{}}
+	path = os.path.join(os.path.dirname(__file__), "TranslationDictionary.csv")
+	with codecs.open(path, 'r', 'utf-8') as f:
+		reader = csv.reader(f)
+		for row in reader:
+			#for context in bpy.app.translations.contexts:
+			dict['en'][(bpy.app.translations.contexts.default, row[0])] = row[1]
+			dict['en'][(bpy.app.translations.contexts.operator_default, row[0])] = row[1]
+	return dict
+
 # プラグインをインストールしたときの処理
 def register():
 	bpy.utils.register_module(__name__)
+	
+	translation_dict = GetTranslationDict()
+	bpy.app.translations.register(__name__, translation_dict)
+	
 	bpy.types.IMAGE_MT_image.append(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.append(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.append(IMAGE_MT_view.menu)
@@ -189,6 +207,9 @@ def register():
 # プラグインをアンインストールしたときの処理
 def unregister():
 	bpy.utils.unregister_module(__name__)
+	
+	bpy.app.translations.unregister(__name__)
+	
 	bpy.types.IMAGE_MT_image.remove(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.remove(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.remove(IMAGE_MT_view.menu)

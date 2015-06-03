@@ -12,8 +12,8 @@ import bpy
 
 class DeleteUnmassage(bpy.types.Operator):
 	bl_idname = "armature.delete_unmassage"
-	bl_label = "Remove bone without confirmation"
-	bl_description = "I will delete without confirmation the bone"
+	bl_label = "確認無しでボーンを削除"
+	bl_description = "ボーンを確認無しで削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -22,11 +22,11 @@ class DeleteUnmassage(bpy.types.Operator):
 
 class Move3DCursor(bpy.types.Operator):
 	bl_idname = "armature.move_3d_cursor"
-	bl_label = "The bone as it is to the position of the 3D cursor"
-	bl_description = "Position as it is of relative bone of the tail (or a root), I will move the bone to the position of the 3D cursor"
+	bl_label = "ボーンをそのまま3Dカーソルの位置へ"
+	bl_description = "相対的なボーンの尾(根本でも可)の位置をそのままに、ボーンを3Dカーソルの位置へ移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isTail = bpy.props.BoolProperty(name="Move tail", default=False)
+	isTail = bpy.props.BoolProperty(name="尾を移動", default=False)
 	
 	def execute(self, context):
 		for bone in context.selected_bones:

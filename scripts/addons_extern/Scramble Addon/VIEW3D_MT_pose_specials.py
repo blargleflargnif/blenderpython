@@ -9,18 +9,18 @@ import re, math
 
 class CreateCustomShape(bpy.types.Operator):
 	bl_idname = "pose.create_custom_shape"
-	bl_label = "Create a custom shape"
-	bl_description = "I will create a custom shape object of bone in selection"
+	bl_label = "カスタムシェイプを作成"
+	bl_description = "選択中のボーンのカスタムシェイプオブジェクトを作成します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	name =  bpy.props.StringProperty(name="Object name", default="Objects for custom shapes")
+	name =  bpy.props.StringProperty(name="オブジェクト名", default="カスタムシェイプ用オブジェクト")
 	items = [
-		("1", "Line", "", 1),
-		("2", "Rhombus", "", 2),
+		("1", "線", "", 1),
+		("2", "ひし形", "", 2),
 		]
-	shape = bpy.props.EnumProperty(items=items, name="Form")
-	isObjectMode =  bpy.props.BoolProperty(name="To complete after the object mode", default=True)
-	isHide = bpy.props.BoolProperty(name="I hide after completion of the armature", default=True)
+	shape = bpy.props.EnumProperty(items=items, name="形")
+	isObjectMode =  bpy.props.BoolProperty(name="完了後オブジェクトモードに", default=True)
+	isHide = bpy.props.BoolProperty(name="完了後アーマチュアを隠す", default=True)
 	
 	def execute(self, context):
 		obj = bpy.context.active_object
@@ -65,25 +65,25 @@ class CreateCustomShape(bpy.types.Operator):
 				if (self.isHide):
 					obj.hide = True
 			else:
-				self.report(type={"ERROR"}, message="Please running in pose mode")
+				self.report(type={"ERROR"}, message="ポーズモードで実行してください")
 				return {'CANCELLED'}
 		else:
-			self.report(type={"ERROR"}, message="Active object is not a armature")
+			self.report(type={"ERROR"}, message="アクティブオブジェクトがアーマチュアではありません")
 			return {'CANCELLED'}
 		return {'FINISHED'}
 
 class CreateWeightCopyMesh(bpy.types.Operator):
 	bl_idname = "pose.create_weight_copy_mesh"
-	bl_label = "Create a weight copy for mesh"
-	bl_description = "You can create a mesh to be used in bone weight copy of the currently selected"
+	bl_label = "ウェイトコピー用メッシュを作成"
+	bl_description = "選択中のボーンのウェイトコピーで使用するメッシュを作成します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	name =  bpy.props.StringProperty(name="Object name to be created", default="Wait for copying objects")
+	name =  bpy.props.StringProperty(name="作成するオブジェクト名", default="ウェイトコピー用オブジェクト")
 	items = [
-		("TAIL", "Tail", "", 1),
-		("HEAD", "Head", "", 2),
+		("TAIL", "末尾", "", 1),
+		("HEAD", "根本", "", 2),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Position of the weight")
+	mode = bpy.props.EnumProperty(items=items, name="ウェイトの位置")
 	
 	def execute(self, context):
 		obj = bpy.context.active_object
@@ -128,20 +128,20 @@ class CreateWeightCopyMesh(bpy.types.Operator):
 				#bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0, 0, 0.01)})
 				#bpy.ops.object.mode_set(mode="OBJECT")
 			else:
-				self.report(type={"ERROR"}, message="Please running in pose mode")
+				self.report(type={"ERROR"}, message="ポーズモードで実行してください")
 				return {'CANCELLED'}
 		else:
-			self.report(type={"ERROR"}, message="Active object is not a armature")
+			self.report(type={"ERROR"}, message="アクティブオブジェクトがアーマチュアではありません")
 			return {'CANCELLED'}
 		return {'FINISHED'}
 
 class CopyBoneName(bpy.types.Operator):
 	bl_idname = "pose.copy_bone_name"
-	bl_label = "Copy bone names to the clipboard"
-	bl_description = "I will copy the name of the active bone to clipboard"
+	bl_label = "ボーン名をクリップボードにコピー"
+	bl_description = "アクティブボーンの名前をクリップボードにコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isObject = bpy.props.BoolProperty(name="Also object name", default=False)
+	isObject = bpy.props.BoolProperty(name="オブジェクト名も", default=False)
 	
 	def execute(self, context):
 		if (self.isObject):
@@ -152,11 +152,11 @@ class CopyBoneName(bpy.types.Operator):
 
 class SplineGreasePencil(bpy.types.Operator):
 	bl_idname = "pose.spline_grease_pencil"
-	bl_label = "The chain-like bone I make along the grease pencil"
-	bl_description = "The selection bone that led to like chain is caused along the grease pencil and give it a pose"
+	bl_label = "チェーン状ボーンをグリースペンシルに沿わせる"
+	bl_description = "チェーンの様に繋がった選択ボーンをグリースペンシルに沿わせてポーズを付けます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isRootReset = bpy.props.BoolProperty(name="To its original position the root", default=False)
+	isRootReset = bpy.props.BoolProperty(name="根本を元の位置に", default=False)
 	
 	def execute(self, context):
 		activeObj = context.active_object
@@ -168,7 +168,7 @@ class SplineGreasePencil(bpy.types.Operator):
 						i += 1
 						break
 		if (i+1 < len(context.selected_pose_bones)):
-			self.report(type={"ERROR"}, message="Run by selecting a bone group that led to a chain")
+			self.report(type={"ERROR"}, message="チェーン状に繋がったボーン群を選択して実行して下さい")
 			return {'CANCELLED'}
 		bpy.ops.object.mode_set(mode='OBJECT')
 		bpy.ops.gpencil.convert(type='CURVE', use_timing_data=True)
@@ -208,13 +208,13 @@ class SplineGreasePencil(bpy.types.Operator):
 
 class RenameBoneRegularExpression(bpy.types.Operator):
 	bl_idname = "pose.rename_bone_regular_expression"
-	bl_label = "Replace bone names in regular expression"
-	bl_description = "I will replace the bone names (in selection) in the part that matches the regular expression"
+	bl_label = "ボーン名を正規表現で置換"
+	bl_description = "(選択中の)ボーン名を正規表現に一致する部分で置換します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isAll = bpy.props.BoolProperty(name="All unselected also including", default=False)
-	pattern = bpy.props.StringProperty(name="Before replacement (regular expression)", default="^")
-	repl = bpy.props.StringProperty(name="After substitution", default="@")
+	isAll = bpy.props.BoolProperty(name="非選択も含め全て", default=False)
+	pattern = bpy.props.StringProperty(name="置換前(正規表現)", default="^")
+	repl = bpy.props.StringProperty(name="置換後", default="@")
 	
 	def execute(self, context):
 		obj = context.active_object
@@ -226,29 +226,29 @@ class RenameBoneRegularExpression(bpy.types.Operator):
 				for bone in bones:
 					bone.name = re.sub(self.pattern, self.repl, bone.name)
 			else:
-				self.report(type={"ERROR"}, message="Please running in pause mode")
+				self.report(type={"ERROR"}, message="ポーズモードで実行してください")
 				return {'CANCELLED'}
 		else:
-			self.report(type={"ERROR"}, message="Not the armature object")
+			self.report(type={"ERROR"}, message="アーマチュアオブジェクトではありません")
 			return {'CANCELLED'}
 		return {'FINISHED'}
 
 class SetSlowParentBone(bpy.types.Operator):
 	bl_idname = "pose.set_slow_parent_bone"
-	bl_label = "Set the slow parent"
-	bl_description = "I set the slow parent to bone in selection"
+	bl_label = "スローペアレントを設定"
+	bl_description = "選択中のボーンにスローペアレントを設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		('DAMPED_TRACK', "Damped Track", "", 1),
+		('DAMPED_TRACK', "減衰トラック", "", 1),
 		('IK', "IK", "", 2),
-		('STRETCH_TO', "Stretch To", "", 3),
-		('COPY_LOCATION', "Copy Location", "", 4),
+		('STRETCH_TO', "ストレッチ", "", 3),
+		('COPY_LOCATION', "位置コピー", "", 4),
 		]
-	constraint = bpy.props.EnumProperty(items=items, name="Constraint")
-	radius = bpy.props.FloatProperty(name="Radius", default=0.5, min=0.01, max=10, soft_min=0.01, soft_max=10, step=10, precision=3)
-	slow_parent_offset = bpy.props.FloatProperty(name="Strength of slow parent", default=5, min=0, max=100, soft_min=0, soft_max=100, step=50, precision=3)
-	is_use_driver = bpy.props.BoolProperty(name="Add driver to bone", default=True)
+	constraint = bpy.props.EnumProperty(items=items, name="コンストレイント")
+	radius = bpy.props.FloatProperty(name="エンプティの大きさ", default=0.5, min=0.01, max=10, soft_min=0.01, soft_max=10, step=10, precision=3)
+	slow_parent_offset = bpy.props.FloatProperty(name="スローペアレントの強度", default=5, min=0, max=100, soft_min=0, soft_max=100, step=50, precision=3)
+	is_use_driver = bpy.props.BoolProperty(name="ボーンにドライバを追加", default=True)
 	
 	def execute(self, context):
 		pre_cursor_location = context.space_data.cursor_location[:]
@@ -258,7 +258,7 @@ class SetSlowParentBone(bpy.types.Operator):
 		bones = context.selected_pose_bones[:]
 		for bone in bones:
 			if (not bone.parent):
-				self.report(type={'WARNING'}, message="Bone"+bone.name+"There is no parent")
+				self.report(type={'WARNING'}, message="ボーン「"+bone.name+"」には親がありません、スルーします")
 				continue
 			if (self.constraint == 'COPY_LOCATION'):
 				context.space_data.cursor_location = obj.matrix_world * arm.bones[bone.name].head_local
@@ -296,15 +296,15 @@ class SetSlowParentBone(bpy.types.Operator):
 
 class RenameBoneNameEnd(bpy.types.Operator):
 	bl_idname = "pose.rename_bone_name_end"
-	bl_label = "Bone names of XX.R => XX_R Mutual convert"
-	bl_description = "Bone names of XX.R => XX_R I interconversion "
+	bl_label = "ボーン名の XXX.R => XXX_R を相互変換"
+	bl_description = "ボーン名の XXX.R => XXX_R を相互変換します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	reverse = bpy.props.BoolProperty(name="XX.R => XX_R", default=False)
+	reverse = bpy.props.BoolProperty(name="XXX.R => XXX_R", default=False)
 	
 	def execute(self, context):
 		if (not context.selected_pose_bones):
-			self.report(type={"ERROR"}, message="Run by selecting a bone in pose mode")
+			self.report(type={"ERROR"}, message="ポーズモードでボーンを選択して実行して下さい")
 			return {"CANCELLED"}
 		rename_count = 0
 		for bone in context.selected_pose_bones:
@@ -327,12 +327,12 @@ class RenameBoneNameEnd(bpy.types.Operator):
 				rename_count += 1
 		for area in context.screen.areas:
 			area.tag_redraw()
-		self.report(type={"INFO"}, message="Conversion of bone names has ended,"+str(rename_count)+"Was number conversion")
+		self.report(type={"INFO"}, message="ボーン名の変換が終了しました、"+str(rename_count)+"個変換しました")
 		return {'FINISHED'}
 
 class RenameBoneNameEndJapanese(bpy.types.Operator):
 	bl_idname = "pose.rename_bone_name_end_japanese"
-	bl_label = "rename_bone_name_end_japanese"
+	bl_label = "ボーン名の XXX.R => 右XXX を相互変換"
 	bl_description = "ボーン名の XXX.R => 右XXX を相互変換します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -364,13 +364,13 @@ class RenameBoneNameEndJapanese(bpy.types.Operator):
 
 class TogglePosePosition(bpy.types.Operator):
 	bl_idname = "pose.toggle_pose_position"
-	bl_label = "Switch the pose position"
-	bl_description = "I will switch the pause position / rest position of the armature"
+	bl_label = "ポーズ位置を切り替え"
+	bl_description = "アーマチュアのポーズ位置/レスト位置を切り替えます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		if (context.object.type != 'ARMATURE'):
-			self.report(type={"ERROR"}, message="Run in the armature")
+			self.report(type={"ERROR"}, message="アーマチュアで実行して下さい")
 			return {"CANCELLED"}
 		if (context.object.data.pose_position == 'POSE'):
 			context.object.data.pose_position = 'REST'
@@ -380,8 +380,8 @@ class TogglePosePosition(bpy.types.Operator):
 
 class CopyConstraintsMirror(bpy.types.Operator):
 	bl_idname = "pose.copy_constraints_mirror"
-	bl_label = "Copy constraint to a pair of bone"
-	bl_description = "If XL, XR, I will copy bone to the constraint of the name of the XR if XL"
+	bl_label = "対のボーンにコンストレイントをコピー"
+	bl_description = "「X.L」なら「X.R」、「X.R」なら「X.L」の名前のボーンへとコンストレイントをコピーします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -407,10 +407,10 @@ class CopyConstraintsMirror(bpy.types.Operator):
 			try:
 				mirror_bone = context.active_object.pose.bones[GetMirrorBoneName(bone.name)]
 			except KeyError:
-				self.report(type={"WARNING"}, message=bone.name+"I ignored because bone to be paired does not exist")
+				self.report(type={"WARNING"}, message=bone.name+"の対になるボーンが存在しないので無視します")
 				continue
 			if (bone.name == mirror_bone.name):
-				self.report(type={"WARNING"}, message=bone.name+"Is not a name corresponding to the mirror, and ignores")
+				self.report(type={"WARNING"}, message=bone.name+"はミラーに対応した名前ではありません、無視します")
 				continue
 			for const in mirror_bone.constraints[:]:
 				mirror_bone.constraints.remove(const)
@@ -434,8 +434,8 @@ class CopyConstraintsMirror(bpy.types.Operator):
 
 class RemoveBoneNameSerialNumbers(bpy.types.Operator):
 	bl_idname = "pose.remove_bone_name_serial_numbers"
-	bl_label = "Remove serial number of bone names"
-	bl_description = "Such as X.001, you attempt to remove a number from the serial number marked with bone names"
+	bl_label = "ボーン名の連番を削除"
+	bl_description = "「X.001」など、連番の付いたボーン名から数字を取り除くのを試みます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -447,40 +447,40 @@ class RemoveBoneNameSerialNumbers(bpy.types.Operator):
 
 class SetRigidBodyBone(bpy.types.Operator):
 	bl_idname = "pose.set_rigid_body_bone"
-	bl_label = "Set physics"
-	bl_description = "In bone group led was being selected, you can set the physical operation by RigidBody"
+	bl_label = "物理演算を設定"
+	bl_description = "選択中の繋がったボーン群に、RigidBodyによる物理演算を設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	shape_size = bpy.props.FloatProperty(name="Shape Size", default=0.1, min=0, max=10, soft_min=0, soft_max=10, step=1, precision=3)
-	shape_level = bpy.props.IntProperty(name="Shape Level", default=3, min=1, max=6, soft_min=1, soft_max=6)
-	constraints_size = bpy.props.FloatProperty(name="Constraints Level", default=0.1, min=0, max=10, soft_min=0, soft_max=10, step=1, precision=3)
+	shape_size = bpy.props.FloatProperty(name="シェイプサイズ", default=0.1, min=0, max=10, soft_min=0, soft_max=10, step=1, precision=3)
+	shape_level = bpy.props.IntProperty(name="シェイプの細分化", default=3, min=1, max=6, soft_min=1, soft_max=6)
+	constraints_size = bpy.props.FloatProperty(name="剛体コンストレイントサイズ", default=0.1, min=0, max=10, soft_min=0, soft_max=10, step=1, precision=3)
 	items = [
-		('PLAIN_AXES', "Plain Axis", "", 1),
-		('ARROWS', "Arrows", "", 2),
-		('SINGLE_ARROW', "Single Arrow", "", 3),
-		('CIRCLE', "Circle", "", 4),
-		('CUBE', "Cube", "", 5),
-		('SPHERE', "Sphere", "", 6),
-		('CONE', "Cone", "", 7),
-		('IMAGE', "Image", "", 8),
+		('PLAIN_AXES', "十字", "", 1),
+		('ARROWS', "座標軸", "", 2),
+		('SINGLE_ARROW', "矢印", "", 3),
+		('CIRCLE', "円", "", 4),
+		('CUBE', "立方体", "", 5),
+		('SPHERE', "球", "", 6),
+		('CONE', "円錐", "", 7),
+		('IMAGE', "画像", "", 8),
 		]
-	empty_draw_type = bpy.props.EnumProperty(items=items, name="Rigid body constraint display", default='SPHERE')
-	is_parent_shape = bpy.props.BoolProperty(name="And tracking the rigid constraint on shape", default=False)
-	rot_limit = bpy.props.FloatProperty(name="Rotational restriction", default=90, min=0, max=360, soft_min=0, soft_max=360, step=1, precision=3)
-	linear_damping = bpy.props.FloatProperty(name="Attenuation: Moving", default=0.04, min=0, max=1, soft_min=0, soft_max=1, step=1, precision=3)
-	angular_damping = bpy.props.FloatProperty(name="Attenuation: Rotation", default=0.1, min=0, max=1, soft_min=0, soft_max=1, step=1, precision=3)
+	empty_draw_type = bpy.props.EnumProperty(items=items, name="剛体コンストレイント表示", default='SPHERE')
+	is_parent_shape = bpy.props.BoolProperty(name="剛体コンストレイントをシェイプに追尾", default=False)
+	rot_limit = bpy.props.FloatProperty(name="回転制限", default=90, min=0, max=360, soft_min=0, soft_max=360, step=1, precision=3)
+	linear_damping = bpy.props.FloatProperty(name="減衰：移動", default=0.04, min=0, max=1, soft_min=0, soft_max=1, step=1, precision=3)
+	angular_damping = bpy.props.FloatProperty(name="減衰：回転", default=0.1, min=0, max=1, soft_min=0, soft_max=1, step=1, precision=3)
 	
 	def execute(self, context):
 		pre_active_obj = context.active_object
 		if (not pre_active_obj):
-			self.report(type={'ERROR'}, message="There is no active object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
 			return {'CANCELLED'}
 		if (pre_active_obj.type != 'ARMATURE'):
-			self.report(type={'ERROR'}, message="Run in the armature object")
+			self.report(type={'ERROR'}, message="アーマチュアオブジェクトで実行して下さい")
 			return {'CANCELLED'}
 		pre_mode = pre_active_obj.mode
 		if (pre_mode != 'POSE'):
-			self.report(type={'ERROR'}, message="Run in pause mode")
+			self.report(type={'ERROR'}, message="ポーズモードで実行して下さい")
 			return {'CANCELLED'}
 		pre_cursor_location = context.space_data.cursor_location[:]
 		arm_obj = pre_active_obj
@@ -503,7 +503,7 @@ class SetRigidBodyBone(bpy.types.Operator):
 				no_parent_count += 1
 			bones.append(bone)
 		if (no_parent_count != 1):
-			self.report(type={'ERROR'}, message="Run by selecting a series of connected bones")
+			self.report(type={'ERROR'}, message="一連の繋がったボーンを選択して実行して下さい")
 			return {'CANCELLED'}
 		bpy.ops.object.mode_set(mode='OBJECT')
 		base_obj = None
@@ -541,7 +541,7 @@ class SetRigidBodyBone(bpy.types.Operator):
 			bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
 		bpy.ops.object.mode_set(mode='OBJECT')
 		base_obj = obj
-		base_obj.name = "Rigid base"
+		base_obj.name = "剛体基点"
 		pairs = []
 		for bone in bones:
 			bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=self.shape_level, size=1, view_align=False, enter_editmode=False, location=(0, 0, 0), rotation=(0, 0, 0))
@@ -561,7 +561,7 @@ class SetRigidBodyBone(bpy.types.Operator):
 			obj.draw_type = 'WIRE'
 			const = arm_obj.pose.bones[bone.name].constraints.new('DAMPED_TRACK')
 			const.target = obj
-			obj.name = "Rigid body"
+			obj.name = "剛体"
 			shape = obj
 			bpy.ops.rigidbody.object_add()
 			
@@ -579,7 +579,7 @@ class SetRigidBodyBone(bpy.types.Operator):
 			obj.constraints.remove(const)
 			obj.scale = (self.constraints_size, self.constraints_size, self.constraints_size)
 			bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-			obj.name = "Rigid body constraint"
+			obj.name = "剛体コンストレイント"
 			
 			bpy.ops.rigidbody.constraint_add()
 			obj.rigid_body_constraint.type = 'GENERIC'
@@ -635,32 +635,32 @@ class SetRigidBodyBone(bpy.types.Operator):
 
 class SetIKRotationLimitByPose(bpy.types.Operator):
 	bl_idname = "pose.set_ik_rotation_limit_by_pose"
-	bl_label = "The rotation limiting the current pose"
-	bl_description = "The rotational state of the current bone, set to rotation limit of IK and constraints"
+	bl_label = "現ポーズを回転制限に"
+	bl_description = "現在のボーンの回転状態を、IKやコンストレイントの回転制限へと設定します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		('IK', "Rotation limit of IK", "", 1),
-		('CONST', "Rotation limit of constraint", "", 2),
+		('IK', "IKの回転制限", "", 1),
+		('CONST', "コンストレイントの回転制限", "", 2),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Mode")
-	use_reverse = bpy.props.BoolProperty(name="Use Reversal", default=True)
-	use_x = bpy.props.BoolProperty(name="Use X", default=True)
-	use_y = bpy.props.BoolProperty(name="Use Y", default=True)
-	use_z = bpy.props.BoolProperty(name="Use Z", default=True)
-	is_clear_rot = bpy.props.BoolProperty(name="Reset the rotation of the pose", default=True)
+	mode = bpy.props.EnumProperty(items=items, name="モード")
+	use_reverse = bpy.props.BoolProperty(name="制限の反転", default=True)
+	use_x = bpy.props.BoolProperty(name="X軸の制限", default=True)
+	use_y = bpy.props.BoolProperty(name="Y軸の制限", default=True)
+	use_z = bpy.props.BoolProperty(name="Z軸の制限", default=True)
+	is_clear_rot = bpy.props.BoolProperty(name="ポーズの回転をリセット", default=True)
 	
 	def execute(self, context):
 		pre_active_obj = context.active_object
 		if (not pre_active_obj):
-			self.report(type={'ERROR'}, message="There is no active object")
+			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
 			return {'CANCELLED'}
 		if (pre_active_obj.type != 'ARMATURE'):
-			self.report(type={'ERROR'}, message="Run in the armature object")
+			self.report(type={'ERROR'}, message="アーマチュアオブジェクトで実行して下さい")
 			return {'CANCELLED'}
 		pre_mode = pre_active_obj.mode
 		if (pre_mode != 'POSE'):
-			self.report(type={'ERROR'}, message="Run in Pose mode")
+			self.report(type={'ERROR'}, message="ポーズモードで実行して下さい")
 			return {'CANCELLED'}
 		for bone in context.selected_pose_bones:
 			pre_rotation_mode = bone.rotation_mode
@@ -737,8 +737,8 @@ class SetIKRotationLimitByPose(bpy.types.Operator):
 
 class BoneNameMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_pose_specials_bone_name"
-	bl_label = "Bone names"
-	bl_description = "This is a menu of functions related to bone names"
+	bl_label = "ボーン名"
+	bl_description = "ボーン名に関する機能のメニューです"
 	
 	def draw(self, context):
 		self.layout.operator(CopyBoneName.bl_idname, icon="PLUGIN")
@@ -746,16 +746,16 @@ class BoneNameMenu(bpy.types.Menu):
 		self.layout.separator()
 		self.layout.operator(RemoveBoneNameSerialNumbers.bl_idname, icon="PLUGIN")
 		self.layout.separator()
-		self.layout.operator(RenameBoneNameEnd.bl_idname, text="Bone names replacement XX_R => XX.R", icon="PLUGIN").reverse = False
-		self.layout.operator(RenameBoneNameEnd.bl_idname, text="Bone names replacement XX.R => XX_R", icon="PLUGIN").reverse = True
+		self.layout.operator(RenameBoneNameEnd.bl_idname, text="ボーン名置換「XXX_R => XXX.R」", icon="PLUGIN").reverse = False
+		self.layout.operator(RenameBoneNameEnd.bl_idname, text="ボーン名置換「XXX.R => XXX_R」", icon="PLUGIN").reverse = True
 		self.layout.separator()
 		self.layout.operator(RenameBoneNameEndJapanese.bl_idname, text="ボーン名置換「XXX_R => 右XXX」", icon="PLUGIN").reverse = False
 		self.layout.operator(RenameBoneNameEndJapanese.bl_idname, text="ボーン名置換「右XXX => XXX_R」", icon="PLUGIN").reverse = True
 
 class SpecialsMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_pose_specials_specials"
-	bl_label = "Special processing"
-	bl_description = "This is a menu of functions related to special processing"
+	bl_label = "特殊処理"
+	bl_description = "特殊な処理に関する機能のメニューです"
 	
 	def draw(self, context):
 		self.layout.operator(SplineGreasePencil.bl_idname, icon="PLUGIN")
@@ -786,9 +786,9 @@ def menu(self, context):
 		self.layout.separator()
 		self.layout.operator(CopyConstraintsMirror.bl_idname, icon="PLUGIN")
 		self.layout.separator()
-		text = "Switch the pause position (current: rest position)"
+		text = "ポーズ位置を切り替え (現在：レスト位置)"
 		if (context.object.data.pose_position == 'POSE'):
-			text = "Switch the pause position (current: pose position)"
+			text = "ポーズ位置を切り替え (現在：ポーズ位置)"
 		self.layout.operator(TogglePosePosition.bl_idname, text=text, icon="PLUGIN")
 		self.layout.separator()
 		self.layout.menu(SpecialsMenu.bl_idname, icon="PLUGIN")

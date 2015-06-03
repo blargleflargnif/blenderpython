@@ -56,14 +56,12 @@ class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
             text="Minimum Bounds")
         layout.operator("object.bounding_boxers",
             text="BBOX")
-        layout.operator("mesh.ajout_primitive",
-            text="Plancher")
 # Register all operators and panels
 
 # Define "Extras" menu
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="LAYER_ACTIVE")
+    self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="LATTICE_DATA")
 
 
 

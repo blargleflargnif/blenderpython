@@ -8,12 +8,12 @@ import bpy
 
 class CopyAllMaterialNode(bpy.types.Operator):
 	bl_idname = "node.copy_all_material_node"
-	bl_label = "Copy this node to all material"
-	bl_description = "(May be selected object only) I will replicate to the node tree that is currently displayed all other material"
+	bl_label = "このノードを全マテリアルにコピー"
+	bl_description = "現在表示されているノードツリーを他の全マテリアル(選択オブジェクトのみも可)に複製します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isOnlySelected = bpy.props.BoolProperty(name="Selected object only", default=False)
-	isOnlyUseNode = bpy.props.BoolProperty(name="In the case of node spent only", default=False)
+	isOnlySelected = bpy.props.BoolProperty(name="選択オブジェクトのみ", default=False)
+	isOnlyUseNode = bpy.props.BoolProperty(name="ﾉｰﾄﾞ使用済の場合のみ", default=False)
 	
 	def execute(self, context):
 		activeObj = context.active_object
@@ -61,7 +61,7 @@ class CopyAllMaterialNode(bpy.types.Operator):
 	
 	def invoke(self, context, event):
 		if (context.space_data.tree_type != 'ShaderNodeTree'):
-			self.report(type={"ERROR"}, message="Run in shader node")
+			self.report(type={"ERROR"}, message="シェーダーノードで実行して下さい")
 			return {"CANCELLED"}
 		wm = context.window_manager
 		return wm.invoke_props_dialog(self)

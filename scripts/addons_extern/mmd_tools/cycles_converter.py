@@ -117,7 +117,7 @@ def convertToCyclesShader(obj):
                 i.material.node_tree.links.new(shader.inputs[0], texture.outputs['Color'])
             else:
                 mix_rgb = i.material.node_tree.nodes.new('ShaderNodeMixRGB')
-                mix_rgb.blend_type = 'MIX'
+                mix_rgb.blend_type = 'MULTIPLY'
                 mix_rgb.inputs[0].default_value = 1.0
                 mix_rgb.inputs[1].default_value = list(i.material.diffuse_color) + [1.0]
                 mix_rgb.location.x = shader.location.x -250

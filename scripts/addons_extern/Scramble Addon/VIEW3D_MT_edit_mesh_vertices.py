@@ -8,8 +8,8 @@ import bpy
 
 class CellMenuSeparateEX(bpy.types.Operator):
 	bl_idname = "mesh.cell_menu_separate_ex"
-	bl_label = "Separated into different objects (extended)"
-	bl_description = "I will call the extended menu of separation to another object."
+	bl_label = "別オブジェクトに分離 (拡張)"
+	bl_description = "「別オブジェクトに分離」の拡張メニューを呼び出します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -18,8 +18,8 @@ class CellMenuSeparateEX(bpy.types.Operator):
 
 class SeparateSelectedEX(bpy.types.Operator):
 	bl_idname = "mesh.separate_selected_ex"
-	bl_label = "Select product (active separation side)"
-	bl_description = "To enter the edit mode of the isolated after separation with a selection side"
+	bl_label = "選択物 (分離側をアクティブ)"
+	bl_description = "「選択物で分離」した後に分離した側のエディトモードに入ります"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -40,8 +40,8 @@ class SeparateSelectedEX(bpy.types.Operator):
 
 class DuplicateNewParts(bpy.types.Operator):
 	bl_idname = "mesh.duplicate_new_parts"
-	bl_label = "The replication / new object selection unit"
-	bl_description = "To enter it from the new object to duplicate and separate the selection in Edit mode"
+	bl_label = "選択部を複製/新オブジェクトに"
+	bl_description = "選択部分を複製・分離し新オブジェクトにしてからエディトモードに入ります"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -63,25 +63,25 @@ class DuplicateNewParts(bpy.types.Operator):
 
 class QuickShrinkwrap(bpy.types.Operator):
 	bl_idname = "mesh.quick_shrinkwrap"
-	bl_label = "Quick shrink wrap"
-	bl_description = "Another selection mesh, I stuck the selection vertex To Pettari"
+	bl_label = "クイック・シュリンクラップ"
+	bl_description = "もう1つの選択メッシュに、選択頂点をぺったりとくっつけます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		('NEAREST_SURFACEPOINT', "Point of closest surface", "", 1),
-		('PROJECT', "Projection", "", 2),
-		('NEAREST_VERTEX', "Nearest vertex", "", 3),
+		('NEAREST_SURFACEPOINT', "最近接表面の点", "", 1),
+		('PROJECT', "投影", "", 2),
+		('NEAREST_VERTEX', "最近接頂点", "", 3),
 		]
-	wrap_method = bpy.props.EnumProperty(items=items, name="Mode", default='PROJECT')
-	offset = bpy.props.FloatProperty(name="Offset", default=0.0, min=-10, max=10, soft_min=-10, soft_max=10, step=1, precision=5)
+	wrap_method = bpy.props.EnumProperty(items=items, name="モード", default='PROJECT')
+	offset = bpy.props.FloatProperty(name="オフセット", default=0.0, min=-10, max=10, soft_min=-10, soft_max=10, step=1, precision=5)
 	
 	def execute(self, context):
 		if (len(context.selected_objects) != 2):
-			self.report(type={"ERROR"}, message="Run the mesh object in two selected state")
+			self.report(type={"ERROR"}, message="メッシュオブジェクトを2つ選択状態で実行して下さい")
 			return {'CANCELLED'}
 		for obj in context.selected_objects:
 			if (obj.type != 'MESH'):
-				self.report(type={"ERROR"}, message="Run the mesh object in two selected state")
+				self.report(type={"ERROR"}, message="メッシュオブジェクトを2つ選択状態で実行して下さい")
 				return {'CANCELLED'}
 		active_obj = context.active_object
 		pre_mode = active_obj.mode
@@ -97,7 +97,7 @@ class QuickShrinkwrap(bpy.types.Operator):
 				selected_verts.append(vert.index)
 		if (len(selected_verts) <= 0):
 			bpy.ops.object.mode_set(mode=pre_mode)
-			self.report(type={'ERROR'}, message="One or more should be run by selecting the vertex")
+			self.report(type={'ERROR'}, message="1つ以上は頂点を選択して実行して下さい")
 			return {'CANCELLED'}
 		new_vg.add(selected_verts, 1.0, 'REPLACE')
 		new_mod = active_obj.modifiers.new("temp", 'SHRINKWRAP')
@@ -120,16 +120,16 @@ class QuickShrinkwrap(bpy.types.Operator):
 
 class SeparateEXMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_edit_mesh_separate_ex"
-	bl_label = "Separated into different objects (extended)"
-	bl_description = "This is the extended menu of separation to another object."
+	bl_label = "別オブジェクトに分離 (拡張)"
+	bl_description = "「別オブジェクトに分離」の拡張メニューです"
 	
 	def draw(self, context):
-		self.layout.operator("mesh.separate", text="Selections").type = 'SELECTED'
+		self.layout.operator("mesh.separate", text="選択物").type = 'SELECTED'
 		self.layout.operator(SeparateSelectedEX.bl_idname, icon="PLUGIN")
 		self.layout.operator(DuplicateNewParts.bl_idname, icon="PLUGIN")
 		self.layout.separator()
-		self.layout.operator("mesh.separate", text="In Materials").type = 'MATERIAL'
-		self.layout.operator("mesh.separate", text="In structurally separate parts").type = 'LOOSE'
+		self.layout.operator("mesh.separate", text="マテリアルで").type = 'MATERIAL'
+		self.layout.operator("mesh.separate", text="構造的に分離したパーツで").type = 'LOOSE'
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):

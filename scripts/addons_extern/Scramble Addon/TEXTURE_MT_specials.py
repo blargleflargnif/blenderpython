@@ -8,20 +8,20 @@ import bpy
 
 class RenameTextureFileName(bpy.types.Operator):
 	bl_idname = "texture.rename_texture_file_name"
-	bl_label = "The image file name you want to use the texture name"
-	bl_description = "I want to file name of the external image that you are using the name of the active texture"
+	bl_label = "テクスチャ名を使用する画像ファイル名に"
+	bl_description = "アクティブなテクスチャの名前を使用している外部画像のファイル名にします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	isExt = bpy.props.BoolProperty(name="Also including extension", default=True)
+	isExt = bpy.props.BoolProperty(name="拡張子も含む", default=True)
 	
 	def execute(self, context):
 		tex = context.texture
 		if (not tex):
-			self.report(type={"ERROR"}, message="Picture / video, please run the texture")
+			self.report(type={"ERROR"}, message="画像/動画テクスチャで実行してください")
 			return {"CANCELLED"}
 		if (tex.type == "IMAGE"):
 			if (not tex.image):
-				self.report(type={"ERROR"}, message="Image has not been specified")
+				self.report(type={"ERROR"}, message="画像が指定されていません")
 				return {"CANCELLED"}
 			if (tex.image.filepath_raw != ""):
 				name = bpy.path.basename(tex.image.filepath_raw)
@@ -31,14 +31,14 @@ class RenameTextureFileName(bpy.types.Operator):
 					tex.name = name
 				except: pass
 		else:
-			self.report(type={"ERROR"}, message="Picture / video, please run the texture")
+			self.report(type={"ERROR"}, message="画像/動画テクスチャで実行してください")
 			return {"CANCELLED"}
 		return {'FINISHED'}
 
 class RemoveAllTextureSlots(bpy.types.Operator):
 	bl_idname = "texture.remove_all_texture_slots"
-	bl_label = "To all the texture slot empty"
-	bl_description = "I will all the texture slot of the active material in the sky"
+	bl_label = "テクスチャスロットを全て空に"
+	bl_description = "アクティブなマテリアルの全てのテクスチャスロットを空にします"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -49,8 +49,8 @@ class RemoveAllTextureSlots(bpy.types.Operator):
 
 class SlotMoveTop(bpy.types.Operator):
 	bl_idname = "texture.slot_move_top"
-	bl_label = "To the top"
-	bl_description = "I will move the active texture slot to the top"
+	bl_label = "最上段へ"
+	bl_description = "アクティブなテクスチャスロットを一番上に移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -66,8 +66,8 @@ class SlotMoveTop(bpy.types.Operator):
 		return {'FINISHED'}
 class SlotMoveBottom(bpy.types.Operator):
 	bl_idname = "texture.slot_move_bottom"
-	bl_label = "To the bottom"
-	bl_description = "I will move the active texture slot at the bottom"
+	bl_label = "最下段へ"
+	bl_description = "アクティブなテクスチャスロットを一番下に移動させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):

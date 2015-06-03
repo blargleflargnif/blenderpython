@@ -18,10 +18,10 @@
 # by meta-androcto, parts based on work by Erich Toven #
 
 bl_info = {
-    "name": "Objects: Test Scene Elements",
+    "name": "Scene Elements",
     "author": "Meta Androcto, ",
     "version": (0, 2),
-    "blender": (2, 64, 0),
+    "blender": (2, 75, 0),
     "location": "View3D > Add > Scene Elements",
     "description": "Add Scenes & Lights, Objects.",
     "warning": "",
@@ -52,7 +52,7 @@ import bpy
 class INFO_MT_mesh_objects_add(bpy.types.Menu):
     # Define the "mesh objects" menu
     bl_idname = "INFO_MT_scene_elements"
-    bl_label = "Scene Elements"
+    bl_label = "Test scenes"
 
     def draw(self, context):
         layout = self.layout
@@ -69,7 +69,7 @@ class INFO_MT_mesh_objects_add(bpy.types.Menu):
 class INFO_MT_mesh_lamps_add(bpy.types.Menu):
     # Define the "mesh objects" menu
     bl_idname = "INFO_MT_scene_lamps"
-    bl_label = "Lighting Elements"
+    bl_label = "Lighting Sets"
 
     def draw(self, context):
         layout = self.layout
@@ -87,7 +87,7 @@ class INFO_MT_mesh_lamps_add(bpy.types.Menu):
 # Define "Extras" menu
 def menu_func(self, context):
     self.layout.menu("INFO_MT_scene_elements", icon="PLUGIN")
-    self.layout.menu("INFO_MT_scene_lamps", icon="PLUGIN")
+    self.layout.menu("INFO_MT_scene_lamps", icon="OUTLINER_OB_LAMP")
 def register():
     bpy.utils.register_module(__name__)
     # Add "Extras" menu to the "Add Mesh" menu

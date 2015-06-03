@@ -8,8 +8,8 @@ import bpy
 
 class InvertHide(bpy.types.Operator):
 	bl_idname = "object.invert_hide"
-	bl_label = "The inverted Show / Hide"
-	bl_description = "The display state and a non-display state of the object to reverse"
+	bl_label = "表示/隠すを反転"
+	bl_description = "オブジェクトの表示状態と非表示状態を反転させます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -28,24 +28,24 @@ class InvertHide(bpy.types.Operator):
 
 class HideOnlyType(bpy.types.Operator):
 	bl_idname = "object.hide_only_mesh"
-	bl_label = "I hide only certain types of objects"
-	bl_description = "I will hide the objects of a specific type that is displayed"
+	bl_label = "特定の種類のオブジェクトのみを隠す"
+	bl_description = "表示されている特定タイプのオブジェクトを隠します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("MESH", "Mesh", "", 1),
-		("CURVE", "Curve", "", 2),
-		("SURFACE", "Surface", "", 3),
-		("META", "Meta", "", 4),
-		("FONT", "Font", "", 5),
-		("ARMATURE", "Armature", "", 6),
-		("LATTICE", "Lattice", "", 7),
-		("EMPTY", "Empty", "", 8),
-		("CAMERA", "Camera", "", 9),
-		("LAMP", "Lamp", "", 10),
-		("SPEAKER", "Speaker", "", 11),
+		("MESH", "メッシュ", "", 1),
+		("CURVE", "カーブ", "", 2),
+		("SURFACE", "サーフェイス", "", 3),
+		("META", "メタボール", "", 4),
+		("FONT", "テキスト", "", 5),
+		("ARMATURE", "アーマチュア", "", 6),
+		("LATTICE", "ラティス", "", 7),
+		("EMPTY", "エンプティ", "", 8),
+		("CAMERA", "カメラ", "", 9),
+		("LAMP", "ランプ", "", 10),
+		("SPEAKER", "スピーカー", "", 11),
 		]
-	type = bpy.props.EnumProperty(items=items, name="Type of hide objects")
+	type = bpy.props.EnumProperty(items=items, name="隠すオブジェクトのタイプ")
 	
 	def execute(self, context):
 		for obj in context.selectable_objects:
@@ -55,24 +55,24 @@ class HideOnlyType(bpy.types.Operator):
 
 class HideExceptType(bpy.types.Operator):
 	bl_idname = "object.hide_except_mesh"
-	bl_label = "I hide other than the specific type of object"
-	bl_description = "I will hide other than the specific type of object that is displayed"
+	bl_label = "特定の種類のオブジェクト以外を隠す"
+	bl_description = "表示されている特定タイプのオブジェクト以外を隠します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		("MESH", "Mesh", "", 1),
-		("CURVE", "Curve", "", 2),
+		("MESH", "メッシュ", "", 1),
+		("CURVE", "カーブ", "", 2),
 		("SURFACE", "サーフェイス", "", 3),
-		("META", "Meta", "", 4),
-		("FONT", "Font", "", 5),
-		("ARMATURE", "Armature", "", 6),
-		("LATTICE", "Lattice", "", 7),
-		("EMPTY", "Empty", "", 8),
-		("CAMERA", "Camera", "", 9),
-		("LAMP", "Lamp", "", 10),
-		("SPEAKER", "Speaker", "", 11),
+		("META", "メタボール", "", 4),
+		("FONT", "テキスト", "", 5),
+		("ARMATURE", "アーマチュア", "", 6),
+		("LATTICE", "ラティス", "", 7),
+		("EMPTY", "エンプティ", "", 8),
+		("CAMERA", "カメラ", "", 9),
+		("LAMP", "ランプ", "", 10),
+		("SPEAKER", "スピーカー", "", 11),
 		]
-	type = bpy.props.EnumProperty(items=items, name="Type of leave objects")
+	type = bpy.props.EnumProperty(items=items, name="残すオブジェクトのタイプ")
 	
 	def execute(self, context):
 		for obj in context.selectable_objects:
@@ -82,8 +82,8 @@ class HideExceptType(bpy.types.Operator):
 
 class ShowLayerGroupMenu(bpy.types.Operator):
 	bl_idname = "view3d.show_layer_group_menu"
-	bl_label = "Switch the display / non-display in a group"
-	bl_description = "I will switch the display / non-display in a group that belongs to"
+	bl_label = "グループで表示/非表示を切り替え"
+	bl_description = "所属しているグループで表示/非表示を切り替えます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -91,8 +91,8 @@ class ShowLayerGroupMenu(bpy.types.Operator):
 		return {'FINISHED'}
 class LayerGroupMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_layer_group"
-	bl_label = "Switch the display / non-display in a group"
-	bl_description = "I will switch the display / non-display in a group that belongs to"
+	bl_label = "グループで表示/非表示を切り替え"
+	bl_description = "所属しているグループで表示/非表示を切り替えます"
 	
 	def draw(self, context):
 		objs = []
@@ -110,17 +110,17 @@ class LayerGroupMenu(bpy.types.Menu):
 			for group in obj.users_group:
 				if (not group in groups):
 					groups.append(group)
-		self.layout.operator(ApplyLayerGroup.bl_idname, icon="PLUGIN", text="Group independents").group = ""
+		self.layout.operator(ApplyLayerGroup.bl_idname, icon="PLUGIN", text="グループ無所属").group = ""
 		self.layout.separator()
 		for group in groups:
 			self.layout.operator(ApplyLayerGroup.bl_idname, icon="PLUGIN", text=group.name).group = group.name
 class ApplyLayerGroup(bpy.types.Operator): #
 	bl_idname = "view3d.apply_layer_group"
-	bl_label = "Run to switch the display / non-display in a group"
-	bl_description = "I will switch the display / non-display in a group that belongs to"
+	bl_label = "グループで表示/非表示を切り替え実行"
+	bl_description = "所属しているグループで表示/非表示を切り替えます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	group = bpy.props.StringProperty(name="Group Name")
+	group = bpy.props.StringProperty(name="グループ名")
 	
 	def execute(self, context):
 		for obj in bpy.data.objects:

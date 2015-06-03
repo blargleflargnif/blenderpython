@@ -9,8 +9,8 @@ import os
 
 class ReloadAllImage(bpy.types.Operator):
 	bl_idname = "image.reload_all_image"
-	bl_label = "all of the image to re-read"
-	bl_description = "all the image data that refer to the external file I will re-read"
+	bl_label = "全ての画像を再読み込み"
+	bl_description = "外部ファイルを参照している画像データを全て読み込み直します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -27,25 +27,28 @@ class ReloadAllImage(bpy.types.Operator):
 
 class ResaveAllImage(bpy.types.Operator):
 	bl_idname = "image.resave_all_image"
-	bl_label = "I re-save all the images in the textures folder"
-	bl_description = "all the image data that refer to the external file I re-saved in the textures folder"
+	bl_label = "全ての画像をtexturesフォルダに保存し直す"
+	bl_description = "外部ファイルを参照している画像データを全てtexturesフォルダに保存し直します"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
 		if (context.blend_data.filepath == ""):
-			self.report(type={"ERROR"}, message="Run to Save the blend file")
+			self.report(type={"ERROR"}, message="blendファイルを保存してから実行して下さい")
 			return {'CANCELLED'}
 		for img in context.blend_data.images:
 			if (img.filepath != ""):
-				img.pack()
-				img.unpack()
-		self.report(type={"INFO"}, message="I was re-saved in the textures folder")
+				try:
+					img.pack()
+					img.unpack()
+				except RuntimeError:
+					pass
+		self.report(type={"INFO"}, message="texturesフォルダに保存し直しました")
 		return {'FINISHED'}
 
 class OpenRecentFiles(bpy.types.Operator):
 	bl_idname = "wm.open_recent_files"
-	bl_label = "Recent Files and I open a text"
-	bl_description = " Recent Files and I will open in a Blender text editor"
+	bl_label = "「最近使ったファイル」をテキストで開く"
+	bl_description = "「最近使ったファイル」をBlenderのテキストエディタで開きます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -76,8 +79,8 @@ class OpenRecentFiles(bpy.types.Operator):
 
 class OpenBookmarkText(bpy.types.Operator):
 	bl_idname = "wm.open_bookmark_text"
-	bl_label = "Bookmarks me open with a text"
-	bl_description = "file I open the browser bookmarks in Blender's text editor"
+	bl_label = "「ブックマーク」をテキストで開く"
+	bl_description = "ファイルブラウザのブックマークをBlenderのテキストエディタで開きます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):

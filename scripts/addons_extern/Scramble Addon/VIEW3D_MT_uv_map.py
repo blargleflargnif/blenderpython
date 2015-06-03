@@ -8,24 +8,24 @@ import bpy
 
 class CopyOtherUVMenuOperator(bpy.types.Operator): #
 	bl_idname = "uv.copy_other_uv_menu_operator"
-	bl_label = "Copied from other UV"
-	bl_description = "'m going to copy the active UV deployment from other UV"
+	bl_label = "他のUVからコピー"
+	bl_description = "アクティブなUV展開を他のUVからコピーしてきます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		obj = context.active_object
 		if (obj.type != 'MESH'):
-			self.report(type={"ERROR"}, message="Please run a mesh object")
+			self.report(type={"ERROR"}, message="メッシュオブジェクトで実行して下さい")
 			return {"CANCELLED"}
 		if (len(obj.data.uv_layers) < 2):
-			self.report(type={"ERROR"}, message="Run in the UV number of two or more")
+			self.report(type={"ERROR"}, message="UV数が2つ以上で実行して下さい")
 			return {"CANCELLED"}
 		bpy.ops.wm.call_menu(name=CopyOtherUVMenu.bl_idname)
 		return {'FINISHED'}
 class CopyOtherUVMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_uv_map_copy_other"
-	bl_label = "Copied from other UV"
-	bl_description = "I'm going to copy the active UV deployment from other UV"
+	bl_label = "他のUVからコピー"
+	bl_description = "アクティブなUV展開を他のUVからコピーしてきます"
 	
 	def draw(self, context):
 		me = context.active_object.data
@@ -34,11 +34,11 @@ class CopyOtherUVMenu(bpy.types.Menu):
 				self.layout.operator(CopyOtherUV.bl_idname, text=uv.name, icon="PLUGIN").uv = uv.name
 class CopyOtherUV(bpy.types.Operator):
 	bl_idname = "uv.copy_other_uv"
-	bl_label = "Copied from other UV"
-	bl_description = "Active UV deployment of selected portions, I'm going to copy from other UV"
+	bl_label = "他のUVからコピー"
+	bl_description = "選択部分のアクティブなUV展開を、他のUVからコピーしてきます"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	uv = bpy.props.StringProperty(name="Copy the original UV")
+	uv = bpy.props.StringProperty(name="コピー元UV")
 	
 	def execute(self, context):
 		obj = context.active_object

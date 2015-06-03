@@ -9,8 +9,8 @@ import bmesh
 
 class DeleteBySelectMode(bpy.types.Operator):
 	bl_idname = "mesh.delete_by_select_mode"
-	bl_label = "Remove the same elements as the selection mode"
-	bl_description = "I will remove the same elements as the current mesh selection mode (vertex, edge, face)"
+	bl_label = "選択モードと同じ要素を削除"
+	bl_description = "現在のメッシュ選択モードと同じ要素(頂点・辺・面)を削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -25,14 +25,14 @@ class DeleteBySelectMode(bpy.types.Operator):
 
 class DeleteHideMesh(bpy.types.Operator):
 	bl_idname = "mesh.delete_hide_mesh"
-	bl_label = "Remove hidden and are part"
-	bl_description = "I will remove all of hiding are state mesh"
+	bl_label = "隠している部分を削除"
+	bl_description = "隠している状態のメッシュを全て削除します"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		obj = context.active_object
 		if (obj.type != 'MESH'):
-			self.report(type={"ERROR"}, message="Not a mesh object")
+			self.report(type={"ERROR"}, message="メッシュオブジェクトではありません")
 			return {"CANCELLED"}
 		me = obj.data
 		bm = bmesh.from_edit_mesh(me)

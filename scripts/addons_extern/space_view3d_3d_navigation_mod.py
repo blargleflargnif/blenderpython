@@ -23,7 +23,7 @@
 
 bl_info = {
     "name": "3D Navigation_mod",
-    "author": "Demohero, uriel",
+    "author": "Demohero, uriel, meta-androcto",
     "version": (1, 2),
     "blender": (2, 71, 0),
     "location": "View3D > Tool Shelf > 3D Navigation Tab",
@@ -285,25 +285,25 @@ class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 		layout = self.layout
 		
 		box = layout.box()
-		box.label(text = 'User Ortho/Perspective Orbit')
+		box.label(text = 'User Persp/Ortho Orbit')
 		
 		row = box.row(align = True)
 		
 		rowr = box.row()
-		rowr.operator('opr.orbit_left_view',	text = '', icon = 'TRIA_LEFT')
-		rowr.operator('opr.orbit_right_view',	text = '', icon = 'TRIA_RIGHT')
+		rowr.operator('opr.orbit_right_view',	text = '', icon = 'TRIA_LEFT')
+		rowr.operator('opr.orbit_left_view',	text = '', icon = 'TRIA_RIGHT')
 		rowr.operator('opr.orbit_up_view', text = '', icon = 'TRIA_DOWN')
 		rowr.operator('opr.orbit_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()
 		
 		box = layout.box()
-		box.label(text = 'User Ortho/Perspective Pan')
+		box.label(text = 'User Persp/Ortho Pan')
 		
 		row = box.row(align = True)
 		
 		rowr = box.row()
-		rowr.operator('opr.pan_left_view',	text = '', icon = 'TRIA_LEFT')
-		rowr.operator('opr.pan_right_view',	text = '', icon = 'TRIA_RIGHT')
+		rowr.operator('opr.pan_right_view',	text = '', icon = 'TRIA_LEFT')
+		rowr.operator('opr.pan_left_view',	text = '', icon = 'TRIA_RIGHT')
 		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_DOWN')
 		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()

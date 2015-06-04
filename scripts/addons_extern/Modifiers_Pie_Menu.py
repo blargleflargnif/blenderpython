@@ -157,11 +157,12 @@ def register():
 # Unregister #
 ##############
 def unregister():
+
 	bpy.utils.unregister_class(AddModifier)
 	bpy.utils.unregister_class(AddModifier_Modify)
 	bpy.utils.unregister_class(AddModifier_Generate)
 	bpy.utils.unregister_class(AddModifier_Deform)
-
+	wm = bpy.context.window_manager
 	### Keymap ###
 	for km in addon_keymaps:
 		for kmi in km.keymap_items:

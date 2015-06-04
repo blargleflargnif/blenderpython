@@ -131,7 +131,7 @@ class CurToIntersect(bpy.types.Operator):
         for e in ob.data.edges:
             if e.select:
                 sel_edges.append(e)
-        bm.edges.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()        
         e1=bm.edges[sel_edges[0].index]
         e2=bm.edges[sel_edges[1].index]
         
@@ -239,6 +239,7 @@ class CurToIntersect(bpy.types.Operator):
                             bm.edges.new([bm.verts[-1],e1.verts[0]])
         
         if len(edges)==2:
+            bm.verts.ensure_lookup_table()
             bm.verts[-1].co=pts[0]
             bm.verts[-2].co=pts[0]
         if len(edges)==0:
@@ -256,8 +257,6 @@ class CurToIntersect(bpy.types.Operator):
                 if len(e1.verts[0].link_edges)==1: #自由端
                     e1.verts[0].co=pts[0]
                 else:
-                    bm.verts.ensure_lookup_table()
-                    bm.edges.ensure_lookup_table()
                     bm.edges.new([bm.verts[-1],e1.verts[0]])
                         
             if (e2.verts[0].co-pts[0]).length>(e2.verts[1].co-pts[0]).length:

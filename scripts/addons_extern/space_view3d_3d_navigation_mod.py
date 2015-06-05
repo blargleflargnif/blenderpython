@@ -25,7 +25,7 @@ bl_info = {
     "name": "3D Navigation_mod",
     "author": "Demohero, uriel, meta-androcto",
     "version": (1, 2),
-    "blender": (2, 71, 0),
+    "blender": (2, 74, 0),
     "location": "View3D > Tool Shelf > 3D Navigation Tab",
     "description": "Navigate the Camera & 3D View from the Toolshelf",
     "warning": "",

@@ -40,7 +40,7 @@ import bpy
 class OrbitUpView(bpy.types.Operator):
 	bl_idname = 'opr.orbit_up_view'
 	bl_label = 'Orbit Up View'
-	bl_description = 'Orbit the view around to the Up'
+	bl_description = 'Orbit the view towards'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_orbit(type = 'ORBITUP')
@@ -49,7 +49,7 @@ class OrbitUpView(bpy.types.Operator):
 class OrbitLeftView(bpy.types.Operator):
 	bl_idname = 'opr.orbit_left_view'
 	bl_label = 'Orbit Left View'
-	bl_description = 'Orbit the view around to the Left'
+	bl_description = 'Orbit the view around to the Right'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_orbit(type = 'ORBITLEFT')
@@ -58,7 +58,7 @@ class OrbitLeftView(bpy.types.Operator):
 class OrbitRightView(bpy.types.Operator):
 	bl_idname = 'opr.orbit_right_view'
 	bl_label = 'Orbit Right View'
-	bl_description = 'Orbit the view around to the Right'
+	bl_description = 'Orbit the view around to the Left'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_orbit(type = 'ORBITRIGHT')
@@ -67,7 +67,7 @@ class OrbitRightView(bpy.types.Operator):
 class OrbitDownView(bpy.types.Operator):
 	bl_idname = 'opr.orbit_down_view'
 	bl_label = 'Orbit Down View'
-	bl_description = 'Orbit the view around to the Down'
+	bl_description = 'Orbit the view away'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_orbit(type = 'ORBITDOWN')
@@ -76,7 +76,7 @@ class OrbitDownView(bpy.types.Operator):
 class PanUpView(bpy.types.Operator):
 	bl_idname = 'opr.pan_up_view'
 	bl_label = 'Pan Up View'
-	bl_description = 'Pan the view to the Up'
+	bl_description = 'Pan the view Down'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_pan(type = 'PANUP')
@@ -84,8 +84,8 @@ class PanUpView(bpy.types.Operator):
 		
 class PanLeftView(bpy.types.Operator):
 	bl_idname = 'opr.pan_left_view'
-	bl_label = 'Pan Left View'
-	bl_description = 'Pan the view to the Left'
+	bl_label = 'Pan Right View'
+	bl_description = 'Pan the view to your Right'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_pan(type = 'PANLEFT')
@@ -93,8 +93,8 @@ class PanLeftView(bpy.types.Operator):
 		
 class PanRightView(bpy.types.Operator):
 	bl_idname = 'opr.pan_right_view'
-	bl_label = 'Pan Righ Viewt'
-	bl_description = 'Pan the view to the Right'
+	bl_label = 'Pan Left View'
+	bl_description = 'Pan the view to your Left'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_pan(type = 'PANRIGHT')
@@ -103,7 +103,7 @@ class PanRightView(bpy.types.Operator):
 class PanDownView(bpy.types.Operator):
 	bl_idname = 'opr.pan_down_view'
 	bl_label = 'Pan Down View'
-	bl_description = 'Pan the view to the Down'
+	bl_description = 'Pan the view up'
 	
 	def execute(self, context):
 		bpy.ops.view3d.view_pan(type = 'PANDOWN')
@@ -283,31 +283,29 @@ class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 	
 	def draw(self, context):
 		layout = self.layout
+
+		row = layout.row()
 		
-		box = layout.box()
-		box.label(text = 'User Persp/Ortho Orbit')
-		
-		row = box.row(align = True)
-		
+		box = row.box()
+		box.label(text = 'Orbit:')
 		rowr = box.row()
 		rowr.operator('opr.orbit_right_view',	text = '', icon = 'TRIA_LEFT')
 		rowr.operator('opr.orbit_left_view',	text = '', icon = 'TRIA_RIGHT')
+		rowr = box.row()
 		rowr.operator('opr.orbit_up_view', text = '', icon = 'TRIA_DOWN')
 		rowr.operator('opr.orbit_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()
+
 		
-		box = layout.box()
-		box.label(text = 'User Persp/Ortho Pan')
-		
-		row = box.row(align = True)
-		
+		box = row.box()
+		box.label(text = 'Pan:')
 		rowr = box.row()
 		rowr.operator('opr.pan_right_view',	text = '', icon = 'TRIA_LEFT')
 		rowr.operator('opr.pan_left_view',	text = '', icon = 'TRIA_RIGHT')
+		rowr = box.row()
 		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_DOWN')
 		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()
-		
 		row = layout.row()
 		
 		box = row.box()

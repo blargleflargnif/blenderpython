@@ -63,26 +63,7 @@ class oa_buf():
     list_0 = []
 
 #
-class oa_p0(bpy.types.Panel):
 
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_label = 'Object align'
-    bl_context = 'objectmode'
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(context.scene.my_custom_props, 't', expand = True)
-        spl = layout.split(2/3)
-        spl.label('Store data :')
-        spl.operator('oa.op0_id', text = 'object')
-        row = layout.row(align = True)
-        row.operator('oa.op1_id', text = 'x')
-        row.operator('oa.op2_id', text = 'y')
-        row.operator('oa.op3_id', text = 'z')
-        spl = layout.split(0.80)
-        spl.operator('oa.op4_id', text = 'Custom')
-        spl.operator('oa.hp_id', text = '?')
 
 #
 class oa_msg_popup(bpy.types.Operator, oa_buf):
@@ -279,22 +260,5 @@ class oa_op4(bpy.types.Operator):
             row.prop(self, 'z_')
 
 
-class_list = [ oa_p0, oa_op0, oa_op1, oa_op2, oa_op3, oa_op4, oa_h_popup, oa_msg_popup, oa_p_group0 ]
+class_list = [ oa_op0, oa_op1, oa_op2, oa_op3, oa_op4, oa_h_popup, oa_msg_popup, oa_p_group0 ]
 
-
-def register():
-    for c in class_list:
-        bpy.utils.register_class(c)
-
-    bpy.types.Scene.my_custom_props = PointerProperty(type = oa_p_group0)
-
-#
-def unregister():
-    for c in class_list:
-        bpy.utils.unregister_class(c)
-
-    del bpy.context.scene['my_custom_props']
-
-#
-if __name__ == "__main__":
-    register()

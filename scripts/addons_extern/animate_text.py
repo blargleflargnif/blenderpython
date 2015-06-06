@@ -15,6 +15,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+## by LeoMoon Studios, Marcin Zielinski, Martin Wacker, Bassam Kurdali, Jared Felsman, meta-androcto ##
 
 bl_info = {
     "name": "Text Animate",

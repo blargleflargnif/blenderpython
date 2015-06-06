@@ -25,7 +25,7 @@ bl_info = {
     "name": "3D Navigation_mod",
     "author": "Demohero, uriel, meta-androcto",
     "version": (1, 2),
-    "blender": (2, 74, 0),
+    "blender": (2, 71, 0),
     "location": "View3D > Tool Shelf > 3D Navigation Tab",
     "description": "Navigate the Camera & 3D View from the Toolshelf",
     "warning": "",
@@ -275,7 +275,7 @@ class VIEW3D_PT_3dnavigationPanel(bpy.types.Panel):
 
 class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 	bl_idname = 'pan.navigation'
-	bl_label = 'Orbit Pan Zoom Roll'
+	bl_label = 'Pan Orbit Zoom Roll'
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
 	bl_category = 'Navigation'
@@ -285,26 +285,27 @@ class VIEW3D_PT_pan_navigation(bpy.types.Panel):
 		layout = self.layout
 
 		row = layout.row()
-		
+		box = row.box()
+		box.label(text = 'Pan:')
+		rowr = box.row()
+		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_DOWN')
+		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_UP')
+
+		rowr = box.row()
+		rowr.operator('opr.pan_right_view',	text = '', icon = 'BACK')	
+		rowr.operator('opr.pan_left_view',	text = '', icon = 'FORWARD')
+
+		rowr = box.row()
+
 		box = row.box()
 		box.label(text = 'Orbit:')
-		rowr = box.row()
-		rowr.operator('opr.orbit_right_view',	text = '', icon = 'TRIA_LEFT')
-		rowr.operator('opr.orbit_left_view',	text = '', icon = 'TRIA_RIGHT')
 		rowr = box.row()
 		rowr.operator('opr.orbit_up_view', text = '', icon = 'TRIA_DOWN')
 		rowr.operator('opr.orbit_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()
+		rowr.operator('opr.orbit_right_view',	text = '', icon = 'BACK')
+		rowr.operator('opr.orbit_left_view',	text = '', icon = 'FORWARD')		
 
-		
-		box = row.box()
-		box.label(text = 'Pan:')
-		rowr = box.row()
-		rowr.operator('opr.pan_right_view',	text = '', icon = 'TRIA_LEFT')
-		rowr.operator('opr.pan_left_view',	text = '', icon = 'TRIA_RIGHT')
-		rowr = box.row()
-		rowr.operator('opr.pan_up_view', text = '', icon = 'TRIA_DOWN')
-		rowr.operator('opr.pan_down_view', text = '', icon = 'TRIA_UP')
 		rowr = box.row()
 		row = layout.row()
 		

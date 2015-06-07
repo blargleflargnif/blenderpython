@@ -85,37 +85,3 @@ class VIEW3D_MT_Multiselect_Menu(bpy.types.Menu):
         prop.data_path = "tool_settings.mesh_select_mode"
         layout.separator()
 
-def register():
-    bpy.utils.register_module(__name__)
-    
-    #add multiselect keybinding
-    km = bpy.context.window_manager.keyconfigs.active.keymaps['Mesh']
-    kmi = km.keymap_items.new('wm.call_menu', 'TAB', 'PRESS', ctrl=True)
-    kmi.properties.name = "VIEW3D_MT_Multiselect_Menu"
-
-    #remove default keybinding
-    km = bpy.context.window_manager.keyconfigs.active.keymaps['Mesh']
-    for kmi in km.keymap_items:
-        if kmi.idname == 'wm.call_menu':
-            if kmi.properties.name == "VIEW3D_MT_edit_mesh_select_mode":
-                km.keymap_items.remove(kmi)
-                break
-
-def unregister():
-    bpy.utils.unregister_module(__name__)
-
-    #remove multiselect keybinding
-    km = bpy.context.window_manager.keyconfigs.active.keymaps['Mesh']
-    for kmi in km.keymap_items:
-        if kmi.idname == 'wm.call_menu':
-            if kmi.properties.name == "VIEW3D_MT_Multiselect_Menu":
-                km.keymap_items.remove(kmi)
-                break
-
-    #replace default keymap
-    km = bpy.context.window_manager.keyconfigs.active.keymaps['Mesh']
-    kmi = km.keymap_items.new('wm.call_menu', 'TAB', 'PRESS', ctrl=True)
-    kmi.properties.name = "VIEW3D_MT_edit_mesh_select_mode"
-
-if __name__ == "__main__":
-    register()

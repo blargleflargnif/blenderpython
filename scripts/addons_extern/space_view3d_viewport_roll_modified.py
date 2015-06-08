@@ -24,7 +24,7 @@ class RollViewportCW(bpy.types.Operator):
     '''Roll the viewport clockwise.'''
     bl_idname = "view3d.roll_viewport_cw"
     bl_label = "Roll the viewport clockwise"
-    bl_options = {'GRAB_POINTER'}
+    bl_options = {'GRAB_CURSOR'}
 
     def execute(self, context):
         v3d = context.space_data
@@ -42,7 +42,7 @@ class RollViewportCCW(bpy.types.Operator):
     '''Roll the viewport counterclockwise.'''
     bl_idname = "view3d.roll_viewport_ccw"
     bl_label = "Roll the viewport counterclockwise"
-    bl_options = {'GRAB_POINTER'}
+    bl_options = {'GRAB_CURSOR'}
 
     def execute(self, context):
         v3d = context.space_data
@@ -60,7 +60,7 @@ class RollViewport(bpy.types.Operator):
     '''Roll the viewport.'''
     bl_idname = "view3d.roll_viewport"
     bl_label = "Roll the viewport"
-    bl_options = {'GRAB_POINTER'}
+    bl_options = {'GRAB_CURSOR'}
 
     initial_angle=0
     angle_now=0

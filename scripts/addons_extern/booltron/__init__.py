@@ -32,7 +32,7 @@ bl_info = {
 	"warning": "",
 	"wiki_url": "http://jewelcourses.com",
 	"tracker_url": "http://jewelcourses.com",
-	"category": "Mesh"}
+	"category": "Object"}
 
 if "bpy" in locals():
 	import importlib

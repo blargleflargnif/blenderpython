@@ -139,7 +139,8 @@ class Agregar(bpy.types.Operator):
 class PanelA(bpy.types.Panel):
     bl_label = 'Aggregate mesh'
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_region_type = 'TOOLS'
+    bl_category = "Addons"
 
     def draw(self, context):
         wm = context.window_manager
@@ -177,7 +178,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(Agregar)
-    bpy.utils.unregister_class(PanelaA)
+    bpy.utils.unregister_class(PanelA)
 
 if __name__ == '__main__':
     register()

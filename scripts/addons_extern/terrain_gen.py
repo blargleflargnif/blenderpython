@@ -5,7 +5,7 @@ bl_info = {
         "blender": (2, 67, 0),
         "location": "View3D > Add > Mesh",
         "description": "Adds Terrain",
-        "category": "Object"}
+        "category": "Add Mesh"}
 
 import bpy
 import bmesh

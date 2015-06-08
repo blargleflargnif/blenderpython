@@ -210,6 +210,7 @@ try:
                 self.select_vert(each.index)
 
         def select_face(self, index):
+            self.b.faces.ensure_lookup_table()
             face = self.b.faces[index]
             face.select = True
             for each in face.edges:
@@ -398,7 +399,7 @@ try:
 
         @classmethod
         def poll(cls, context):
-            return has_active_mesh(context)
+            return has_active_mesh(context) and is_edit_mode()
 
         def execute(self, context):
             original_mode = bpy.context.mode
@@ -441,10 +442,11 @@ try:
         bl_region_type = 'WINDOW'
         bl_context = 'data'
         bl_label = SUBPANEL_LABEL
+        bl_options = {'DEFAULT_CLOSED'}
 
         @classmethod
         def poll(cls, context):
-            return has_active_mesh(context)
+            return has_active_mesh(context) and is_edit_mode()
 
         def draw(self, context):
             layout = self.layout
@@ -458,20 +460,20 @@ try:
             left.operator(
                 'meshlint.select', text='Select Lint', icon='EDITMODE_HLT')
 
-            right = split.column()
-            if MeshLintVitalizer.is_live:
-                live_label = 'Pause Checking...'
-                play_pause = 'PAUSE'
-            else:
-                live_label = 'Continuous Check!'
-                play_pause = 'PLAY'
-            right.operator(
-                'meshlint.live_toggle', text=live_label, icon=play_pause)
-            
-            layout.split().operator(
-                'meshlint.objects_deselect',
-                text='Deselect all Lint-free Objects',
-                icon='UV_ISLANDSEL')
+#            right = split.column()
+#           if MeshLintVitalizer.is_live:
+#                live_label = 'Pause Checking...'
+#                play_pause = 'PAUSE'
+#            else:
+#                live_label = 'Continuous Check!'
+#                play_pause = 'PLAY'
+#            right.operator(
+#                'meshlint.live_toggle', text=live_label, icon=play_pause)
+#            
+#            layout.split().operator(
+#                'meshlint.objects_deselect',
+#                text='Deselect all Lint-free Objects',
+#                icon='UV_ISLANDSEL')
 
         def add_criticism(self, layout, context):
             col = layout.column()

@@ -8,7 +8,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/3D_interaction/Datablock_Tools",
     "tracker_url": "",
-    "category": "3D View"}
+    "category": "Object"}
 	
 import bpy
 import os
@@ -135,7 +135,7 @@ def register():
 
 
 def unregister():
-    bpy.utils.register_class(CleanImagesOP)
+    bpy.utils.unregister_class(CleanImagesOP)
     bpy.utils.unregister_class(CleanMaterialsOP)
     bpy.utils.unregister_class(SetInstanceOP)
     bpy.utils.unregister_class(DatablockToolsMenu)

@@ -47,32 +47,4 @@ class MESH_OT_CallContextMenu(bpy.types.Operator):
         else:
             return bpy.ops.wm.call_menu(name=MESH_MT_CombinedMenu.bl_idname)
         
-classes = [ MESH_MT_CombinedMenu,
-            MESH_OT_CallContextMenu ]
 
-    
-def register():
-    # add operator
-    for c in classes:
-        bpy.utils.register_class(c)
-
-    # add keymap entry
-    
-    wm = bpy.context.window_manager
-    km = wm.keyconfigs.addon.keymaps.new(name='3D View', space_type='VIEW_3D')
-    kmi = km.keymap_items.new('mesh.addon_call_context_menu', 'RIGHTMOUSE', 'DOUBLE_CLICK')
-
-
-def unregister():
-    # remove keymap entry
-    for km, kmi in addon_keymaps:
-        km.keymap_items.remove(kmi)
-    addon_keymaps.clear()
-    
-    # remove operator and preferences
-    for c in reversed(classes):
-        bpy.utils.unregister_class(c)
-
-
-if __name__ == "__main__":
-    register()

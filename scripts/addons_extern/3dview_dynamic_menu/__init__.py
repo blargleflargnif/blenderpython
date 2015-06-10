@@ -34,12 +34,17 @@ if "bpy" in locals():
     importlib.reload(manipulator_Menu)
     importlib.reload(multiselect_menu)
     importlib.reload(edit_context_mode)
+    importlib.reload(toolshelf_menu)
+    importlib.reload(navigation)
+
 
 else:
     from . import spacebar_menu
     from . import manipulator_Menu
     from . import multiselect_menu
     from . import edit_context_mode
+    from . import toolshelf_menu
+    from . import navigation
 
 import bpy
 
@@ -49,16 +54,12 @@ class AddonPreferences1(bpy.types.AddonPreferences):
 	
 	def draw(self, context):
 		layout = self.layout
-		layout.label(text="3d View Mode Sensitive Menu")
-		layout.label(text="---------------------------")
-		layout.label(text="Dynamic Spacebar Menu, Hotkey: spacebar")
-		layout.label(text="Menu's for 3d window types & modes")
-		layout.label(text="Multi Select Menu, Hotkey ctrl/tab")
-		layout.label(text="Extend the Edit Mesh Select Mode menu to include combinations")
-		layout.label(text="Manipulator Menu, Hotkey ctrl/spacebar")
-		layout.label(text="Extend the Manipulator menu to include combinations")
-		layout.label(text="Edit Context Menu, Hotkey, Right Mouse Double Click")
-		layout.label(text="Double Click Select Vert Edge Face for menu")
+		layout.label(text="Key Maps:")
+		layout.label(text="Dynamic Spacebar Menu: Hotkey: spacebar")
+		layout.label(text="Multi Select Menu: Hotkey ctrl/tab")
+		layout.label(text="Manipulator Menu: Hotkey ctrl/spacebar")
+		layout.label(text="Select Vert Edge Face Menu: Hotkey, Right Mouse/Double Click")
+
 
 def register():
     bpy.utils.register_module(__name__)

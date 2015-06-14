@@ -2,14 +2,10 @@
 
 import bpy
 import zipfile, urllib.request, os, sys, re
-import csv, codecs
+import csv
 import collections
 import subprocess
-import webbrowser
-try:
-	import winreg
-except:
-	pass
+import winreg
 
 ################
 # オペレーター #
@@ -52,7 +48,7 @@ class UpdateScrambleAddon(bpy.types.Operator):
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
-		response = urllib.request.urlopen("https://github.com/saidenka/Blender-Scramble-Addon/archive/master.zip")
+#		response = urllib.request.urlopen("https://github.com/saidenka/Blender-Scramble-Addon/archive/master.zip")
 		tempDir = bpy.app.tempdir
 		zipPath = os.path.join(tempDir, "Blender-Scramble-Addon-master.zip")
 		addonDir = os.path.dirname(__file__)
@@ -81,7 +77,7 @@ class ShowShortcutHtml(bpy.types.Operator):
 	def execute(self, context):
 		addonDir = os.path.dirname(__file__)
 		keyDatas = collections.OrderedDict()
-		with codecs.open(os.path.join(addonDir, "ShortcutHtmlKeysData.csv"), 'r', 'utf-8') as f:
+		with open(os.path.join(addonDir, "ShortcutHtmlKeysData.csv"), 'r') as f:
 			reader = csv.reader(f)
 			for row in reader:
 				name = row[1]
@@ -155,14 +151,14 @@ class ShowShortcutHtml(bpy.types.Operator):
 						title = title + i[0]
 						alreadys.append(i[0])
 			areaStrings = areaStrings+ '<area href="#" title="' +title+ '" shape="' +data["shape"]+ '" coords="' +data["coords"]+ '">\n'
-		file = codecs.open(os.path.join(addonDir, "ShortcutHtmlTemplate.html"), 'r', 'utf-8')
+		file = open(os.path.join(addonDir, "ShortcutHtmlTemplate.html"), "r")
 		template = file.read()
 		file.close()
 		template = template.replace("<!-- [AREAS] -->", areaStrings)
-		file = codecs.open(os.path.join(addonDir, "ShortcutHtmlTemp.html"), "w", 'utf-8')
+		file = open(os.path.join(addonDir, "ShortcutHtmlTemp.html"), "w")
 		file.write(template)
 		file.close()
-		webbrowser.open(os.path.join(addonDir, "ShortcutHtmlTemp.html"))
+		os.system('"' + os.path.join(addonDir, "ShortcutHtmlTemp.html") + '"')
 		return {'FINISHED'}
 
 class RegisterLastCommandKeyconfig(bpy.types.Operator):
@@ -563,10 +559,10 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.menu(ShortcutsMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(AssociateMenu.bl_idname, icon="PLUGIN")
+#		self.layout.menu(ShortcutsMenu.bl_idname, icon="PLUGIN")
+#		self.layout.menu(AssociateMenu.bl_idname, icon="PLUGIN")
 		self.layout.separator()
-
+#		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
 	self.layout.separator()
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='CANCEL').id = __name__.split('.')[-1]

@@ -16,15 +16,15 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 # Contributed to by
-# Pontiac, Fourmadmen, varkenvarken, tuga3d, meta-androcto, metalliandy, dreampainter & cotejrp1#
+# #
 
 bl_info = {
-    "name": "Mesh: Icicle/Snowflake",
-    "author":"Eoin Brennan (Mayeoin Bread)",
+    "name": "Siding & Floor",
+    "author":"Various",
     "version": (0, 1, 0),
     "blender": (2, 74, 0),
     "location": "View3D > Add > Mesh",
-    "description": "Add Icicle & Snowflake",
+    "description": "Add Siding & Floor Types",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Add_Mesh/Add_Extra",
@@ -33,35 +33,43 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(add_mesh_icicle_gen)
-    importlib.reload(add_mesh_snowflake)
+    importlib.reload(add_mesh_drystone)
+    importlib.reload(add_mesh_floor_planks)
+    importlib.reload(add_mesh_plancher)
+    importlib.reload(add_mesh_siding)
 
 
 else:
-    from . import add_mesh_icicle_gen
-    from . import add_mesh_snowflake
-
+    from . import add_mesh_drystone
+    from . import add_mesh_floor_planks
+    from . import add_mesh_plancher
+    from . import add_mesh_siding
 
 import bpy
 
-class INFO_MT_mesh_icy_add(bpy.types.Menu):
+class INFO_MT_mesh_floorwall_add(bpy.types.Menu):
     # Define the "Ice" menu
-    bl_idname = "INFO_MT_mesh_ice_add"
-    bl_label = "Ice & Snow"
+    bl_idname = "INFO_MT_mesh_floorwall_add"
+    bl_label = "Floors & Walls"
 
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("mesh.icicle_gen",
-            text="Icicle Generator")
-        layout.operator("mesh.snowflake",
-            text="Snowflake")
+        layout.operator("mesh.primitive_add_siding",
+            text = "Siding")
+        layout.operator("mesh.drystone",
+            text="Drystone")
+        layout.operator("mesh.floor_boards_add",
+            text="Floor Boards")
+        layout.operator("mesh.ajout_primitive",
+            text="Plancher")
 
 # Register all operators and panels
 
 # Define "Extras" menu
 def menu_func(self, context):
-    self.layout.menu("INFO_MT_mesh_ice_add", text="Ice & Snow")
+    self.layout.menu("INFO_MT_mesh_floorwall_add", text="Floors & Walls", icon = "UV_ISLANDSEL")
+
 
 def register():
     bpy.utils.register_module(__name__)
@@ -70,10 +78,11 @@ def register():
     bpy.types.INFO_MT_mesh_add.append(menu_func)
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
 
-    # Remove "Extras" menu from the "Add Mesh" menu.
+# Remove "Extras" menu from the "Add Mesh" menu.
     bpy.types.INFO_MT_mesh_add.remove(menu_func)
+
+    bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
     register()

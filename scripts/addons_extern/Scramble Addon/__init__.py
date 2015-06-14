@@ -1,21 +1,26 @@
-# アドオンを読み込む時に最初にこのファイルが読み込まれます
+# get the folder modules
+
 import os, csv, codecs
 from .add_mesh_objects import INFO_MT_mesh_add
-# アドオン情報
+from .add_curve_objects import INFO_MT_curve_add
+from .modifiers import DATA_PT_modifiers
+
+# Blender Addon Information
 bl_info = {
-	"name" : "Scramble Menu's",
+	"name" : "Scramble Addon",
 	"author" : "さいでんか(saidenka)",
 	"version" : (0,1),
-	"blender" : (2, 75, 0),
-	"location" : "様々なメニューの末尾",
-	"description" : "さいでんか制作の拡張機能群の詰め合わせ",
+	"blender" : (2, 7),
+	"location" : "Everywhere",
+	"description" : "Extended Menu's",
 	"warning" : "",
 	"wiki_url" : "http://github.com/saidenka/Blender-Scramble-Addon",
 	"tracker_url" : "http://github.com/saidenka/Blender-Scramble-Addon/issues",
-	"category" : "3D View"
+	"category" : "Interface"
 }
 
-# サブスクリプト群をインポート
+# get the py modules
+
 if "bpy" in locals():
 	import imp
 	imp.reload(IMAGE_MT_image)
@@ -23,7 +28,6 @@ if "bpy" in locals():
 	imp.reload(IMAGE_MT_view)
 	imp.reload(INFO_MT_file)
 	imp.reload(INFO_MT_file_external_data)
-	imp.reload(INFO_MT_mesh_add)
 	imp.reload(INFO_MT_render)
 	imp.reload(INFO_MT_window)
 	imp.reload(MATERIAL_MT_specials)
@@ -59,13 +63,16 @@ if "bpy" in locals():
 	imp.reload(VIEW3D_MT_view_align_selected)
 	imp.reload(VIEW3D_MT_snap)
 	imp.reload(VIEW3D_MT_uv_map)
+	imp.reload(USERPREF_HT_header)
+	imp.reload(PROPERTIES_HT_header)
+	imp.reload(DATA_PT_uv_texture)
+	imp.reload(DATA_PT_vertex_colors)
 else:
 	from . import IMAGE_MT_image
 	from . import IMAGE_MT_select
 	from . import IMAGE_MT_view
 	from . import INFO_MT_file
 	from . import INFO_MT_file_external_data
-	from . import INFO_MT_mesh_add
 	from . import INFO_MT_render
 	from . import INFO_MT_window
 	from . import MATERIAL_MT_specials
@@ -101,26 +108,33 @@ else:
 	from . import VIEW3D_MT_view_align_selected
 	from . import VIEW3D_MT_snap
 	from . import VIEW3D_MT_uv_map
-
+	from . import USERPREF_HT_header
+	from . import PROPERTIES_HT_header
+	from . import DATA_PT_uv_texture
+	from . import DATA_PT_vertex_colors
 import bpy
 
-# アドオン設定
+# Addons Preferences
 class AddonPreferences(bpy.types.AddonPreferences):
 	bl_idname = __name__
 	
-	disabled_menu = bpy.props.StringProperty(name="無効なメニュー", default="")
-	use_disabled_menu = bpy.props.BoolProperty(name="「追加項目のオン/オフ」の非表示", default=True)
+	disabled_menu = bpy.props.StringProperty(name="Disable Menu", default="")
+	use_disabled_menu = bpy.props.BoolProperty(name="Use Disabled menu", default=False)
+	view_savedata = bpy.props.StringProperty(name="View Saved Data", default="")
+	key_config_xml_path = bpy.props.StringProperty(name="XML Key Path Config", default="BlenderKeyConfig.xml")
 	
 	def draw(self, context):
 		layout = self.layout
 		layout.prop(self, 'disabled_menu')
 		layout.prop(self, 'use_disabled_menu')
+		layout.prop(self, 'view_savedata')
+		layout.prop(self, 'key_config_xml_path')
 
 # 追加メニューの有効/無効
 class ToggleMenuEnable(bpy.types.Operator):
 	bl_idname = "wm.toggle_menu_enable"
-	bl_label = "追加項目のオン/オフ"
-	bl_description = "ScrambleAddonによる追加メニューを有効/無効に切り替えます"
+	bl_label = "Menu Enable Toggle"
+	bl_description = "Scramble on/off"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	id = bpy.props.StringProperty()
@@ -161,13 +175,14 @@ def register():
 	
 	translation_dict = GetTranslationDict()
 	bpy.app.translations.register(__name__, translation_dict)
-	
+
+	bpy.types.INFO_MT_mesh_add.append(INFO_MT_mesh_add.menu)
+	bpy.types.INFO_MT_curve_add.append(INFO_MT_curve_add.menu)
 	bpy.types.IMAGE_MT_image.append(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.append(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.append(IMAGE_MT_view.menu)
 	bpy.types.INFO_MT_file.append(INFO_MT_file.menu)
 	bpy.types.INFO_MT_file_external_data.append(INFO_MT_file_external_data.menu)
-	bpy.types.INFO_MT_mesh_add.append(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_render.append(INFO_MT_render.menu)
 	bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
 	bpy.types.MATERIAL_MT_specials.append(MATERIAL_MT_specials.menu)
@@ -203,19 +218,25 @@ def register():
 	bpy.types.VIEW3D_MT_view_align_selected.append(VIEW3D_MT_view_align_selected.menu)
 	bpy.types.VIEW3D_MT_snap.append(VIEW3D_MT_snap.menu)
 	bpy.types.VIEW3D_MT_uv_map.append(VIEW3D_MT_uv_map.menu)
-
+	bpy.types.USERPREF_HT_header.append(USERPREF_HT_header.menu)
+	bpy.types.PROPERTIES_HT_header.append(PROPERTIES_HT_header.menu)
+	bpy.types.DATA_PT_modifiers.append(DATA_PT_modifiers.menu)
+	bpy.types.DATA_PT_uv_texture.append(DATA_PT_uv_texture.menu)
+	bpy.types.DATA_PT_vertex_colors.append(DATA_PT_vertex_colors.menu)
+		
 # プラグインをアンインストールしたときの処理
 def unregister():
-	bpy.utils.unregister_module(__name__)
+
 	
 	bpy.app.translations.unregister(__name__)
-	
+
+	bpy.types.INFO_MT_mesh_add.remove(INFO_MT_mesh_add.menu)
+	bpy.types.INFO_MT_curve_add.remove(INFO_MT_curve_add.menu)		
 	bpy.types.IMAGE_MT_image.remove(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.remove(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.remove(IMAGE_MT_view.menu)
 	bpy.types.INFO_MT_file.remove(INFO_MT_file.menu)
 	bpy.types.INFO_MT_file_external_data.remove(INFO_MT_file_external_data.menu)
-	bpy.types.INFO_MT_mesh_add.remove(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_render.remove(INFO_MT_render.menu)
 	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
 	bpy.types.MATERIAL_MT_specials.remove(MATERIAL_MT_specials.menu)
@@ -251,7 +272,13 @@ def unregister():
 	bpy.types.VIEW3D_MT_view_align_selected.remove(VIEW3D_MT_view_align_selected.menu)
 	bpy.types.VIEW3D_MT_snap.remove(VIEW3D_MT_snap.menu)
 	bpy.types.VIEW3D_MT_uv_map.remove(VIEW3D_MT_uv_map.menu)
+	bpy.types.USERPREF_HT_header.remove(USERPREF_HT_header.menu)
+	bpy.types.PROPERTIES_HT_header.remove(PROPERTIES_HT_header.menu)
+	bpy.types.DATA_PT_modifiers.remove(DATA_PT_modifiers.menu)
+	bpy.types.DATA_PT_uv_texture.remove(DATA_PT_uv_texture.menu)
+	bpy.types.DATA_PT_vertex_colors.remove(DATA_PT_vertex_colors.menu)
 
+	bpy.utils.unregister_module(__name__)
 # メイン関数
 if __name__ == "__main__":
 	register()

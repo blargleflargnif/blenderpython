@@ -97,7 +97,7 @@ class SetAllSubsurfRenderLevels(bpy.types.Operator):
 	
 	def execute(self, context):
 		for obj in bpy.data.objects:
-			if (obj.type != 'MESH'):
+			if (obj.type != 'MESH' and obj.type != 'CURVE'):
 				continue
 			for mod in obj.modifiers:
 				if (mod.type == 'SUBSURF'):

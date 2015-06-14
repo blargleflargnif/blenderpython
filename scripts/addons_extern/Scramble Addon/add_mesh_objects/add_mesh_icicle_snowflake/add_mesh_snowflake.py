@@ -1,7 +1,7 @@
 bl_info = {"name":"Snowflake Generator",
            "author":"Eoin Brennan (Mayeoin Bread)",
-           "version":(1,1),
-           "blender":(2,6,9),
+           "version":(1,2),
+           "blender":(2,7,4),
            "location":"View3D > Add > Mesh",
            "descrition":"Adds a randomly generated snowflake",
            "warning":"",
@@ -50,13 +50,13 @@ class SnowflakeGen(bpy.types.Operator):
             return obj
         #select a single vert
         def selVert(par):
-            bpy.ops.mesh.select_all(action = 'DESELECT')
             bm.verts.ensure_lookup_table()
+            bpy.ops.mesh.select_all(action = 'DESELECT')
             bm.verts[par].select = True
         #select a single edge
         def selEdge(par):
-            bpy.ops.mesh.select_all(action = 'DESELECT')
             bm.edges.ensure_lookup_table()
+            bpy.ops.mesh.select_all(action = 'DESELECT')
             bm.edges[par].select = True
         #select last added vert
         def selLasVert():
@@ -106,6 +106,7 @@ class SnowflakeGen(bpy.types.Operator):
             legVec = Vector((length*sin(angle),length*cos(angle),0.0))
             extMov(legVec)
         obj = addObj()
+        bm = bmesh.from_edit_mesh(obj.data)
         if obj.type == "MESH":
             if obj.mode == "OBJECT":
                 bpy.ops.object.mode_set(mode = "EDIT")
@@ -113,6 +114,8 @@ class SnowflakeGen(bpy.types.Operator):
                 #delete all verts
                 bpy.ops.mesh.select_all(action = 'SELECT')
                 bpy.ops.mesh.delete(type='VERT')
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
                 #add circle (base for snowflake)
                 bpy.ops.mesh.primitive_circle_add(
                     vertices=self.numV,
@@ -122,7 +125,8 @@ class SnowflakeGen(bpy.types.Operator):
                     rotation=(0.0,0.0,0.0),
                     view_align=False,
                     enter_editmode=True)
-                bm = bmesh.from_edit_mesh(obj.data)
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
                 #variables...
                 rnum = randint(0,1)
                 if rnum == 0:
@@ -171,13 +175,14 @@ class SnowflakeGen(bpy.types.Operator):
                 dd = d
                 d = d*uniform(0.4,1.0)
                 #Position new vert
-                lastVert = numVerts()
                 bm.verts.ensure_lookup_table()
+                lastVert = numVerts()
                 bm.verts[lastVert].co = root
                 bm.verts[lastVert].co.y = root.y + (vCount-1)*(d*rando*2)/vCount
                 #Extrude right leg
                 extLeg(lastVert,(4*dd/d)/vCount,0)
                 #Extrude left leg
+                bm.verts.ensure_lookup_table()
                 extLeg(lastVert,(4*dd/d)/vCount,1)
                 ##
                 #   if d < 0.8*dd, add 1 or two more sets of legs on end
@@ -190,13 +195,16 @@ class SnowflakeGen(bpy.types.Operator):
                     lastEdge = numEdges()
                     selEdge(ringEdge-1)
                     subdiv(randleg)
+                    bm.verts.ensure_lookup_table()
+                    bm.edges.ensure_lookup_table()
                     lastVert = numVerts()
                     for l in range(randleg):
-                        bm.verts.ensure_lookup_table()
                         mlva.append(bm.verts[lastVert].index - l)
                     hg = (4*dd/d)/vCount - len(mlva)*(d/2)
                     for l in range(len(mlva)):
+                        bm.verts.ensure_lookup_table()
                         extLeg(mlva[l],hg,0)
+                        bm.verts.ensure_lookup_table()
                         extLeg(mlva[l],hg,1)
                         hg = hg+d/2
                     s3 = 0
@@ -206,6 +214,8 @@ class SnowflakeGen(bpy.types.Operator):
                 lastEdge = numEdges()
                 selEdge(ringEdge)
                 subdiv(numRings)
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
                 lastVert = numVerts()
                 outerRingLoops = []
                 for i in range(numRings):
@@ -214,6 +224,7 @@ class SnowflakeGen(bpy.types.Operator):
                     selVert(outerRingLoops[j])
                     #extrude and rotate based on rand1 number
                     for i in range(rand1):
+                        bm.verts.ensure_lookup_table()
                         extMov(nullV)
                         rotate(angle/rand1)
                     lastVert = numVerts()
@@ -225,6 +236,8 @@ class SnowflakeGen(bpy.types.Operator):
                         #snap cursor to rotate around the vert
                         bpy.ops.view3d.snap_cursor_to_selected()
                         #extrude and rotate around vert
+                        bm.verts.ensure_lookup_table()
+                        bm.edges.ensure_lookup_table()
                         extMov(upVec)
                         rotate(angle/2)
                         bpy.ops.view3d.snap_cursor_to_center()
@@ -232,8 +245,12 @@ class SnowflakeGen(bpy.types.Operator):
                         hg = d/s1
                         if s3 == 0:
                             subdiv(s1)
+                            bm.verts.ensure_lookup_table()
+                            bm.edges.ensure_lookup_table()
                             lastVert = numVerts()
                             extLeg2(lastVert,hg,angle/2+(pi/4))
+                            bm.verts.ensure_lookup_table()
+                            bm.edges.ensure_lookup_table()
                             extLeg2(lastVert,hg,angle/2-(pi/4))
                             lastEdge = numEdges()
                             if s1 == 1:
@@ -247,10 +264,13 @@ class SnowflakeGen(bpy.types.Operator):
                                 else:
                                     selEdge(lastEdge-3)
                             subdiv(randleg)
+                            bm.verts.ensure_lookup_table()
+                            bm.edges.ensure_lookup_table()
                             lastVert = numVerts()
                             mlvb = []
                             for l in range(randleg):
                                 bm.verts.ensure_lookup_table()
+                                bm.edges.ensure_lookup_table()
                                 mlvb.append(bm.verts[lastVert].index - l)
                             randrev = randint(0,1)
                             if randrev == 1:
@@ -295,8 +315,9 @@ class SnowflakeGen(bpy.types.Operator):
                 #   Select all new verts and duplicate
                 ##
                 bpy.ops.mesh.select_all(action = 'SELECT')
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
                 for o in oVerts:
-                    bm.verts.ensure_lookup_table()
                     bm.verts[o].select = False
                 for i in range(vCount-1):
                     #duplicate around origin
@@ -313,8 +334,10 @@ class SnowflakeGen(bpy.types.Operator):
                     bpy.ops.mesh.select_all(action = 'DESELECT')
                     for r in range(len(dupVert)):
                         bm.verts.ensure_lookup_table()
+                        bm.edges.ensure_lookup_table()
                         bm.verts[dupVert[r]].select = True
                     for r in range(len(dupEdge)):
+                        bm.verts.ensure_lookup_table()
                         bm.edges.ensure_lookup_table()
                         bm.edges[dupEdge[r]].select = True
                 ##
@@ -323,13 +346,16 @@ class SnowflakeGen(bpy.types.Operator):
                 if fillC:
                     selVert(0)
                     for o in oVerts:
+                        bm.verts.ensure_lookup_table()
+                        bm.edges.ensure_lookup_table()
                         bm.verts[o].select = True
                     extMov(nullV)
                     bpy.ops.view3d.snap_selected_to_cursor(use_offset=False)
                 # Remove doubles
                 bpy.ops.mesh.select_all(action = 'SELECT')
                 bpy.ops.mesh.remove_doubles()
-            
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
         return {'FINISHED'}
 
 def menu_func(self, context):

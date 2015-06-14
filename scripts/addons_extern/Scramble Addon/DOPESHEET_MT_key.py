@@ -8,8 +8,8 @@ import bpy
 
 class DeleteUnmessage(bpy.types.Operator):
 	bl_idname = "action.delete_unmessage"
-	bl_label = "キーフレームを削除 (確認しない)"
-	bl_description = "選択した全てのキーフレームを確認せずに削除します"
+	bl_label = "Delete keyframes"
+	bl_description = "Delete without checking for all selected keyframes"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -18,12 +18,12 @@ class DeleteUnmessage(bpy.types.Operator):
 
 class CreanEX(bpy.types.Operator):
 	bl_idname = "action.crean_ex"
-	bl_label = "全キーフレームを大掃除"
-	bl_description = "全てのアクションの重複したキーフレームを削除します"
+	bl_label = "Clean up all keyframes"
+	bl_description = "Remove the keyframe duplicates of all actions"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	keep_fcurves = bpy.props.BoolProperty(name="キーを1つは残す", default=False)
-	threshold = bpy.props.FloatProperty(name="しきい値", default=0.00001, min=0, max=1, soft_min=0, soft_max=1, step=0.001, precision=5)
+	keep_fcurves = bpy.props.BoolProperty(name="keep FCurves", default=False)
+	threshold = bpy.props.FloatProperty(name="Threshold", default=0.00001, min=0, max=1, soft_min=0, soft_max=1, step=0.001, precision=5)
 	
 	def execute(self, context):
 		threshold = self.threshold
@@ -80,4 +80,4 @@ def menu(self, context):
 		self.layout.operator(CreanEX.bl_idname, icon="PLUGIN")
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.separator()
-		self.layout.operator('wm.toggle_menu_enable', icon='CANCEL').id = __name__.split('.')[-1]
+		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

@@ -1,14 +1,61 @@
-# get the folder modules
+# Initially this file is loaded when you load the add-on.
 
 import os, csv, codecs
-from .add_mesh_objects import INFO_MT_mesh_add
+
 from .add_curve_objects import INFO_MT_curve_add
+from .add_mesh_objects import INFO_MT_mesh_add
+from .add_surface_objects import INFO_MT_surface_add
+from .armature import VIEW3D_MT_armature_specials
+from .armature import VIEW3D_MT_bone_options_toggle
+from .armature import VIEW3D_MT_edit_armature
+from .edit_mesh import VIEW3D_MT_edit_mesh
+from .edit_mesh import VIEW3D_MT_edit_mesh_delete
+from .edit_mesh import VIEW3D_MT_edit_mesh_showhide
+from .edit_mesh import VIEW3D_MT_edit_mesh_specials
+from .edit_mesh import VIEW3D_MT_edit_mesh_vertices
+from .file import INFO_MT_file
+from .file import INFO_MT_file_external_data
+from .header import PROPERTIES_HT_header
+from .header import USERPREF_HT_header
+from .help import INFO_MT_help
+from .image import IMAGE_MT_image
+from .image import IMAGE_MT_select
+from .image import IMAGE_MT_view
+from .materials import MATERIAL_MT_specials
+from .menu_tools import analyse_dicom_3d_models
 from .modifiers import DATA_PT_modifiers
+from .node import NODE_MT_node
+from .object import VIEW3D_MT_make_links
+from .object import VIEW3D_MT_object
+from .object import VIEW3D_MT_object_showhide
+from .object import VIEW3D_MT_object_specials
+from .object import VIEW3D_MT_object_apply
+from .pie_menu import INFO_MT_window
+from .pose import VIEW3D_MT_pose_constraints
+from .pose import VIEW3D_MT_pose_showhide
+from .pose import VIEW3D_MT_pose_specials
+from .render import INFO_MT_render
+from .select import VIEW3D_MT_select_edit_mesh
+from .select import VIEW3D_MT_select_pose
+from .select import VIEW3D_MT_select_edit_armature
+from .select import VIEW3D_MT_select_object
+from .shape_keys import MESH_MT_shape_key_specials
+from .texture import TEXTURE_MT_specials
+from .uv_texture import DATA_PT_uv_texture
+from .uv_texture import VIEW3D_MT_uv_map
+from .vertex_colors import DATA_PT_vertex_colors
+from .vertex_group import MESH_MT_vertex_group_specials
+from .vertex_paint import VIEW3D_MT_paint_weight
+from .view_3d import VIEW3D_MT_view
+from .view_3d import VIEW3D_MT_view_align
+from .view_3d import VIEW3D_MT_view_align_selected
+from .view_3d import VIEW3D_MT_snap
+
 
 # Blender Addon Information
 bl_info = {
 	"name" : "Scramble Addon",
-	"author" : "さいでんか(saidenka)",
+	"author" : "さいでんか(saidenka), meta-androcto, various",
 	"version" : (0,1),
 	"blender" : (2, 7),
 	"location" : "Everywhere",
@@ -22,96 +69,16 @@ bl_info = {
 # get the py modules
 
 if "bpy" in locals():
-	import imp
-	imp.reload(IMAGE_MT_image)
-	imp.reload(IMAGE_MT_select)
-	imp.reload(IMAGE_MT_view)
-	imp.reload(INFO_MT_file)
-	imp.reload(INFO_MT_file_external_data)
-	imp.reload(INFO_MT_render)
-	imp.reload(INFO_MT_window)
-	imp.reload(MATERIAL_MT_specials)
-	imp.reload(MESH_MT_shape_key_specials)
-	imp.reload(MESH_MT_vertex_group_specials)
-	imp.reload(NODE_MT_node)
-	imp.reload(TEXTURE_MT_specials)
-	imp.reload(VIEW3D_MT_armature_specials)
-	imp.reload(VIEW3D_MT_bone_options_toggle)
-	imp.reload(VIEW3D_MT_edit_armature)
-	imp.reload(VIEW3D_MT_edit_mesh)
-	imp.reload(VIEW3D_MT_edit_mesh_delete)
-	imp.reload(VIEW3D_MT_edit_mesh_showhide)
-	imp.reload(VIEW3D_MT_edit_mesh_specials)
-	imp.reload(VIEW3D_MT_make_links)
-	imp.reload(VIEW3D_MT_object)
-	imp.reload(VIEW3D_MT_object_showhide)
-	imp.reload(VIEW3D_MT_object_specials)
-	imp.reload(VIEW3D_MT_paint_weight)
-	imp.reload(VIEW3D_MT_pose_constraints)
-	imp.reload(VIEW3D_MT_pose_showhide)
-	imp.reload(VIEW3D_MT_pose_specials)
-	imp.reload(VIEW3D_MT_select_edit_mesh)
-	imp.reload(VIEW3D_MT_select_pose)
-	imp.reload(VIEW3D_MT_view)
-	imp.reload(VIEW3D_MT_view_align)
-	imp.reload(VIEW3D_MT_select_edit_armature)
-	imp.reload(VIEW3D_MT_edit_mesh_vertices)
-	imp.reload(INFO_MT_help)
-	imp.reload(DOPESHEET_MT_key)
-	imp.reload(VIEW3D_MT_select_object)
-	imp.reload(VIEW3D_MT_object_apply)
-	imp.reload(VIEW3D_MT_view_align_selected)
-	imp.reload(VIEW3D_MT_snap)
-	imp.reload(VIEW3D_MT_uv_map)
-	imp.reload(USERPREF_HT_header)
-	imp.reload(PROPERTIES_HT_header)
-	imp.reload(DATA_PT_uv_texture)
-	imp.reload(DATA_PT_vertex_colors)
+	import importlib
+	importlib.reload(DOPESHEET_MT_key)
+
+
 else:
-	from . import IMAGE_MT_image
-	from . import IMAGE_MT_select
-	from . import IMAGE_MT_view
-	from . import INFO_MT_file
-	from . import INFO_MT_file_external_data
-	from . import INFO_MT_render
-	from . import INFO_MT_window
-	from . import MATERIAL_MT_specials
-	from . import MESH_MT_shape_key_specials
-	from . import MESH_MT_vertex_group_specials
-	from . import NODE_MT_node
-	from . import TEXTURE_MT_specials
-	from . import VIEW3D_MT_armature_specials
-	from . import VIEW3D_MT_bone_options_toggle
-	from . import VIEW3D_MT_edit_armature
-	from . import VIEW3D_MT_edit_mesh
-	from . import VIEW3D_MT_edit_mesh_delete
-	from . import VIEW3D_MT_edit_mesh_showhide
-	from . import VIEW3D_MT_edit_mesh_specials
-	from . import VIEW3D_MT_make_links
-	from . import VIEW3D_MT_object
-	from . import VIEW3D_MT_object_showhide
-	from . import VIEW3D_MT_object_specials
-	from . import VIEW3D_MT_paint_weight
-	from . import VIEW3D_MT_pose_constraints
-	from . import VIEW3D_MT_pose_showhide
-	from . import VIEW3D_MT_pose_specials
-	from . import VIEW3D_MT_select_edit_mesh
-	from . import VIEW3D_MT_select_pose
-	from . import VIEW3D_MT_view
-	from . import VIEW3D_MT_view_align
-	from . import VIEW3D_MT_select_edit_armature
-	from . import VIEW3D_MT_edit_mesh_vertices
-	from . import INFO_MT_help
 	from . import DOPESHEET_MT_key
-	from . import VIEW3D_MT_select_object
-	from . import VIEW3D_MT_object_apply
-	from . import VIEW3D_MT_view_align_selected
-	from . import VIEW3D_MT_snap
-	from . import VIEW3D_MT_uv_map
-	from . import USERPREF_HT_header
-	from . import PROPERTIES_HT_header
-	from . import DATA_PT_uv_texture
-	from . import DATA_PT_vertex_colors
+
+
+
+
 import bpy
 
 # Addons Preferences
@@ -178,6 +145,7 @@ def register():
 
 	bpy.types.INFO_MT_mesh_add.append(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_curve_add.append(INFO_MT_curve_add.menu)
+	bpy.types.INFO_MT_surface_add.append(INFO_MT_surface_add.menu)
 	bpy.types.IMAGE_MT_image.append(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.append(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.append(IMAGE_MT_view.menu)
@@ -231,7 +199,8 @@ def unregister():
 	bpy.app.translations.unregister(__name__)
 
 	bpy.types.INFO_MT_mesh_add.remove(INFO_MT_mesh_add.menu)
-	bpy.types.INFO_MT_curve_add.remove(INFO_MT_curve_add.menu)		
+	bpy.types.INFO_MT_curve_add.remove(INFO_MT_curve_add.menu)
+	bpy.types.INFO_MT_surface_add.remove(INFO_MT_surface_add.menu)		
 	bpy.types.IMAGE_MT_image.remove(IMAGE_MT_image.menu)
 	bpy.types.IMAGE_MT_select.remove(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.remove(IMAGE_MT_view.menu)

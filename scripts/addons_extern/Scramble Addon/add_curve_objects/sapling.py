@@ -71,7 +71,7 @@ def getPresetpath():
        and return it as preset path"""
     presetpath = ""
     for p in bpy.utils.script_paths():
-        presetpath = os.path.join(p, 'addons_extern', 'add_curve_objects', 'presets')
+        presetpath = os.path.join(p, 'addons_extern', 'Scramble Addon', 'sapling_presets')
         if os.path.exists(presetpath):
             break
     return presetpath

@@ -43,6 +43,7 @@ if "bpy" in locals():
     importlib.reload(add_curve_celtic_links)
     importlib.reload(add_curve_formulacurves)
     importlib.reload(add_curve_wires)
+    importlib.reload(add_curve_ivygen)
 
 
 else:
@@ -56,6 +57,7 @@ else:
     from . import add_curve_celtic_links
     from . import add_curve_formulacurves
     from . import add_curve_wires
+    from . import add_curve_ivygen
 
 
 import bpy
@@ -71,6 +73,8 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.operator("curve.tree_add",
             text="Sapling 3")
+        self.layout.operator(IvyGen.bl_idname, text="Add Ivy to Mesh",
+            icon='PLUGIN').updateIvy = True
         layout.operator("mesh.curveaceous_galore",
             text="Curves Galore!")
         layout.operator("curve.spirals",
@@ -103,6 +107,7 @@ def menu(self, context):
 		self.layout.separator()
 		layout.label(text="Curve Factory")
 		self.layout.operator("curve.tree_add", text="Sapling 3!", icon="PLUGIN")
+		self.layout.operator("curve.ivy_gen", text="Add Ivy to Mesh", icon='PLUGIN').updateIvy = True
 		self.layout.operator("mesh.curveaceous_galore", text="Curves Galore!", icon="PLUGIN")
 		self.layout.operator("curve.torus_knot_plus", text="Torus Knot Plus", icon="PLUGIN")
 		self.layout.operator("curve.spirals", text="Spirals", icon="PLUGIN")

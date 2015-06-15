@@ -32,13 +32,20 @@ bl_info = {
 
 
 if "bpy" in locals():
-    import imp
-    imp.reload(add_mesh_balcony)
-    imp.reload(add_mesh_sove)
-    imp.reload(add_mesh_window)
-    imp.reload(add_mesh_beam_builder)
-    imp.reload(Wallfactory)
-    imp.reload(stairbuilder)
+    import importlib
+    importlib.reload(add_mesh_balcony)
+    importlib.reload(add_mesh_sove)
+    importlib.reload(add_mesh_window)
+    importlib.reload(add_mesh_beam_builder)
+    importlib.reload(Wallfactory)
+    importlib.reload(stairbuilder)
+    importlib.reload(Blocks)
+    importlib.reload(general)
+    importlib.reload(post)
+    importlib.reload(rail)
+    importlib.reload(retainer)
+    imprtlib.reload(stringer)
+    importlib.reload(tread)
 
 else:
     from . import add_mesh_balcony
@@ -47,6 +54,13 @@ else:
     from . import add_mesh_beam_builder
     from . import Wallfactory
     from . import stairbuilder
+    from . import Blocks
+    from . import general
+    from . import post
+    from . import rail
+    from . import retainer
+    from . import stringer
+    from . import tread
 
 import bpy
 
@@ -76,7 +90,7 @@ class INFO_MT_mesh_objects_add(bpy.types.Menu):
 # Register all operators and panels
 
 # Define "Extras" menu
-def menu_func(self, context):
+def menu(self, context):
     self.layout.menu("INFO_MT_cad_objects_add", icon="PLUGIN")
 
 

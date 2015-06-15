@@ -558,14 +558,14 @@ bpy.types.Object.usefloorplan = BoolProperty(name="Use Floorplan",
 									update=updateMesh)
 
 
-class FloorBoards(bpy.types.Panel):
-	bl_idname = "FloorBoards"
-	bl_label = "Floorgenerator"
-	bl_space_type = "PROPERTIES"
-	bl_region_type = "WINDOW"
-	bl_context = "modifier"
-	bl_options = {'DEFAULT_CLOSED'}
+class FloorBoardsAdd(bpy.types.Operator):
+	bl_idname = "mesh.floor_boards_add"
+	bl_label = "FloorBoards"
+	bl_options = {'REGISTER', 'UNDO'}
 
+	@classmethod
+	def poll(self, context):
+		return context.mode == 'OBJECT'
 	def draw(self, context):
 		layout = self.layout
 		if bpy.context.mode == 'EDIT_MESH':
@@ -620,17 +620,6 @@ class FloorBoards(bpy.types.Panel):
 					layout.operator('mesh.floor_boards_convert')
 			else:
 				layout.operator('mesh.floor_boards_convert')
-
-
-class FloorBoardsAdd(bpy.types.Operator):
-	bl_idname = "mesh.floor_boards_add"
-	bl_label = "FloorBoards"
-	bl_options = {'REGISTER', 'UNDO'}
-
-	@classmethod
-	def poll(self, context):
-		return context.mode == 'OBJECT'
-
 	def execute(self, context):
 		bpy.ops.mesh.primitive_cube_add()
 		context.active_object.name = "FloorBoard"

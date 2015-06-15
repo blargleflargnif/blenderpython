@@ -28,6 +28,8 @@ from .add_mesh_siding_wall import add_mesh_plancher
 from .add_mesh_siding_wall import add_mesh_siding
 from .add_ant_erosion import erode
 from .add_ant_erosion import erosion
+from .add_bound_box import bound_box
+from .add_mesh_building_objects import build
 
 bl_info = {
     "name": "Object Factory",
@@ -66,6 +68,7 @@ if "bpy" in locals():
     importlib.reload(fractalDome)
     importlib.reload(Boltactory)
     importlib.reload(add_mesh_beam_builder)
+    importlib.reload(terrain_gen)
 
 else:
     from . import add_mesh_star
@@ -91,6 +94,7 @@ else:
     from . import fractalDome
     from . import Boltfactory
     from . import add_mesh_beam_builder
+    from . import terrain_gen
 
 
 import bpy
@@ -108,6 +112,8 @@ class INFO_MT_mesh_ant_add(bpy.types.Menu):
         layout.label(text="Use Erode After ANT")
         layout.operator("mesh.erode",
             text="Erosion")
+        layout.separator()
+        layout.operator("mesh.primitive_terrain_add", text="Terrain")
 
 class INFO_MT_mesh_vert_add(bpy.types.Menu):
     # Define the "Pipe Joints" menu
@@ -165,12 +171,12 @@ class INFO_MT_mesh_math_add(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.menu("INFO_MT_mesh_torus_add", text="Torus Objects", icon="MESH_TORUS")
         layout.operator("mesh.primitive_z_function_surface",
             text="Z Math Surface")
         layout.operator("mesh.primitive_xyz_function_surface",
             text="XYZ Math Surface")
         self.layout.operator("mesh.primitive_solid_add", text="Regular Solid")
-
 
 class INFO_MT_mesh_extras_add(bpy.types.Menu):
     # Define the "Simple Objects" menu
@@ -181,6 +187,7 @@ class INFO_MT_mesh_extras_add(bpy.types.Menu):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.menu("INFO_MT_mesh_diamonds_add", text="Diamonds", icon="PMARKER_SEL")
+        layout.menu("INFO_MT_mesh_ice_add", text="Ice & Snow", icon="FREEZE")
         layout.operator("mesh.primitive_star_add",
             text="Simple Star")
         layout.operator("mesh.primitive_steppyramid_add",
@@ -264,6 +271,54 @@ class INFO_MT_mesh_floorwall_add(bpy.types.Menu):
         layout.operator("mesh.ajout_primitive",
             text="Plancher")
 
+class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
+    # Define the "Bound Box" menu
+    bl_idname = "INFO_MT_mesh_boundbox_add"
+    bl_label = "Bound Box Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("mesh.boundbox_add",
+            text = "Bound Box Add")
+        layout.operator("object.min_bounds",
+            text="Minimum Bounds")
+        layout.operator("object.bounding_boxers",
+            text="BBOX")
+
+class INFO_MT_mesh_mech_add(bpy.types.Menu):
+    # Define the "Mech" menu
+    bl_idname = "INFO_MT_mesh_mech_add"
+    bl_label = "Mechanical"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.menu("INFO_MT_mesh_pipe_joints_add", text="Pipe Joints", icon="SNAP_PEEL_OBJECT")
+        layout.menu("INFO_MT_mesh_gears_add", text="Gears", icon="SCRIPTWIN")
+        layout.operator("mesh.bolt_add", text="Add Bolt", icon="CURSOR")
+
+class INFO_MT_mesh_building_add(bpy.types.Menu):
+    # Define the "Building" menu
+    bl_idname = "INFO_MT_mesh_building_add"
+    bl_label = "Building"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.menu("INFO_MT_mesh_beambuilder_add", text="Beam Builder", icon="NOCURVE")
+        layout.menu("INFO_MT_mesh_floorwall_add", text="Floors & Walls", icon = "UV_ISLANDSEL")
+        layout.operator("mesh.add_say3d_balcony",
+            text="Balcony")
+        layout.operator("mesh.add_say3d_sove",
+            text="Sove")
+        layout.operator("mesh.add_say3d_pencere2",
+            text="Window")
+        layout.operator("mesh.wall_add",
+            text="Wall Factory")
+        layout.operator("mesh.stairs",
+            text="Stair Builder")
+
 def IsMenuEnable(self_id):
 	for id in bpy.context.user_preferences.addons["Scramble Addon"].preferences.disabled_menu.split(','):
 		if (id == self_id):
@@ -278,22 +333,17 @@ def menu(self, context):
 		layout = self.layout
 		col = layout.column()
 		self.layout.separator()
-		layout.label(text="Object Factory")
-		self.layout.menu("INFO_MT_mesh_ant_add", text="Landscape", icon="RNDCURVE")
-		self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
-		self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
-		self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
-		self.layout.operator("mesh.bolt_add", text="Add Bolt", icon="CURSOR")
-		self.layout.menu("INFO_MT_mesh_pipe_joints_add", text="Pipe Joints", icon="SNAP_PEEL_OBJECT")
-		self.layout.menu("INFO_MT_mesh_gears_add", text="Gears", icon="SCRIPTWIN")
-		self.layout.menu("INFO_MT_mesh_beambuilder_add", text="Beam Builder", icon="NOCURVE")
-		self.layout.menu("INFO_MT_mesh_torus_add", text="Torus Objects", icon="MESH_TORUS")
-		self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
-		self.layout.separator()
 		self.layout.operator("object.parent_to_empty", text="Parent To Empty", icon="LINK_AREA")
 		self.layout.separator()
-		self.layout.menu("INFO_MT_mesh_floorwall_add", text="Floors & Walls", icon = "UV_ISLANDSEL")
-		self.layout.menu("INFO_MT_mesh_ice_add", text="Ice & Snow", icon="FREEZE")
+		layout.label(text="Object Factory")
+		self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
+		self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
+		self.layout.menu("INFO_MT_mesh_ant_add", text="Landscape", icon="RNDCURVE")
+		self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
+		self.layout.menu("INFO_MT_mesh_mech_add", text="Mechanical", icon="SCRIPTWIN")
+		self.layout.menu("INFO_MT_mesh_building_add", text="Building", icon="UV_ISLANDSEL")
+		self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
+		self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="LATTICE_DATA")
 
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.separator()

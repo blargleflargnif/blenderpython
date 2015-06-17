@@ -192,12 +192,6 @@ class MakeSurfaceCone(bpy.types.Operator):
 
         return{'FINISHED'}
 
-
-        
-
-
-        
-        
 class MakeSurfaceStar(bpy.types.Operator):
     bl_idname = 'object.add_surface_star'
     bl_label = 'Add Surface Star'
@@ -414,19 +408,19 @@ class SmoothXtimes(bpy.types.Operator):
         return{'FINISHED'}
                     
 def Surface_plane_button(self, context):
-    self.layout.operator(MakeSurfacePlane.bl_idname, text="surface plane", icon="PLUGIN")
+    self.layout.operator(MakeSurfacePlane.bl_idname, text="surface plane", icon="MOD_CURVE")
 
 def Surface_cone_button(self, context):
-    self.layout.operator(MakeSurfaceCone.bl_idname, text="surface cone", icon="PLUGIN")
+    self.layout.operator(MakeSurfaceCone.bl_idname, text="surface cone", icon="MOD_CURVE")
 
 def Surface_star_button(self, context):
-    self.layout.operator(MakeSurfaceStar.bl_idname, text="surface star", icon="PLUGIN")
+    self.layout.operator(MakeSurfaceStar.bl_idname, text="surface star", icon="MOD_CURVE")
 
 def Surface_wedge_button(self, context):
-    self.layout.operator(MakeSurfaceWedge.bl_idname, text="surface wedge", icon="PLUGIN")
+    self.layout.operator(MakeSurfaceWedge.bl_idname, text="surface wedge", icon="MOD_CURVE")
 
 def SmoothXtimes_button(self,context):
-      self.layout.operator(SmoothXtimes.bl_idname, text="smooth x times", icon="NONE")
+      self.layout.operator(SmoothXtimes.bl_idname, text="smooth x times", icon="MOD_CURVE")
 
      
 def register():

@@ -62,6 +62,32 @@ else:
 
 import bpy
 
+class INFO_MT_curve_plants_add(bpy.types.Menu):
+    # Define the "Extras" menu
+    bl_idname = "curve_plants_add"
+    bl_label = "Plants"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("curve.tree_add",
+            text="Sapling 3")
+        self.layout.operator("curve.ivy_gen", text="Add Ivy to Mesh").updateIvy = True
+
+class INFO_MT_curve_knots_add(bpy.types.Menu):
+    # Define the "Extras" menu
+    bl_idname = "curve_knots_add"
+    bl_label = "Plants"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("curve.torus_knot_plus",
+            text="Torus Knot Plus")
+        layout.operator("curve.celtic_links",
+            text="Celtic Links")
+        layout.operator("mesh.add_braid",
+            text="Braid Knot")
 
 class INFO_MT_curve_extras_add(bpy.types.Menu):
     # Define the "Extras" menu
@@ -71,26 +97,17 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("curve.tree_add",
-            text="Sapling 3")
-        self.layout.operator(IvyGen.bl_idname, text="Add Ivy to Mesh",
-            icon='PLUGIN').updateIvy = True
         layout.operator("mesh.curveaceous_galore",
             text="Curves Galore!")
         layout.operator("curve.spirals",
             text="Spirals")
-        layout.operator("curve.torus_knot_plus",
-            text="Torus Knot Plus")
-        layout.operator("mesh.add_braid",
-            text="Braid Knot")
         layout.operator("curve.curlycurve",
             text="Curly Curve")
-        layout.operator("curve.celtic_links",
-            text="Celtic Links")
         layout.operator("curve.formulacurves",
             text="Formula Curve")
         layout.operator("curve.wires",
             text="Curve Wires")
+
 def IsMenuEnable(self_id):
 	for id in bpy.context.user_preferences.addons["Scramble Addon"].preferences.disabled_menu.split(','):
 		if (id == self_id):
@@ -106,16 +123,13 @@ def menu(self, context):
 		col = layout.column()
 		self.layout.separator()
 		layout.label(text="Curve Factory")
-		self.layout.operator("curve.tree_add", text="Sapling 3!", icon="PLUGIN")
-		self.layout.operator("curve.ivy_gen", text="Add Ivy to Mesh", icon='PLUGIN').updateIvy = True
-		self.layout.operator("mesh.curveaceous_galore", text="Curves Galore!", icon="PLUGIN")
-		self.layout.operator("curve.torus_knot_plus", text="Torus Knot Plus", icon="PLUGIN")
-		self.layout.operator("curve.spirals", text="Spirals", icon="PLUGIN")
-		self.layout.operator("mesh.add_braid", text="Braid Knot", icon="PLUGIN")
-		self.layout.operator("curve.curlycurve", text="Curly Curve", icon="PLUGIN")
-		self.layout.operator("curve.celtic_links", text="Celtic Links", icon="PLUGIN")
-		self.layout.operator("curve.formulacurves", text="Formula Curve", icon="PLUGIN")
-		self.layout.operator("curve.wires", text="Curve Wires", icon="PLUGIN")
+		self.layout.menu("curve_plants_add", text="Plants", icon="CURVE_DATA")
+		self.layout.menu("curve_knots_add", text="Knots", icon='CURVE_DATA')
+		self.layout.operator("mesh.curveaceous_galore", text="Curves Galore!", icon="CURVE_DATA")
+		self.layout.operator("curve.spirals", text="Spirals", icon="CURVE_DATA")
+		self.layout.operator("curve.curlycurve", text="Curly Curve", icon="CURVE_DATA")
+		self.layout.operator("curve.formulacurves", text="Formula Curve", icon="CURVE_DATA")
+		self.layout.operator("curve.wires", text="Curve Wires", icon="CURVE_DATA")
 
 	if (context.user_preferences.addons["Scramble Addon"].preferences.use_disabled_menu):
 		self.layout.separator()

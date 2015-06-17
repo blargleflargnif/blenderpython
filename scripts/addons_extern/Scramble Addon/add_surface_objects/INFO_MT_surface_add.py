@@ -51,11 +51,11 @@ def menu(self, context):
 		col = layout.column()
 		self.layout.separator()
 		layout.label(text="Surface Factory")
-		self.layout.operator("object.add_surface_wedge", text="Wedge", icon="PLUGIN")
-		self.layout.operator("object.add_surface_cone", text="Cone", icon="PLUGIN")
-		self.layout.operator("object.add_surface_star", text="Star", icon="PLUGIN")
-		self.layout.operator("object.add_surface_plane", text="Plane", icon="PLUGIN")
-		self.layout.operator("curve.smooth_x_times", text="Special Smooth", icon="PLUGIN")
+		self.layout.operator("object.add_surface_wedge", text="Wedge", icon="MOD_CURVE")
+		self.layout.operator("object.add_surface_cone", text="Cone", icon="MOD_CURVE")
+		self.layout.operator("object.add_surface_star", text="Star", icon="MOD_CURVE")
+		self.layout.operator("object.add_surface_plane", text="Plane", icon="MOD_CURVE")
+		self.layout.operator("curve.smooth_x_times", text="Special Smooth", icon="MOD_CURVE")
 
 
 

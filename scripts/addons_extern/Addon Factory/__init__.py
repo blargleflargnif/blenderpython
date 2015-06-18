@@ -77,10 +77,12 @@ if "bpy" in locals():
 else:
 	from . import DOPESHEET_MT_key
 
-
-
-
 import bpy
+
+bpy.context.user_preferences.system.use_international_fonts = True
+bpy.context.user_preferences.system.language = 'en_US'
+bpy.context.user_preferences.system.use_translate_interface = True
+bpy.context.user_preferences.system.use_translate_tooltips = True
 
 # Addons Preferences
 class AddonPreferences(bpy.types.AddonPreferences):

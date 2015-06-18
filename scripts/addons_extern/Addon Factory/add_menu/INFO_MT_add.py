@@ -52,7 +52,7 @@ else:
     from . import pixelate_3d
     from . import object_add_chain
     from . import oscurart_chain_maker
-	
+
 import bpy
 
 class create_menu(bpy.types.Panel):
@@ -67,6 +67,7 @@ class create_menu(bpy.types.Panel):
         layout.operator('object.pixelate', icon='MESH_GRID')
         layout.operator('mesh.primitive_chain_add', icon='LINKED')
         layout.operator('mesh.primitive_oscurart_chain_add', icon='LINKED')
+
 
 class INFO_MT_mesh_chain_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -146,7 +147,7 @@ def menu(self, context):
 		self.layout.menu("INFO_MT_mesh_mods", icon="PLUGIN")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
-		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
+		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Add Factory", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 
 def register():
     bpy.utils.register_module(__name__)

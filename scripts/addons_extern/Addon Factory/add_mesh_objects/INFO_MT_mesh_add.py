@@ -30,6 +30,7 @@ from .add_ant_erosion import erode
 from .add_ant_erosion import erosion
 from .add_bound_box import bound_box
 from .add_mesh_building_objects import build
+from .add_mesh_rocks import rock_generator
 
 bl_info = {
     "name": "Object Factory",
@@ -114,6 +115,7 @@ class INFO_MT_mesh_ant_add(bpy.types.Menu):
             text="Erosion")
         layout.separator()
         layout.operator("mesh.primitive_terrain_add", text="Terrain")
+        layout.operator("mesh.rocks", text="Rock Gen")
 
 class INFO_MT_mesh_vert_add(bpy.types.Menu):
     # Define the "Pipe Joints" menu

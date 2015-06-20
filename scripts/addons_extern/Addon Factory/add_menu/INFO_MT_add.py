@@ -41,7 +41,8 @@ if "bpy" in locals():
     importlib.reload(scene_objects_cycles)
     importlib.reload(pixelate_3d)
     importlib.reload(object_add_chain)
-    importlib.reload(oscurart_chain_maker)
+    importlib.reload(drop_to_ground)
+
 
 else:
     from . import scene_camera
@@ -52,6 +53,7 @@ else:
     from . import pixelate_3d
     from . import object_add_chain
     from . import oscurart_chain_maker
+    from . import drop_to_ground
 
 import bpy
 
@@ -93,7 +95,16 @@ class INFO_MT_mesh_mods_add(bpy.types.Menu):
             text="Pixelate")
         self.layout.menu("INFO_MT_mesh_chain", icon="LINKED")
 
+class INFO_MT_quick_tools_add(bpy.types.Menu):
+    # Define the "mesh objects" menu
+    bl_idname = "INFO_MT_quick_tools"
+    bl_label = "Quick Tools"
 
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("object.drop_on_active",
+            text="Drop To Ground")
 
 class INFO_MT_scene_elements_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -145,6 +156,7 @@ def menu(self, context):
 		self.layout.menu("INFO_MT_scene_elements", icon="SCENE_DATA")
 		self.layout.menu("INFO_MT_scene_lamps", icon="OUTLINER_OB_LAMP")
 		self.layout.menu("INFO_MT_mesh_mods", icon="PLUGIN")
+		self.layout.menu("INFO_MT_quick_tools", icon="PLUGIN")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Add Factory", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

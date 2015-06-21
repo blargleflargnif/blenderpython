@@ -1133,7 +1133,6 @@ class VIEW3D_MT_object_relations(Menu):
 
         layout.operator_menu_enum("object.make_local", "type", text="Make Local...")
         layout.menu("VIEW3D_MT_make_single_user")
-        layout.operator("object.duplicate_move")
         layout.operator("object.duplicate_move_linked")
         layout.operator("object.proxy_make", text="Make Proxy...")
         layout.operator("object.make_dupli_face")
@@ -1162,6 +1161,7 @@ class VIEW3D_MT_object(Menu):
         layout.menu("VIEW3D_MT_object_group")
         layout.menu("VIEW3D_MT_snap")
         layout.separator()
+        layout.operator("object.duplicate_move")
         layout.operator("object.join")
         layout.operator("object.move_to_layer", text="Move to Layer...")
 		

@@ -240,11 +240,16 @@ class VIEW3D_MT_transform_object(VIEW3D_MT_transform_base):
 
         # object-specific option follow...
         layout.separator()
+        layout.menu("VIEW3D_MT_object_clear")
+        layout.menu("VIEW3D_MT_object_apply")
+        layout.separator()
 
         layout.operator("transform.translate", text="Move Texture Space").texture_space = True
         layout.operator("transform.resize", text="Scale Texture Space").texture_space = True
-
+        layout.operator("object.randomize_transform")
         layout.separator()
+		
+        layout.operator("object.align")
 
         layout.operator_context = 'EXEC_REGION_WIN'
         layout.operator("transform.transform", text="Align to Transform Orientation").mode = 'ALIGN'  # XXX see alignmenu() in edit.c of b2.4x to get this working
@@ -257,11 +262,6 @@ class VIEW3D_MT_transform_object(VIEW3D_MT_transform_base):
         layout.operator("object.origin_set", text="Origin to Geometry").type = 'ORIGIN_GEOMETRY'
         layout.operator("object.origin_set", text="Origin to 3D Cursor").type = 'ORIGIN_CURSOR'
         layout.operator("object.origin_set", text="Origin to Center of Mass").type = 'ORIGIN_CENTER_OF_MASS'
-        layout.separator()
-
-        layout.operator("object.randomize_transform")
-        layout.operator("object.align")
-
         layout.separator()
 
         layout.operator("object.anim_transforms_to_deltas")
@@ -423,18 +423,17 @@ class VIEW3D_MT_view(Menu):
 
         layout.separator()
 
-        layout.operator("view3d.viewnumpad", text="Camera").type = 'CAMERA'
         layout.menu("VIEW3D_MT_view_cameras", text="Cameras")
 
         layout.separator()
 
-        layout.operator("view3d.view_persportho")
-
-        layout.separator()
         layout.menu("VIEW3D_MT_view_directions")
         layout.menu("VIEW3D_MT_view_navigation")
         layout.menu("VIEW3D_MT_view_align")
         layout.menu("VIEW3D_MT_view_toggle")
+
+        layout.separator()
+        layout.operator("view3d.view_persportho")
         layout.operator("view3d.localview", text="View Global/Local")
         layout.operator("view3d.view_selected").use_all_regions = False
         layout.operator("view3d.view_all").center = False
@@ -451,10 +450,6 @@ class VIEW3D_MT_view(Menu):
         layout.separator()
 
         layout.operator("screen.animation_play", text="Playback Animation")
-
-        layout.separator()
-
-
 
 
 class VIEW3D_MT_view_navigation(Menu):
@@ -1072,6 +1067,14 @@ class INFO_MT_lamp_add(Menu):
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.operator_enum("object.lamp_add", "type")
 
+class INFO_MT_camera_add(Menu):
+    bl_idname = "INFO_MT_camera_add"
+    bl_label = "Camera"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'EXEC_REGION_WIN'
+        layout.operator("object.camera_add", text="Camera", icon='OUTLINER_OB_CAMERA')
 
 class INFO_MT_add(Menu):
     bl_label = "Add"
@@ -1104,11 +1107,11 @@ class INFO_MT_add(Menu):
         layout.operator("object.speaker_add", text="Speaker", icon='OUTLINER_OB_SPEAKER')
         layout.separator()
 
-        layout.operator("object.camera_add", text="Camera", icon='OUTLINER_OB_CAMERA')
+        layout.menu("INFO_MT_camera_add", icon='OUTLINER_OB_CAMERA')
         layout.menu("INFO_MT_lamp_add", icon='OUTLINER_OB_LAMP')
         layout.separator()
 
-        layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='FORCE_FORCE')
+        layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='PARTICLE_POINT')
         layout.separator()
 
         if len(bpy.data.groups) > 10:
@@ -1120,6 +1123,7 @@ class INFO_MT_add(Menu):
         layout.separator()
         layout.menu("VIEW3D_MT_object_quick_effects", text="Quick Effects", icon='PARTICLES')
 
+# ********** Object menu **********
 
 class VIEW3D_MT_object_relations(Menu):
     bl_idname = "INFO_MT_object_relations"
@@ -1137,8 +1141,6 @@ class VIEW3D_MT_object_relations(Menu):
         layout.operator("object.data_transfer")
         layout.operator("object.datalayout_transfer")
 
-# ********** Object menu **********
-
 
 class VIEW3D_MT_object(Menu):
     bl_context = "objectmode"
@@ -1150,41 +1152,36 @@ class VIEW3D_MT_object(Menu):
         layout.operator("ed.undo")
         layout.operator("ed.redo")
         layout.operator("ed.undo_history")
-
         layout.separator()
+
         layout.operator("object.delete", text="Delete...").use_global = False
+        layout.separator()
+		
         layout.menu("VIEW3D_MT_transform_object")
         layout.menu("VIEW3D_MT_mirror")
-        layout.menu("VIEW3D_MT_object_clear")
-        layout.menu("VIEW3D_MT_object_apply")
-        layout.menu("VIEW3D_MT_snap")
-
-        layout.separator()
-
-        layout.menu("VIEW3D_MT_object_animation")
-
-        layout.separator()
-
-        layout.menu("INFO_MT_object_relations")
-        layout.menu("VIEW3D_MT_make_links", text="Make Links...")
         layout.menu("VIEW3D_MT_object_parent")
-        layout.menu("VIEW3D_MT_object_track")
         layout.menu("VIEW3D_MT_object_group")
-        layout.menu("VIEW3D_MT_object_constraints")
-
+        layout.menu("VIEW3D_MT_snap")
         layout.separator()
-
-        layout.menu("VIEW3D_MT_object_game")
-
-        layout.separator()
-
         layout.operator("object.join")
+        layout.operator("object.move_to_layer", text="Move to Layer...")
+		
+
 
         layout.separator()
 
-        layout.operator("object.move_to_layer", text="Move to Layer...")
-        layout.menu("VIEW3D_MT_object_showhide")
+        layout.menu("VIEW3D_MT_make_links", text="Make Links...")
+        layout.menu("INFO_MT_object_relations")
+        layout.menu("VIEW3D_MT_object_constraints")
+        layout.menu("VIEW3D_MT_object_track")
 
+        layout.separator()
+        layout.menu("VIEW3D_MT_object_animation")
+        layout.separator()		
+        layout.menu("VIEW3D_MT_object_game")
+        layout.separator()
+
+        layout.menu("VIEW3D_MT_object_showhide")
         layout.operator_menu_enum("object.convert", "target")
 
 

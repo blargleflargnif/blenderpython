@@ -378,7 +378,39 @@ class VIEW3D_MT_uv_map(Menu):
 
 
 # ********** View menus **********
+class VIEW3D_MT_view_directions(Menu):
+    bl_label = "Directions"
 
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("view3d.viewnumpad", text="Top").type = 'TOP'
+        layout.operator("view3d.viewnumpad", text="Bottom").type = 'BOTTOM'
+        layout.operator("view3d.viewnumpad", text="Front").type = 'FRONT'
+        layout.operator("view3d.viewnumpad", text="Back").type = 'BACK'
+        layout.operator("view3d.viewnumpad", text="Right").type = 'RIGHT'
+        layout.operator("view3d.viewnumpad", text="Left").type = 'LEFT'
+
+class VIEW3D_MT_view_border(Menu):
+    bl_label = "Set Border"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+
+        layout.operator("view3d.clip_border", text="Clipping Border...")
+        layout.operator("view3d.zoom_border", text="Zoom Border...")
+        layout.operator("view3d.render_border", text="Render Border...").camera_only = False
+
+class VIEW3D_MT_view_toggle(Menu):
+    bl_label = "View Toggle"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_REGION_WIN'
+
+        layout.operator("screen.region_quadview")
+        layout.operator("screen.screen_full_area", text="Toggle Maximize Area")
+        layout.operator("screen.screen_full_area").use_hide_panels = True
 
 class VIEW3D_MT_view(Menu):
     bl_label = "View"
@@ -392,13 +424,6 @@ class VIEW3D_MT_view(Menu):
         layout.separator()
 
         layout.operator("view3d.viewnumpad", text="Camera").type = 'CAMERA'
-        layout.operator("view3d.viewnumpad", text="Top").type = 'TOP'
-        layout.operator("view3d.viewnumpad", text="Bottom").type = 'BOTTOM'
-        layout.operator("view3d.viewnumpad", text="Front").type = 'FRONT'
-        layout.operator("view3d.viewnumpad", text="Back").type = 'BACK'
-        layout.operator("view3d.viewnumpad", text="Right").type = 'RIGHT'
-        layout.operator("view3d.viewnumpad", text="Left").type = 'LEFT'
-
         layout.menu("VIEW3D_MT_view_cameras", text="Cameras")
 
         layout.separator()
@@ -406,27 +431,22 @@ class VIEW3D_MT_view(Menu):
         layout.operator("view3d.view_persportho")
 
         layout.separator()
-
+        layout.menu("VIEW3D_MT_view_directions")
         layout.menu("VIEW3D_MT_view_navigation")
         layout.menu("VIEW3D_MT_view_align")
-
-        layout.separator()
-
-        layout.operator_context = 'INVOKE_REGION_WIN'
-
-        layout.operator("view3d.clip_border", text="Clipping Border...")
-        layout.operator("view3d.zoom_border", text="Zoom Border...")
-        layout.operator("view3d.render_border", text="Render Border...").camera_only = False
-
-        layout.separator()
-
-        layout.operator("view3d.layers", text="Show All Layers").nr = 0
-
-        layout.separator()
-
+        layout.menu("VIEW3D_MT_view_toggle")
         layout.operator("view3d.localview", text="View Global/Local")
         layout.operator("view3d.view_selected").use_all_regions = False
         layout.operator("view3d.view_all").center = False
+
+        layout.separator()
+
+        layout.menu("VIEW3D_MT_view_border")
+
+        layout.operator("screen.area_dupli")
+        layout.separator()
+
+        layout.operator("view3d.layers", text="Show All Layers").nr = 0
 
         layout.separator()
 
@@ -434,10 +454,7 @@ class VIEW3D_MT_view(Menu):
 
         layout.separator()
 
-        layout.operator("screen.area_dupli")
-        layout.operator("screen.region_quadview")
-        layout.operator("screen.screen_full_area", text="Toggle Maximize Area")
-        layout.operator("screen.screen_full_area").use_hide_panels = True
+
 
 
 class VIEW3D_MT_view_navigation(Menu):
@@ -1091,7 +1108,7 @@ class INFO_MT_add(Menu):
         layout.menu("INFO_MT_lamp_add", icon='OUTLINER_OB_LAMP')
         layout.separator()
 
-        layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='OUTLINER_OB_EMPTY')
+        layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='FORCE_FORCE')
         layout.separator()
 
         if len(bpy.data.groups) > 10:
@@ -1101,7 +1118,7 @@ class INFO_MT_add(Menu):
             layout.operator_menu_enum("object.group_instance_add", "group", text="Group Instance", icon='OUTLINER_OB_EMPTY')
 
         layout.separator()
-        layout.menu("VIEW3D_MT_object_quick_effects")
+        layout.menu("VIEW3D_MT_object_quick_effects", text="Quick Effects", icon='PARTICLES')
 
 
 class VIEW3D_MT_object_relations(Menu):

@@ -1098,6 +1098,9 @@ class INFO_MT_add(Menu):
         layout.menu("INFO_MT_metaball_add", text="Metaball", icon='OUTLINER_OB_META')
         layout.operator("object.text_add", text="Text", icon='OUTLINER_OB_FONT')
         layout.separator()
+        layout.menu("INFO_MT_camera_add", icon='OUTLINER_OB_CAMERA')
+        layout.menu("INFO_MT_lamp_add", icon='OUTLINER_OB_LAMP')
+        layout.separator()
 
         layout.menu("INFO_MT_armature_add", icon='OUTLINER_OB_ARMATURE')
         layout.operator("object.add", text="Lattice", icon='OUTLINER_OB_LATTICE').type = 'LATTICE'
@@ -1105,10 +1108,6 @@ class INFO_MT_add(Menu):
         layout.separator()
 
         layout.operator("object.speaker_add", text="Speaker", icon='OUTLINER_OB_SPEAKER')
-        layout.separator()
-
-        layout.menu("INFO_MT_camera_add", icon='OUTLINER_OB_CAMERA')
-        layout.menu("INFO_MT_lamp_add", icon='OUTLINER_OB_LAMP')
         layout.separator()
 
         layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='PARTICLE_POINT')

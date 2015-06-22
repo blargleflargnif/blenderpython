@@ -247,6 +247,11 @@ class OperatorLoftCurves(bpy.types.Operator):
     bl_description = "Lofts selected curves"
     
     
+    @staticmethod
+    def driveLoft():
+        # print("driveLoft")
+        return 0.7
+    
     @classmethod
     def poll(cls, context):
         return Util.Selected2Curves()
@@ -285,6 +290,29 @@ class OperatorSweepCurves(bpy.types.Operator):
         
         return {'FINISHED'}
 
+
+
+class OperatorRevolveCurves(bpy.types.Operator):
+    bl_idname = "curvetools2.operatorrevolvecurves"
+    bl_label = "Revolve"
+    bl_description = "Generates a revolved surface from a profile and an axis  -- in order: profile and axis"
+    
+    
+    @classmethod
+    def poll(cls, context):
+        return Util.Selected2Curves()
+
+            
+    def execute(self, context):
+        #print("### TODO: OperatorRevolveCurves.execute()")
+        
+        revolvedSurface = Surfaces.RevolvedSurface.FromSelection()
+        revolvedSurface.AddToScene()
+        
+        self.report({'INFO'}, "OperatorRevolveCurves.execute()")
+        
+        return {'FINISHED'}
+
         
 
 # 3 CURVES SELECTED
@@ -310,8 +338,68 @@ class OperatorBirail(bpy.types.Operator):
 
 
         
+class OperatorSweepAndMorph(bpy.types.Operator):
+    bl_idname = "curvetools2.operatorsweepandmorph"
+    bl_label = "SweepAndMorph"
+    bl_description = "Generates a swept surface from 2 profile curves and a rail -- in order: profileBegin, profileEnd and rail"
+    
+    
+    @classmethod
+    def poll(cls, context):
+        return Util.Selected3Curves()
+
+            
+    def execute(self, context):        
+        sweptAndMorphedSurface = Surfaces.SweptAndMorphedSurface.FromSelection()
+        sweptAndMorphedSurface.AddToScene()
+        
+        self.report({'INFO'}, "OperatorSweepAndMorph.execute()")
+        
+        return {'FINISHED'}
+
+
+        
 # 1 OR MORE CURVES SELECTED
 # #########################
+class OperatorSetOriginsToStart(bpy.types.Operator):
+    bl_idname = "curvetools2.operatorsetoriginstostart"
+    bl_label = "OperatorSetOriginsToStart"
+    bl_description = "Sets the origin of the curves to the start of the curve"
+    
+    
+    @classmethod
+    def poll(cls, context):
+        return Util.Selected1OrMoreCurves()
+
+            
+    def execute(self, context):
+        selCurves = Util.GetSelectedCurves()
+        selObjectNames = Properties.CurveTools2SelectedObject.GetSelectedObjectNames()
+        
+        for blCurve in selCurves:
+            cName = blCurve.name
+            blSpline = blCurve.data.splines[0]
+            newOrigin = blCurve.matrix_world * blSpline.bezier_points[0].co
+        
+            origOrigin = bpy.context.scene.cursor_location.copy()
+            
+            bpy.context.scene.cursor_location = newOrigin
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_pattern(pattern=cName, extend=False)
+            bpy.context.scene.objects.active = blCurve
+            bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+            bpy.context.scene.cursor_location = origOrigin
+        
+        # restore selection
+        bpy.ops.object.select_all(action='DESELECT')
+        for selObjName in selObjectNames:
+            bpy.ops.object.select_pattern(pattern=selObjName, extend=True)
+            
+        
+        return {'FINISHED'}
+        
+        
+        
 class OperatorSplinesSetResolution(bpy.types.Operator):
     bl_idname = "curvetools2.operatorsplinessetresolution"
     bl_label = "SplinesSetResolution"

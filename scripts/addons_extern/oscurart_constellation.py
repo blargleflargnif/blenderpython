@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Constellation",
+    "name": "Mesh: Constellation",
     "author": "Oscurart",
     "version": (1, 0),
     "blender": (2, 67, 0),

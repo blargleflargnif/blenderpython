@@ -81,7 +81,10 @@ def circle_array_menu(self, context):
         
 def register():
     bpy.utils.register_class(Circle_Array)
-    bpy.types.VIEW3D_MT_object.append(circle_array_menu)  
+    bpy.types.VIEW3D_MT_object.append(circle_array_menu)
+def unregister():
+    bpy.utils.unregister_class(Circle_Array)
+    bpy.types.VIEW3D_MT_object.remove(circle_array_menu)  
     
 if __name__ == "__main__":
     register() 

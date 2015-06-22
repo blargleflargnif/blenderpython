@@ -2,46 +2,61 @@ import time
 
 import bpy
 from bpy.props import *
+import bpy.app
 
-
-
-class CurveTools2SelectedObjectHeader(bpy.types.Header):
-    bl_label = "Selection"
-    bl_space_type = "VIEW_3D"
-    
-    def __init__(self):
-        self.update()
-
-        
-    def update(self):
-        blenderSelectedObjects = bpy.context.selected_objects
-        selectedObjects = bpy.context.scene.curvetools.SelectedObjects
-        
-        selectedObjectsToRemove = []
-        for selectedObject in selectedObjects:
-            if not selectedObject.IsElementOf(blenderSelectedObjects): selectedObjectsToRemove.append(selectedObject)
-        for selectedObject in selectedObjectsToRemove: selectedObjects.remove(selectedObject)
-        
-        blenderObjectsToAdd = []
-        for blenderObject in blenderSelectedObjects:
-            if not CurveTools2SelectedObject.ListContains(selectedObjects, blenderObject): blenderObjectsToAdd.append(blenderObject)
-        for blenderObject in blenderObjectsToAdd:
-            newSelectedObject = CurveTools2SelectedObject(blenderObject)
-            selectedObjects.append(newSelectedObject)
-
-        
-    def draw(self, context):
-        selectedObjects = bpy.context.scene.curvetools.SelectedObjects
-        nrSelectedObjects = len(selectedObjects)
-        
-        layout = self.layout
-        row = layout.row()
-        row.label("Sel:", nrSelectedObjects)
 
 
 class CurveTools2SelectedObject(bpy.types.PropertyGroup):
     name = StringProperty(name = "name", default = "??")
-
+        
+        
+    def __getattr__(self, attrName):
+        # general blender object
+        if attrName == "blenderObject":
+            try: rvObject = bpy.data.objects[self.name]
+            except: rvObject = None
+            
+            return rvObject
+            
+        if attrName == "type":
+            try: rvType = self.blenderObject.type
+            except: rvType = None
+            
+            return rvType
+            
+        # curve object
+        if attrName == "isCurve":
+            try: rvBool = (self.blenderObject.type == "CURVE")
+            except: rvBool = False
+            
+            return rvBool
+            
+        if attrName == "curveData":
+            if not self.isCurve: return None
+            
+            try: rvData = self.blenderObject.data
+            except: rvData = None
+            
+            return rvData
+            
+        if attrName == "curveSplines":
+            try: rvSplines = self.curveData.splines
+            except: rvSplines = None
+            
+            return rvSplines
+            
+        if attrName == "nrSplines":
+            try: rvNrSplines = len(self.curveSplines)
+            except: rvNrSplines = None
+            
+            return rvNrSplines
+            
+        if attrName == "curveType":
+            try: rvType = self.curveSplines[0].type
+            except: rvType = None
+            
+            return rvType
+        
     
     @staticmethod
     def UpdateThreadTarget(lock, sleepTime, selectedObjectNames, selectedBlenderObjectNames):
@@ -65,7 +80,41 @@ class CurveTools2SelectedObject(bpy.types.PropertyGroup):
             for i in range(nrNewSelectedObjects): selectedObjects.add()
             for i, newSelectedObjectName in enumerate(newSelectedObjectNames):
                 selectedObjects[i].name = newSelectedObjectName
+                
+            selectedCurves = CurveTools2SelectedObject.GetSelectedCurves()
+            bpy.context.scene.curvetools.NrSelectedCurves = len(selectedCurves)
         except: pass
+        
+        
+    @staticmethod
+    def GetSelectedBlenderObjects():
+        selectedObjects = bpy.context.scene.curvetools.SelectedObjects
+        
+        rvObjects = []
+        for selObj in selectedObjects: rvObjects.append(selObj.blenderObject)
+        
+        return rvObjects
+        
+        
+    @staticmethod
+    def GetSelectedCurves():
+        selectedObjects = bpy.context.scene.curvetools.SelectedObjects
+        
+        rvCurves = []
+        for selObj in selectedObjects: 
+            if selObj.isCurve: rvCurves.append(selObj.blenderObject)
+        
+        return rvCurves
+        
+        
+    @staticmethod
+    def GetSelectedBlenderObjects():
+        selectedObjects = bpy.context.scene.curvetools.SelectedObjects
+        
+        rvObjects = []
+        for selObj in selectedObjects: rvObjects.append(selObj.blenderObject)
+        
+        return rvObjects
 
         
     @staticmethod

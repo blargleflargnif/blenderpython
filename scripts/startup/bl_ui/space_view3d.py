@@ -1113,14 +1113,15 @@ class INFO_MT_add(Menu):
         layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='PARTICLE_POINT')
         layout.separator()
 
+        layout.menu("VIEW3D_MT_object_quick_effects", text="Quick Effects", icon='PARTICLES')
+        layout.separator()
+
         if len(bpy.data.groups) > 10:
             layout.operator_context = 'INVOKE_REGION_WIN'
-            layout.operator("object.group_instance_add", text="Group Instance...", icon='OUTLINER_OB_EMPTY')
+            layout.operator("object.group_instance_add", text="Group Instance...", icon='GROUP_VERTEX')
         else:
-            layout.operator_menu_enum("object.group_instance_add", "group", text="Group Instance", icon='OUTLINER_OB_EMPTY')
+            layout.operator_menu_enum("object.group_instance_add", "group", text="Group Instance", icon='GROUP_VERTEX')
 
-        layout.separator()
-        layout.menu("VIEW3D_MT_object_quick_effects", text="Quick Effects", icon='PARTICLES')
 
 # ********** Object menu **********
 

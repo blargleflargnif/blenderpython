@@ -1856,7 +1856,7 @@ class Selection(bpy.types.Panel):
 			
 class Tools(bpy.types.Panel):
 	bl_idname = 'pan.tools'
-	bl_label = 'Extra Tools'
+	bl_label = 'Modify Tools'
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
 	bl_category = 'Tools'

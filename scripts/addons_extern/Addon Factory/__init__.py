@@ -23,7 +23,7 @@ from .image import IMAGE_MT_image
 from .image import IMAGE_MT_select
 from .image import IMAGE_MT_view
 from .materials import MATERIAL_MT_specials
-from .menu_tools import analyse_dicom_3d_models
+from .tools_panels import VIEW3D_MT_tools_panels
 from .modifiers import DATA_PT_modifiers
 from .node import NODE_MT_node
 from .object import VIEW3D_MT_make_links

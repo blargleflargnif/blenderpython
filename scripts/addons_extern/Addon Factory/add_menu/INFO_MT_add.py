@@ -42,7 +42,8 @@ if "bpy" in locals():
     importlib.reload(pixelate_3d)
     importlib.reload(object_add_chain)
     importlib.reload(drop_to_ground)
-
+    importlib.reload(circle_array)
+    importlib.reload(crear_cuerda)
 
 else:
     from . import scene_camera
@@ -54,11 +55,13 @@ else:
     from . import object_add_chain
     from . import oscurart_chain_maker
     from . import drop_to_ground
+    from . import circle_array
+    from . import crear_cuerda
 
 import bpy
 
 class create_menu(bpy.types.Panel):
-    bl_label = 'Create Factory'
+    bl_label = 'Add Factory'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "Create"
@@ -66,10 +69,13 @@ class create_menu(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator('object.pixelate', icon='MESH_GRID')
         layout.operator('mesh.primitive_chain_add', icon='LINKED')
         layout.operator('mesh.primitive_oscurart_chain_add', icon='LINKED')
-
+        layout.operator('object.pixelate', icon='MESH_GRID')
+        layout.operator("object.drop_on_active",
+            text="Drop To Ground", icon='MESH_PLANE')
+        layout.operator("objects.circle_array_operator",
+            text="Circle Array", icon='MOD_ARRAY')
 
 class INFO_MT_mesh_chain_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -83,17 +89,19 @@ class INFO_MT_mesh_chain_add(bpy.types.Menu):
         layout.operator('mesh.primitive_oscurart_chain_add', icon='LINKED')
 
 
-class INFO_MT_mesh_mods_add(bpy.types.Menu):
+class INFO_MT_array_mods_add(bpy.types.Menu):
     # Define the "mesh objects" menu
-    bl_idname = "INFO_MT_mesh_mods"
-    bl_label = "Mesh Mods"
+    bl_idname = "INFO_MT_array_mods"
+    bl_label = "Array Mods"
 
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("object.pixelate",
-            text="Pixelate")
         self.layout.menu("INFO_MT_mesh_chain", icon="LINKED")
+        layout.operator("objects.circle_array_operator",
+            text="Circle Array", icon='MOD_ARRAY')
+        layout.operator("ball.rope",
+            text="Wrecking Ball", icon='PHYSICS')
 
 class INFO_MT_quick_tools_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -105,6 +113,7 @@ class INFO_MT_quick_tools_add(bpy.types.Menu):
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.operator("object.drop_on_active",
             text="Drop To Ground")
+        layout.operator('object.pixelate', icon='MESH_GRID')
 
 class INFO_MT_scene_elements_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -154,9 +163,9 @@ def menu(self, context):
 		self.layout.separator()
 		layout.label(text="Add Factory")
 		self.layout.menu("INFO_MT_scene_elements", icon="SCENE_DATA")
-		self.layout.menu("INFO_MT_scene_lamps", icon="OUTLINER_OB_LAMP")
-		self.layout.menu("INFO_MT_mesh_mods", icon="PLUGIN")
-		self.layout.menu("INFO_MT_quick_tools", icon="PLUGIN")
+		self.layout.menu("INFO_MT_scene_lamps", icon="LAMP_SPOT")
+		self.layout.menu("INFO_MT_array_mods", icon="MOD_ARRAY")
+		self.layout.menu("INFO_MT_quick_tools", icon="MOD_BUILD")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Add Factory", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

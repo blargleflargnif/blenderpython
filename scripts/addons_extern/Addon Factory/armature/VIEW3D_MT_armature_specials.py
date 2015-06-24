@@ -9,8 +9,8 @@ import re
 
 class CreateMirror(bpy.types.Operator):
 	bl_idname = "armature.create_mirror"
-	bl_label = "Mirroring the selection bone"
-	bl_description = "I will mirror the bone in selected in any axis"
+	bl_label = "Mirroring Armature L/R"
+	bl_description = "Mirror Selected bone"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -61,8 +61,8 @@ class CreateMirror(bpy.types.Operator):
 
 class CopyBoneName(bpy.types.Operator):
 	bl_idname = "armature.copy_bone_name"
-	bl_label = "Copy bone names to the clipboard"
-	bl_description = "I will copy the name of the active bone to clipboard"
+	bl_label = "Copy bone names"
+	bl_description = "Copy the name of the active bone to clipboard"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	isObject = bpy.props.BoolProperty(name="Also object name", default=False)
@@ -76,7 +76,7 @@ class CopyBoneName(bpy.types.Operator):
 
 class RenameBoneRegularExpression(bpy.types.Operator):
 	bl_idname = "armature.rename_bone_regular_expression"
-	bl_label = "Replace bone names in regular expression"
+	bl_label = "Replace Bone Names"
 	bl_description = "I will replace the bone names (in selection) in the part that matches the regular expression"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -101,8 +101,8 @@ class RenameBoneRegularExpression(bpy.types.Operator):
 
 class RenameOppositeBone(bpy.types.Operator):
 	bl_idname = "armature.rename_opposite_bone"
-	bl_label = "And rename the bone in the opposite position"
-	bl_description = "I make the bone at the position of the X-axis opposite side of the selection in the bone in pairs as ○ .R ○ .L"
+	bl_label = "Rename Pairs L/R"
+	bl_description = "X-axis rename in pairs as ○ .R ○ .L"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	threshold = bpy.props.FloatProperty(name="Position of the threshold", default=0.00001, min=0, soft_min=0, step=0.001, precision=5)

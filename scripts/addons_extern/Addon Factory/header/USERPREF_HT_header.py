@@ -918,7 +918,7 @@ class AddonsMenu(bpy.types.Menu):
 	
 	def draw(self, context):
 		self.layout.operator(ToggleDisabledMenu.bl_idname, icon="PLUGIN")
-		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
+#		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
 
 ################
 # メニュー追加 #

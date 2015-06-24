@@ -422,7 +422,7 @@ class PlancherPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_category = "Create"
     bl_label = "Plancher"
-
+    bl_options = {'DEFAULT_CLOSED'}
     #------------------------------------------------------------
     # PANEL 
     #------------------------------------------------------------

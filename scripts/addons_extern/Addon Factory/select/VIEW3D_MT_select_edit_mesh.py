@@ -8,16 +8,16 @@ import bpy
 
 class SelectAxisLimit(bpy.types.Operator):
 	bl_idname = "mesh.select_axis_limit"
-	bl_label = "X=Select vertices 0"
-	bl_description = "I choose the vertex of X = 0"
+	bl_label = "Select Along Axis"
+	bl_description = "Select Along Axis"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
 		("0", "X Axis", "", 1),
 		("1", "Y Axis", "", 2),
-		("2", " Axis", "", 3),
+		("2", "Z Axis", "", 3),
 		]
-	axis = bpy.props.EnumProperty(items=items, name="Axis")
+	axis = bpy.props.EnumProperty(items=items, name="Select Along Axis")
 	offset = bpy.props.FloatProperty(name="Offset", default=0.0, step=10, precision=3)
 	threshold = bpy.props.FloatProperty(name="Threshold", default=0.0000001, min=0.0, soft_min=0.0, step=0.1, precision=10)
 	
@@ -38,7 +38,7 @@ class SelectAxisLimit(bpy.types.Operator):
 
 class SelectAxisOver(bpy.types.Operator):
 	bl_idname = "mesh.select_axis_over"
-	bl_label = "Choose the right half"
+	bl_label = "Select Opposite Side"
 	bl_description = "Choose the right half of the mesh (other settings available)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -88,8 +88,8 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(SelectAxisLimit.bl_idname, icon="PLUGIN")
-		self.layout.operator(SelectAxisOver.bl_idname, icon="PLUGIN")
+		self.layout.operator(SelectAxisLimit.bl_idname, icon="EMPTY_DATA")
+		self.layout.operator(SelectAxisOver.bl_idname, icon="LATTICE_DATA")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

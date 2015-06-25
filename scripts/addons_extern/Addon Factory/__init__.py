@@ -180,7 +180,7 @@ def register():
 	bpy.types.VIEW3D_MT_pose_specials.append(VIEW3D_MT_pose_specials.menu)
 	bpy.types.VIEW3D_MT_select_edit_mesh.append(VIEW3D_MT_select_edit_mesh.menu)
 	bpy.types.VIEW3D_MT_select_pose.append(VIEW3D_MT_select_pose.menu)
-	bpy.types.VIEW3D_MT_view.append(VIEW3D_MT_view.menu)
+	bpy.types.VIEW3D_MT_view.prepend(VIEW3D_MT_view.menu)
 	bpy.types.VIEW3D_MT_view_align.append(VIEW3D_MT_view_align.menu)
 	bpy.types.VIEW3D_MT_select_edit_armature.append(VIEW3D_MT_select_edit_armature.menu)
 	bpy.types.VIEW3D_MT_edit_mesh_vertices.append(VIEW3D_MT_edit_mesh_vertices.menu)

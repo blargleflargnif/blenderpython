@@ -845,7 +845,7 @@ class UpdateScrambleAddon(bpy.types.Operator):
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
-		response = urllib.request.urlopen("https://github.com/saidenka/Blender-Scramble-Addon/archive/master.zip")
+#		response = urllib.request.urlopen("https://github.com/saidenka/Blender-Scramble-Addon/archive/master.zip")
 		tempDir = bpy.app.tempdir
 		zipPath = os.path.join(tempDir, "Blender-Scramble-Addon-master.zip")
 		addonDir = os.path.dirname(__file__)

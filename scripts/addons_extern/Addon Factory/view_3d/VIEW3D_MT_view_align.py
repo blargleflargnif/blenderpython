@@ -44,15 +44,15 @@ class ResetView(bpy.types.Operator):
 
 class SelectAndView(bpy.types.Operator):
 	bl_idname = "view3d.select_and_view"
-	bl_label = "In the center of the selection + perspective"
-	bl_description = "Select the ones under the mouse to the center of the view (additional selection in while holding down the Shift)"
+	bl_label = "Center Selection + Perspective"
+	bl_description = "Select the ones under the mouse to the center of the view"
 	bl_options = {'REGISTER'}
 	
 	items = [
 		("view_selected_ex", "Not zoom", "", 1),
 		("view_selected", "To zoom", "", 2),
 		]
-	mode = bpy.props.EnumProperty(items=items, name="Point of view how to change")
+	mode = bpy.props.EnumProperty(items=items, name="Mode")
 	mouse_loc = bpy.props.IntVectorProperty(name="Mouse position", size=2)
 	isExtend = bpy.props.BoolProperty(name="Additional selection", default=False)
 	
@@ -71,8 +71,8 @@ class SelectAndView(bpy.types.Operator):
 
 class SnapMeshView(bpy.types.Operator):
 	bl_idname = "view3d.snap_mesh_view"
-	bl_label = "Snap a perspective to mesh"
-	bl_description = "On the mesh surface under the mouse to move the center of perspective (Please use registered in the shortcut)"
+	bl_label = "Snap a View to mesh"
+	bl_description = "Mesh Surface To center of View"
 	bl_options = {'REGISTER'}
 	
 	mouse_co = bpy.props.IntVectorProperty(name="Mouse position", size=2)
@@ -107,8 +107,8 @@ class SnapMeshView(bpy.types.Operator):
 
 class ReverseView(bpy.types.Operator):
 	bl_idname = "view3d.reverse_view"
-	bl_label = "On the other side of the view"
-	bl_description = "I crowded around to the opposite side of the current view"
+	bl_label = "Flip View"
+	bl_description = "Flip The View"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -119,8 +119,8 @@ class ReverseView(bpy.types.Operator):
 
 class ResetViewAndCursor(bpy.types.Operator):
 	bl_idname = "view3d.reset_view_and_cursor"
-	bl_label = "To the origin point of view and the 3D cursor"
-	bl_description = "I will move the position of the viewpoint and 3D cursor to the origin (XYZ = 0.0)"
+	bl_label = "Reset View & Cursor"
+	bl_description = "Viewpoint and 3D cursor to the origin (XYZ = 0.0)"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -130,8 +130,8 @@ class ResetViewAndCursor(bpy.types.Operator):
 
 class SnapMeshViewAndCursor(bpy.types.Operator):
 	bl_idname = "view3d.snap_mesh_view_and_cursor"
-	bl_label = "And to snap a point of view and the 3D cursor to mesh"
-	bl_description = "On the mesh surface under the mouse to move the viewpoint and the 3D cursor (please use registered in the shortcut)"
+	bl_label = "Snap View & 3D cursor to Mesh"
+	bl_description = "On the mesh surface under the mouse to move the viewpoint and the 3D cursor)"
 	bl_options = {'REGISTER'}
 	
 	mouse_co = bpy.props.IntVectorProperty(name="Mouse position", size=2)
@@ -178,15 +178,15 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(ResetView.bl_idname, icon="PLUGIN")
-		self.layout.operator(ResetViewAndCursor.bl_idname, icon="PLUGIN")
+		self.layout.operator(ResetView.bl_idname)
+		self.layout.operator(ResetViewAndCursor.bl_idname)
 		self.layout.separator()
-		self.layout.operator(ViewSelectedEX.bl_idname, icon="PLUGIN")
-		self.layout.operator(SelectAndView.bl_idname, icon="PLUGIN")
+		self.layout.operator(ViewSelectedEX.bl_idname)
+		self.layout.operator(SelectAndView.bl_idname)
 		self.layout.separator()
-		self.layout.operator(SnapMeshView.bl_idname, icon="PLUGIN")
-		self.layout.operator(SnapMeshViewAndCursor.bl_idname, icon="PLUGIN")
-		self.layout.operator(ReverseView.bl_idname, icon="PLUGIN")
+		self.layout.operator(SnapMeshView.bl_idname)
+		self.layout.operator(SnapMeshViewAndCursor.bl_idname)
+		self.layout.operator(ReverseView.bl_idname)
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

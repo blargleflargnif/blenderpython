@@ -15,6 +15,7 @@ class CopyPieOperator(bpy.types.Operator):
 	def execute(self, context):
 		bpy.ops.wm.call_menu_pie(name=CopyPie.bl_idname)
 		return {'FINISHED'}
+
 class CopyPie(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_pie_copy"
 	bl_label = "Copy Pie"
@@ -33,6 +34,7 @@ class ObjectModePieOperator(bpy.types.Operator):
 	def execute(self, context):
 		bpy.ops.wm.call_menu_pie(name=ObjectModePie.bl_idname)
 		return {'FINISHED'}
+
 class ObjectModePie(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_pie_object_mode"
 	bl_label = "Object interactive mode"
@@ -47,6 +49,7 @@ class ObjectModePie(bpy.types.Menu):
 		self.layout.menu_pie().operator(SetObjectMode.bl_idname, text="Edit", icon="EDITMODE_HLT").mode = "EDIT"
 		self.layout.menu_pie().operator(SetObjectMode.bl_idname, text="Texture Paint", icon="TPAINT_HLT").mode = "TEXTURE_PAINT"
 		self.layout.menu_pie().operator(SetObjectMode.bl_idname, text="Vertex Paint", icon="VPAINT_HLT").mode = "VERTEX_PAINT"
+
 class SetObjectMode(bpy.types.Operator): #
 	bl_idname = "object.set_object_mode"
 	bl_label = "Set the object interactive mode"
@@ -101,8 +104,8 @@ class DrawTypePieOperator(bpy.types.Operator):
 
 class DrawTypePie(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_pie_draw_type"
-	bl_label = "Best drawing type Pie"
-	bl_description = "This is a pie menu to set the highest drawing type"
+	bl_label = "Best Draw Type"
+	bl_description = "Best draw Type"
 	
 	def draw(self, context):
 		self.layout.menu_pie().operator(SetDrawType.bl_idname, text="Bounds", icon="BBOX").type = "BOUNDS"
@@ -112,8 +115,8 @@ class DrawTypePie(bpy.types.Menu):
 
 class SetDrawType(bpy.types.Operator): #
 	bl_idname = "object.set_draw_type"
-	bl_label = "Best drawing type setting"
-	bl_description = "I set the highest drawing type"
+	bl_label = "Set Draw Type"
+	bl_description = "Set Draw Type"
 	bl_options = {'REGISTER'}
 	
 	type = bpy.props.StringProperty(name="Drawing type", default="OBJECT")
@@ -129,15 +132,15 @@ class SetDrawType(bpy.types.Operator): #
 
 class DeleteUnmassage(bpy.types.Operator):
 	bl_idname = "object.delete_unmassage"
-	bl_label = "Delete without confirmation"
-	bl_description = "You can remove the object without displaying a confirmation message when you want to delete"
+	bl_label = "Delete Without Confirm"
+	bl_description = "Delete Without Confirm"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	use_global = bpy.props.BoolProperty(name="Overall Delete", default=False)
 	
 	def execute(self, context):
 		if (context.active_object):
-			self.report(type={"INFO"}, message=context.active_object.name+"I have been deleted, etc.")
+			self.report(type={"INFO"}, message=context.active_object.name+"I have been deleted, goodbye.")
 		bpy.ops.object.delete(use_global=self.use_global)
 		return {'FINISHED'}
 
@@ -151,19 +154,19 @@ class PieMenu(bpy.types.Menu):
 	bl_description = "This is a pie menu for the object manipulation"
 	
 	def draw(self, context):
-		self.layout.operator(CopyPieOperator.bl_idname, icon="PLUGIN")
-		self.layout.operator(ObjectModePieOperator.bl_idname, icon="PLUGIN")
-		self.layout.operator(SubdivisionSetPieOperator.bl_idname, icon="PLUGIN")
-		self.layout.operator(DrawTypePieOperator.bl_idname, icon="PLUGIN")
+		self.layout.operator(CopyPieOperator.bl_idname, icon="COLOR")
+		self.layout.operator(ObjectModePieOperator.bl_idname, icon="COLOR")
+		self.layout.operator(SubdivisionSetPieOperator.bl_idname, icon="COLOR")
+		self.layout.operator(DrawTypePieOperator.bl_idname, icon="COLOR")
 
 class ShortcutMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_shortcut"
-	bl_label = "For shortcut registration"
-	bl_description = "This is a convenient feature likely group When you register to shortcut"
+	bl_label = "Shortcuts"
+	bl_description = "Quick Shortcuts"
 	
 	def draw(self, context):
-		self.layout.operator(DeleteUnmassage.bl_idname, icon="PLUGIN")
-		self.layout.operator(ApplyModifiersAndJoin.bl_idname, icon="PLUGIN")
+		self.layout.operator(DeleteUnmassage.bl_idname, icon="COLOR_RED")
+#		self.layout.operator(ApplyModifiersAndJoin.bl_idname, icon="PLUGIN")
 
 ################
 # メニュー追加 #
@@ -181,8 +184,8 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.menu(ShortcutMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(PieMenu.bl_idname, icon="PLUGIN")
+		self.layout.menu(ShortcutMenu.bl_idname, icon="LINE_DATA")
+		self.layout.menu(PieMenu.bl_idname, icon="COLOR")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

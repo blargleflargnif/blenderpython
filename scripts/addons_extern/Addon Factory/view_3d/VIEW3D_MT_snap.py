@@ -8,7 +8,7 @@ import bpy
 
 class SnapMesh3DCursor(bpy.types.Operator):
 	bl_idname = "view3d.snap_mesh_3d_cursor"
-	bl_label = "Snap the 3D cursor to mesh"
+	bl_label = "Snap Cursor to Mesh"
 	bl_description = "On the mesh surface under the mouse to move the cursor 3D (please use registered in the shortcut)"
 	bl_options = {'REGISTER'}
 	
@@ -41,7 +41,7 @@ class SnapMesh3DCursor(bpy.types.Operator):
 
 class Move3DCursorToViewLocation(bpy.types.Operator):
 	bl_idname = "view3d.move_3d_cursor_to_view_location"
-	bl_label = "The 3D cursor moves to the viewpoint position"
+	bl_label = "Cursor to Viewpoint"
 	bl_description = "I will move the 3D cursor to the center position of the viewpoint"
 	bl_options = {'REGISTER'}
 	
@@ -51,7 +51,7 @@ class Move3DCursorToViewLocation(bpy.types.Operator):
 
 class Move3DCursorFar(bpy.types.Operator):
 	bl_idname = "view3d.move_3d_cursor_far"
-	bl_label = "To hide the 3D cursor (far far) to be"
+	bl_label = "To hide the 3D cursor (far far)"
 	bl_description = "You look like hidden can be moved to far away the 3D cursor"
 	bl_options = {'REGISTER'}
 	
@@ -75,7 +75,7 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor to viewpoint position", icon="PLUGIN")
+		self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor to Viewpoint", icon="PLUGIN")
 		self.layout.operator(Move3DCursorFar.bl_idname, text="Cursor = hide (to far)", icon="PLUGIN")
 		self.layout.operator(SnapMesh3DCursor.bl_idname, text="Cursor to mesh surface", icon="PLUGIN")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):

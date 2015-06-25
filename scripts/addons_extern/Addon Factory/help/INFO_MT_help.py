@@ -522,7 +522,7 @@ class ShowEmptyShortcuts(bpy.types.Operator):
 
 class ShortcutsMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_help_shortcuts"
-	bl_label = "Shortcut relationship"
+	bl_label = "Shortcuts"
 	bl_description = "This is a menu of shortcuts relationship"
 	
 	def draw(self, context):
@@ -540,8 +540,8 @@ class AssociateMenu(bpy.types.Menu):
 	
 	def draw(self, context):
 		column = self.layout.column()
-		column.operator(RegisterBlendFile.bl_idname, icon="PLUGIN")
-		column.operator(RegisterBlendBackupFiles.bl_idname, icon="PLUGIN")
+		column.operator(RegisterBlendFile.bl_idname, icon="LINK_BLEND")
+		column.operator(RegisterBlendBackupFiles.bl_idname, icon="LINK_BLEND")
 
 ################
 # メニュー追加 #
@@ -560,10 +560,10 @@ def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
 #		self.layout.menu(ShortcutsMenu.bl_idname, icon="PLUGIN")
-#		self.layout.menu(AssociateMenu.bl_idname, icon="PLUGIN")
+		self.layout.menu(AssociateMenu.bl_idname, icon="LINK_BLEND")
 		self.layout.separator()
 #		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
-	self.layout.separator()
+#	self.layout.separator()
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 	self.layout.operator(ToggleDisabledMenu.bl_idname, icon='VISIBLE_IPO_ON')

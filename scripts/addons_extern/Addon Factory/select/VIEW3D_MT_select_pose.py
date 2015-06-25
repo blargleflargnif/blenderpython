@@ -9,7 +9,7 @@ import re
 
 class SelectSerialNumberNameBone(bpy.types.Operator):
 	bl_idname = "pose.select_serial_number_name_bone"
-	bl_label = "Select a bone that has a serial number"
+	bl_label = "Select By Number"
 	bl_description = "I choose the bone of names with a number as X.001"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -26,7 +26,7 @@ class SelectSerialNumberNameBone(bpy.types.Operator):
 
 class SelectMoveSymmetryNameBones(bpy.types.Operator):
 	bl_idname = "pose.select_move_symmetry_name_bones"
-	bl_label = "Move the selection to the symmetry of the bone"
+	bl_label = "Filp Name Sides"
 	bl_description = "Change the selection to the if selected XL XR, to the XL if XR"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -76,8 +76,8 @@ class SelectMoveSymmetryNameBones(bpy.types.Operator):
 
 class SelectSameConstraintBone(bpy.types.Operator):
 	bl_idname = "pose.select_same_constraint_bone"
-	bl_label = "Select a bone of the same constraint"
-	bl_description = "I will add select the bone with the same kind of constraint and active bone"
+	bl_label = "Select Same Constraint"
+	bl_description = "Select the bone with the same kind of constraint"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -99,7 +99,7 @@ class SelectSameConstraintBone(bpy.types.Operator):
 
 class SelectSameNameBones(bpy.types.Operator):
 	bl_idname = "pose.select_same_name_bones"
-	bl_label = "Select a bone with the same name"
+	bl_label = "Select By Name"
 	bl_description = "X X.001 X.002 And then select the bone names, such as it is regarded as the same name"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -119,7 +119,7 @@ class SelectSameNameBones(bpy.types.Operator):
 
 class SelectSymmetryNameBones(bpy.types.Operator):
 	bl_idname = "pose.select_symmetry_name_bones"
-	bl_label = "Select additional bone of symmetry name"
+	bl_label = "Select By Symmetry"
 	bl_description = "XR the selected in if XL also additional selection, also choose XL if XR"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -163,16 +163,16 @@ class SelectSymmetryNameBones(bpy.types.Operator):
 class SelectChildrenEnd(bpy.types.Operator):
 	bl_idname = "pose.select_children_end"
 	bl_label = "Select Child End"
-	bl_description = "選択ボーンの子 → 子ボーンの子...と最後まで選択していきます"
+	bl_description = "Select Child End"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		obj = context.active_object
 		if (not obj):
-			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
+			self.report(type={'ERROR'}, message="Naught To Do")
 			return {'CANCELLED'}
 		if (obj.type != 'ARMATURE'):
-			self.report(type={'ERROR'}, message="アーマチュアオブジェクトで実行して下さい")
+			self.report(type={'ERROR'}, message="Not There Yet")
 			return {'CANCELLED'}
 		arm = obj.data
 		selected_bones = context.selected_pose_bones[:]
@@ -193,16 +193,16 @@ class SelectChildrenEnd(bpy.types.Operator):
 class SelectParentEnd(bpy.types.Operator):
 	bl_idname = "pose.select_parent_end"
 	bl_label = "Select Parent End"
-	bl_description = "選択ボーンの親 → 親ボーンの親...と最後まで選択していきます"
+	bl_description = "Select Parent end"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
 		obj = context.active_object
 		if (not obj):
-			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
+			self.report(type={'ERROR'}, message="Error")
 			return {'CANCELLED'}
 		if (obj.type != 'ARMATURE'):
-			self.report(type={'ERROR'}, message="アーマチュアオブジェクトで実行して下さい")
+			self.report(type={'ERROR'}, message="Not A Bug")
 			return {'CANCELLED'}
 		arm = obj.data
 		selected_bones = context.selected_pose_bones[:]
@@ -219,7 +219,7 @@ class SelectParentEnd(bpy.types.Operator):
 
 class SelectGroupedMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_select_pose_grouped"
-	bl_label = "Selected in the relationship (extended)"
+	bl_label = "Select Grouped (extended)"
 	bl_description = "This is the menu of the ability to select all visible bones are summarized in the same property"
 	
 	def draw(self, context):

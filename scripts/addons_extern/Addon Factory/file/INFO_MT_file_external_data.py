@@ -10,7 +10,7 @@ import os
 class ReloadAllImage(bpy.types.Operator):
 	bl_idname = "image.reload_all_image"
 	bl_label = "Reload all Images"
-	bl_description = "all the image data that refer to the external file I will re-read"
+	bl_description = "Reload All Images"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -27,13 +27,13 @@ class ReloadAllImage(bpy.types.Operator):
 
 class ResaveAllImage(bpy.types.Operator):
 	bl_idname = "image.resave_all_image"
-	bl_label = "I re-save all the images in the textures folder"
-	bl_description = "all the image data that refer to the external file I re-saved in the textures folder"
+	bl_label = "Save All Images"
+	bl_description = "Save Images in the textures folder"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
 		if (context.blend_data.filepath == ""):
-			self.report(type={"ERROR"}, message="Run to Save the blend file")
+			self.report(type={"ERROR"}, message="Save .blend first")
 			return {'CANCELLED'}
 		for img in context.blend_data.images:
 			if (img.filepath != ""):
@@ -48,7 +48,7 @@ class ResaveAllImage(bpy.types.Operator):
 class OpenRecentFiles(bpy.types.Operator):
 	bl_idname = "wm.open_recent_files"
 	bl_label = "Open Recent Files Text"
-	bl_description = " Recent Files and I will open in a Blender text editor"
+	bl_description = "Load Recent Files data in Text Editor"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -80,7 +80,7 @@ class OpenRecentFiles(bpy.types.Operator):
 class OpenBookmarkText(bpy.types.Operator):
 	bl_idname = "wm.open_bookmark_text"
 	bl_label = "Open Bookmarks Text"
-	bl_description = "file I open the browser bookmarks in Blender's text editor"
+	bl_description = "Open Saved Bookmarks in Text Editor"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -125,11 +125,11 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(ReloadAllImage.bl_idname, icon="PLUGIN")
-		self.layout.operator(ResaveAllImage.bl_idname, icon="PLUGIN")
+		self.layout.operator(ReloadAllImage.bl_idname, icon="IMAGE_DATA")
+		self.layout.operator(ResaveAllImage.bl_idname, icon="IMAGE_DATA")
 		self.layout.separator()
-		self.layout.operator(OpenRecentFiles.bl_idname, icon="PLUGIN")
-		self.layout.operator(OpenBookmarkText.bl_idname, icon="PLUGIN")
+		self.layout.operator(OpenRecentFiles.bl_idname, icon="PACKAGE")
+		self.layout.operator(OpenBookmarkText.bl_idname, icon="PACKAGE")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

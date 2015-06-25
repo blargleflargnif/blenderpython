@@ -554,7 +554,7 @@ class BallRope(bpy.types.Operator):
         col.prop(self, "solveriterations", text='Solver Iterarions')
         
 bpy.utils.register_class(BallRope)
-
+'''
 class DialogPanel(bpy.types.Panel):
     bl_label = "Rope Creator"
     bl_space_type = "VIEW_3D"
@@ -569,7 +569,7 @@ class DialogPanel(bpy.types.Panel):
         col.alignment = 'EXPAND'
         col.operator("clot.rope")
         col.operator("ball.rope")
-
+'''
 #   Registration
 def register():
     bpy.utils.register_module(__name__)

@@ -51,6 +51,7 @@ from .view_3d import VIEW3D_MT_view
 from .view_3d import VIEW3D_MT_view_align
 from .view_3d import VIEW3D_MT_view_align_selected
 from .view_3d import VIEW3D_MT_snap
+from .shading import VIEW3D_PT_view3d_shading
 
 
 # Blender Addon Information
@@ -195,7 +196,8 @@ def register():
 	bpy.types.DATA_PT_modifiers.append(DATA_PT_modifiers.menu)
 	bpy.types.DATA_PT_uv_texture.append(DATA_PT_uv_texture.menu)
 	bpy.types.DATA_PT_vertex_colors.append(DATA_PT_vertex_colors.menu)
-		
+	bpy.types.VIEW3D_PT_view3d_shading.append(VIEW3D_PT_view3d_shading.menu)
+	
 # プラグインをアンインストールしたときの処理
 def unregister():
 
@@ -251,6 +253,7 @@ def unregister():
 	bpy.types.DATA_PT_modifiers.remove(DATA_PT_modifiers.menu)
 	bpy.types.DATA_PT_uv_texture.remove(DATA_PT_uv_texture.menu)
 	bpy.types.DATA_PT_vertex_colors.remove(DATA_PT_vertex_colors.menu)
+	bpy.types.VIEW3D_PT_view3d_shading.remove(VIEW3D_PT_view3d_shading.menu)
 
 	bpy.utils.unregister_module(__name__)
 # メイン関数

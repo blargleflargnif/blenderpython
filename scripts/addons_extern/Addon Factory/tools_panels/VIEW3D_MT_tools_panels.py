@@ -7,10 +7,13 @@ if "bpy" in locals():
     importlib.reload(select_vis_tools)
     importlib.reload(quick_prefs)
 
+
 else:
     from . import analyse_dicom_3d_models
     from . import display_tools
+    from . import select_vis_tools
     from . import quick_prefs
+
 
 
 import bpy

@@ -415,12 +415,26 @@ class ReverseFacesOperator(bpy.types.Operator):
         name = context.active_object.name
         ReverseFaces(name = name)
         return {'FINISHED'}
-    
+   
+class pkhg_help(bpy.types.Operator):
+	bl_idname = 'help.pkhg'
+	bl_label = ''
+
+	def draw(self, context):
+		layout = self.layout
+		layout.label('To use:')
+		layout.label('Make a selection or selection of Faces.')
+		layout.label('Extrude, rotate extrusions & more.')
+
+	def invoke(self, context, event):
+		return context.window_manager.invoke_popup(self, width = 300)
+		
 class VIEW3D_Faces_Panel(bpy.types.Panel):
     bl_label = "Face Extrude"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_category = 'Addons'
+    bl_category = 'Tools'
+    bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):

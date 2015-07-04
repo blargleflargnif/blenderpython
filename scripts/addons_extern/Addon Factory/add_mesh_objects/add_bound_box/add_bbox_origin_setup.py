@@ -64,7 +64,7 @@ class BBOXSET(bpy.types.Panel):
     bl_label = "BBox Origin Setup"    
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         lt = context.window_manager.bboxwindow

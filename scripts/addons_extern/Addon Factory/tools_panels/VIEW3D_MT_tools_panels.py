@@ -6,6 +6,7 @@ if "bpy" in locals():
     importlib.reload(display_tools)
     importlib.reload(select_vis_tools)
     importlib.reload(quick_prefs)
+    importlib.reload(Auto_Mirror)
 
 
 else:
@@ -13,6 +14,7 @@ else:
     from . import display_tools
     from . import select_vis_tools
     from . import quick_prefs
+    from . import Auto_Mirror
 
 
 

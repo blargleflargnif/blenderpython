@@ -25,7 +25,7 @@ bl_info = {
     "description": "Add Extended Menu's",
     "warning": "",
     "wiki_url": "",
-    "category": "3D View",
+    "category": "Addon Factory",
 }
 
 if "bpy" in locals():
@@ -36,6 +36,8 @@ if "bpy" in locals():
     importlib.reload(edit_context_mode)
     importlib.reload(toolshelf_menu)
     importlib.reload(navigation)
+    importlib.reload(materials_utils)
+
 
 
 else:
@@ -45,6 +47,7 @@ else:
     from . import edit_context_mode
     from . import toolshelf_menu
     from . import navigation
+    from . import materials_utils
 
 import bpy
 
@@ -90,6 +93,13 @@ def register():
     km = wm.keyconfigs.addon.keymaps.new(name='3D View', space_type='VIEW_3D')
     kmi = km.keymap_items.new('mesh.addon_call_context_menu', 'RIGHTMOUSE', 'DOUBLE_CLICK')
 
+    #materials utils keybinding
+    kc = bpy.context.window_manager.keyconfigs.addon
+    if kc:
+        km = kc.keymaps.new(name="3D View", space_type="VIEW_3D")
+        kmi = km.keymap_items.new('wm.call_menu', 'Q', 'PRESS', shift=True)
+        kmi.properties.name = "VIEW3D_MT_master_material"
+
 def unregister():
 
 
@@ -131,6 +141,16 @@ def unregister():
             if kmi.properties.name == "mesh.addon_call_context_menu":
                 km.keymap_items.remove(kmi)
                 break
+
+    #remove materials utils keybinding
+    kc = bpy.context.window_manager.keyconfigs.addon
+    if kc:
+        km = kc.keymaps["3D View"]
+        for kmi in km.keymap_items:
+            if kmi.idname == 'wm.call_menu':
+                if kmi.properties.name == "VIEW3D_MT_master_material":
+                    km.keymap_items.remove(kmi)
+                    break
 
     bpy.utils.unregister_module(__name__)
 

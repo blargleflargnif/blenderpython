@@ -24,7 +24,7 @@ bl_info = {
     "location": "View3D > Tool Shelf > VGroup Cleaner",
     "description": "Clean vertex groups or delete empty vertex groups in selected objects",
     "tracker_url": "https://github.com/iRi-E/blender_vgroup_cleaner/issues",
-    "category": "3D View"}
+    "category": "Mesh"}
 
 import bpy
 import re

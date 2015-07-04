@@ -44,6 +44,7 @@ if "bpy" in locals():
     importlib.reload(drop_to_ground)
     importlib.reload(circle_array)
     importlib.reload(crear_cuerda)
+    importlib.reload(dupli_spin)
 
 else:
     from . import scene_camera
@@ -57,6 +58,7 @@ else:
     from . import drop_to_ground
     from . import circle_array
     from . import crear_cuerda
+    from . import dupli_spin
 
 import bpy
 
@@ -76,6 +78,8 @@ class create_menu(bpy.types.Panel):
             text="Drop To Ground", icon='MESH_PLANE')
         layout.operator("objects.circle_array_operator",
             text="Circle Array", icon='MOD_ARRAY')
+        layout.operator("object.procedural_dupli_spin",
+            text="Dupli Splin", icon='MOD_ARRAY')
 
 class INFO_MT_mesh_chain_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -100,6 +104,8 @@ class INFO_MT_array_mods_add(bpy.types.Menu):
         self.layout.menu("INFO_MT_mesh_chain", icon="LINKED")
         layout.operator("objects.circle_array_operator",
             text="Circle Array", icon='MOD_ARRAY')
+        layout.operator("object.procedural_dupli_spin",
+            text="Dupli Spin", icon='MOD_ARRAY')
         layout.operator("ball.rope",
             text="Wrecking Ball", icon='PHYSICS')
 
@@ -114,6 +120,7 @@ class INFO_MT_quick_tools_add(bpy.types.Menu):
         layout.operator("object.drop_on_active",
             text="Drop To Ground")
         layout.operator('object.pixelate', icon='MESH_GRID')
+
 
 class INFO_MT_scene_elements_add(bpy.types.Menu):
     # Define the "mesh objects" menu

@@ -32,7 +32,7 @@ class SlowPanel(bpy.types.Panel):
     bl_label = 'Slow Parenting Tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-
+    bl_category = "Animation"
     def draw(self, context):
         wm = context.window_manager
         layout = self.layout

@@ -8,8 +8,8 @@ import bpy
 
 class InvertHide(bpy.types.Operator):
 	bl_idname = "object.invert_hide"
-	bl_label = "The inverted Show / Hide"
-	bl_description = "The display state and a non-display state of the object to reverse"
+	bl_label = "Reverse Show/Hide"
+	bl_description = "Reverse Show/Hide"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -28,7 +28,7 @@ class InvertHide(bpy.types.Operator):
 
 class HideOnlyType(bpy.types.Operator):
 	bl_idname = "object.hide_only_mesh"
-	bl_label = "I hide only certain types of objects"
+	bl_label = "Hide By Type"
 	bl_description = "I will hide the objects of a specific type that is displayed"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -55,14 +55,14 @@ class HideOnlyType(bpy.types.Operator):
 
 class HideExceptType(bpy.types.Operator):
 	bl_idname = "object.hide_except_mesh"
-	bl_label = "I hide other than the specific type of object"
+	bl_label = "Hide except type"
 	bl_description = "I will hide other than the specific type of object that is displayed"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
 		("MESH", "Mesh", "", 1),
 		("CURVE", "Curve", "", 2),
-		("SURFACE", "サーフェイス", "", 3),
+		("SURFACE", "Surface", "", 3),
 		("META", "Meta", "", 4),
 		("FONT", "Font", "", 5),
 		("ARMATURE", "Armature", "", 6),
@@ -82,7 +82,7 @@ class HideExceptType(bpy.types.Operator):
 
 class ShowLayerGroupMenu(bpy.types.Operator):
 	bl_idname = "view3d.show_layer_group_menu"
-	bl_label = "Switch the display / non-display in a group"
+	bl_label = "Show Layer Group"
 	bl_description = "I will switch the display / non-display in a group that belongs to"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -92,7 +92,7 @@ class ShowLayerGroupMenu(bpy.types.Operator):
 
 class LayerGroupMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_layer_group"
-	bl_label = "Switch the display / non-display in a group"
+	bl_label = "Switch Group Display"
 	bl_description = "I will switch the display / non-display in a group that belongs to"
 	
 	def draw(self, context):
@@ -118,7 +118,7 @@ class LayerGroupMenu(bpy.types.Menu):
 
 class ApplyLayerGroup(bpy.types.Operator): #
 	bl_idname = "view3d.apply_layer_group"
-	bl_label = "Run to switch the display / non-display in a group"
+	bl_label = "Apply Layer Group"
 	bl_description = "I will switch the display / non-display in a group that belongs to"
 	bl_options = {'REGISTER', 'UNDO'}
 	

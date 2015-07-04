@@ -30,98 +30,13 @@ class LocalViewEx(bpy.types.Operator):
 		#bpy.ops.view3d.view_selected_ex()
 		return {'FINISHED'}
 
-class TogglePanelsA(bpy.types.Operator):
-	bl_idname = "view3d.toggle_panels_a"
-	bl_label = "Panel display switch (mode A)"
-	bl_description = "Property / both display of tool shelf I will toggle / a both hide"
-	bl_options = {'REGISTER'}
-	
-	def execute(self, context):
-		toolW = 0
-		uiW = 0
-		for region in context.area.regions:
-			if (region.type == 'TOOLS'):
-				toolW = region.width
-			if (region.type == 'UI'):
-				uiW = region.width
-		if (1 < toolW or 1 < uiW):
-			if (1 < toolW):
-				bpy.ops.view3d.toolshelf()
-			if (1 < uiW):
-				bpy.ops.view3d.properties()
-		else:
-			bpy.ops.view3d.toolshelf()
-			bpy.ops.view3d.properties()
-		return {'FINISHED'}
-
-class TogglePanelsB(bpy.types.Operator):
-	bl_idname = "view3d.toggle_panels_b"
-	bl_label = "Panel display switch (mode B)"
-	bl_description = "Toggle the panel both non-display, Display only tool shelf, Display Properties only, panel both display"
-	bl_options = {'REGISTER'}
-	
-	def execute(self, context):
-		toolW = 0
-		uiW = 0
-		for region in context.area.regions:
-			if (region.type == 'TOOLS'):
-				toolW = region.width
-			if (region.type == 'UI'):
-				uiW = region.width
-		if (toolW <= 1 and uiW <= 1):
-			bpy.ops.view3d.toolshelf()
-		elif (toolW <= 1 and 1 < uiW):
-			bpy.ops.view3d.toolshelf()
-		else:
-			bpy.ops.view3d.toolshelf()
-			bpy.ops.view3d.properties()
-		return {'FINISHED'}
-
-class TogglePanelsC(bpy.types.Operator):
-	bl_idname = "view3d.toggle_panels_c"
-	bl_label = "Panel display switch (mode C)"
-	bl_description = "Panel both non-display, Display only tool shelf, Display Properties only ... toggle"
-	bl_options = {'REGISTER'}
-	
-	def execute(self, context):
-		toolW = 0
-		uiW = 0
-		for region in context.area.regions:
-			if (region.type == 'TOOLS'):
-				toolW = region.width
-			if (region.type == 'UI'):
-				uiW = region.width
-		if (toolW <= 1 and uiW <= 1):
-			bpy.ops.view3d.toolshelf()
-		elif (1 < toolW and uiW <= 1):
-			bpy.ops.view3d.toolshelf()
-			bpy.ops.view3d.properties()
-		else:
-			bpy.ops.view3d.properties()
-		return {'FINISHED'}
-
-class ToggleViewportShadeA(bpy.types.Operator):
-	bl_idname = "view3d.toggle_viewport_shade_a"
-	bl_label = "Shading switching (mode A)"
-	bl_description = "Shading wire frame, solid, texture, ... and I will continue to switch"
-	bl_options = {'REGISTER'}
-	
-	def execute(self, context):
-		if (context.space_data.viewport_shade == 'SOLID'):
-			context.space_data.viewport_shade = 'TEXTURED'
-		elif (context.space_data.viewport_shade == 'TEXTURED'):
-			context.space_data.viewport_shade = 'WIREFRAME'
-		else:
-			context.space_data.viewport_shade = 'SOLID'
-		return {'FINISHED'}
-
 class SaveView(bpy.types.Operator):
 	bl_idname = "view3d.save_view"
 	bl_label = "Save View"
-	bl_description = "現在の3Dビューの視点をセーブします"
+	bl_description = "Save Current View"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	index = bpy.props.StringProperty(name="Index", default="視点セーブデータ")
+	index = bpy.props.StringProperty(name="Index", default="Name Me!")
 	
 	def execute(self, context):
 		data = ""
@@ -132,7 +47,7 @@ class SaveView(bpy.types.Operator):
 				index = line.split(':')[0]
 			except ValueError:
 				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
-				self.report(type={'ERROR'}, message="視点の読み込みに失敗しました、セーブデータをリセットします")
+				self.report(type={'ERROR'}, message="Does Not Compute")
 				return {'CANCELLED'}
 			if (str(self.index) == index):
 				continue
@@ -145,7 +60,7 @@ class SaveView(bpy.types.Operator):
 		text = text + str(context.region_data.view_distance) + ':'
 		text = text + context.region_data.view_perspective
 		context.user_preferences.addons["Addon Factory"].preferences.view_savedata = text
-		self.report(type={'INFO'}, message="現在の視点をセーブデータ"+str(self.index)+"に保存しました")
+		self.report(type={'INFO'}, message="Saved"+str(self.index)+"Current View")
 		return {'FINISHED'}
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_dialog(self)
@@ -153,10 +68,10 @@ class SaveView(bpy.types.Operator):
 class LoadView(bpy.types.Operator):
 	bl_idname = "view3d.load_view"
 	bl_label = "Load View"
-	bl_description = "現在の3Dビューに視点をロードします"
+	bl_description = "View(Name"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	index = bpy.props.StringProperty(name="視点セーブデータ名", default="視点セーブデータ")
+	index = bpy.props.StringProperty(name="Index", default="Name Me!")
 	
 	def execute(self, context):
 		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
@@ -166,7 +81,7 @@ class LoadView(bpy.types.Operator):
 				index, loc, rot, distance, view_perspective = line.split(':')
 			except ValueError:
 				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
-				self.report(type={'ERROR'}, message="視点の読み込みに失敗しました、セーブデータをリセットします")
+				self.report(type={'ERROR'}, message="You broke it!")
 				return {'CANCELLED'}
 			if (str(self.index) == index):
 				for i, v in enumerate(loc.split(',')):
@@ -175,16 +90,16 @@ class LoadView(bpy.types.Operator):
 					context.region_data.view_rotation[i] = float(v)
 				context.region_data.view_distance = float(distance)
 				context.region_data.view_perspective = view_perspective
-				self.report(type={'INFO'}, message="視点セーブデータ"+str(self.index)+"を読み込みました")
+				self.report(type={'INFO'}, message="Loaded"+str(self.index)+"Current View")
 				break
 		else:
-			self.report(type={'WARNING'}, message="視点のセーブデータ"+str(self.index)+"が存在しませんでした")
+			self.report(type={'WARNING'}, message="Rename View"+str(self.index)+"Current View")
 		return {'FINISHED'}
 
 class DeleteViewSavedata(bpy.types.Operator):
 	bl_idname = "view3d.delete_view_savedata"
 	bl_label = "Delete view saved data"
-	bl_description = "全ての視点セーブデータを削除します"
+	bl_description = "View Saved Data"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -201,14 +116,15 @@ class PieMenu(bpy.types.Menu):
 	bl_description = "This is a pie menu of 3D view relationship"
 	
 	def draw(self, context):
-		self.layout.operator(ViewNumpadPieOperator.bl_idname, icon="PLUGIN")
-		self.layout.operator(ViewportShadePieOperator.bl_idname, icon="PLUGIN")
-		self.layout.operator(LayerPieOperator.bl_idname, text="Layer", icon="PLUGIN")
+		self.layout.operator(ViewNumpadPieOperator.bl_idname, icon="COLOR")
+		self.layout.operator(ViewportShadePieOperator.bl_idname, icon="COLOR")
+		self.layout.operator(LayerPieOperator.bl_idname, text="Layer", icon="COLOR")
+		self.layout.operator(AreaTypePieOperator.bl_idname, icon="COLOR")
 
 class ViewNumpadPieOperator(bpy.types.Operator):
 	bl_idname = "view3d.view_numpad_pie_operator"
-	bl_label = "Preset view"
-	bl_description = "This is a pie menu of preset view (numeric keypad 1,3,7 Toka)"
+	bl_label = "Directions"
+	bl_description = "(numeric keypad 1,3,7 Toka)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -217,8 +133,8 @@ class ViewNumpadPieOperator(bpy.types.Operator):
 
 class ViewNumpadPie(bpy.types.Menu): #
 	bl_idname = "VIEW3D_MT_view_pie_view_numpad"
-	bl_label = "Preset view"
-	bl_description = "This is a pie menu of preset view (numeric keypad 1,3,7 Toka)"
+	bl_label = "Directions"
+	bl_description = "(numeric keypad 1,3,7 Toka)"
 	
 	def draw(self, context):
 		self.layout.menu_pie().operator("view3d.viewnumpad", text="Left", icon="TRIA_LEFT").type = "LEFT"
@@ -263,6 +179,71 @@ class SetViewportShade(bpy.types.Operator): #
 	
 	def execute(self, context):
 		context.space_data.viewport_shade = self.mode
+		return {'FINISHED'}
+
+
+
+class AreaTypePieOperator(bpy.types.Operator):
+	bl_idname = "wm.area_type_pie_operator"
+	bl_label = "Editor type"
+	bl_description = "This is a pie menu editor type change"
+	bl_options = {'REGISTER', 'UNDO'}
+	
+	def execute(self, context):
+		bpy.ops.wm.call_menu_pie(name=AreaTypePie.bl_idname)
+		return {'FINISHED'}
+
+class AreaTypePie(bpy.types.Menu):
+	bl_idname = "INFO_MT_window_pie_area_type"
+	bl_label = "Editor Type"
+	bl_description = "Change Editor Type"
+	
+	def draw(self, context):
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Text Editor", icon="TEXT").type = "TEXT_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Outliner", icon="OOPS").type = "OUTLINER"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Properties", icon="BUTS").type = "PROPERTIES"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="3D View", icon="MESH_CUBE").type = "VIEW_3D"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="UV/Image Editor", icon="IMAGE_COL").type = "IMAGE_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Node editor", icon="NODETREE").type = "NODE_EDITOR"
+		self.layout.menu_pie().operator("wm.call_menu_pie", text="Anime relationship", icon="ACTION").name = AreaTypePieAnim.bl_idname
+		self.layout.menu_pie().operator("wm.call_menu_pie", text="Other", icon="QUESTION").name = AreaTypePieOther.bl_idname
+		
+
+class AreaTypePieAnim(bpy.types.Menu):
+	bl_idname = "INFO_MT_window_pie_area_type_anim"
+	bl_label = "Editor Type (animation)"
+	bl_description = "Editor Type (animation)"
+	
+	def draw(self, context):
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="NLA Editor", icon="NLA").type = "NLA_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Action Editor", icon="ACTION").type = "DOPESHEET_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Graph editor", icon="IPO").type = "GRAPH_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Timeline", icon="TIME").type = "TIMELINE"
+
+class AreaTypePieOther(bpy.types.Menu):
+	bl_idname = "INFO_MT_window_pie_area_type_other"
+	bl_label = "Editor type (animation)"
+	bl_description = "Editor type (others) is a change pie menu of"
+	
+	def draw(self, context):
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Logic", icon="LOGIC").type = "LOGIC_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Sequence Editor", icon="SEQUENCE").type = "SEQUENCE_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Clip Editor", icon="RENDER_ANIMATION").type = "CLIP_EDITOR"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="File Browser", icon="FILESEL").type = "FILE_BROWSER"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Python Console", icon="CONSOLE").type = "CONSOLE"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="Info", icon="INFO").type = "INFO"
+		self.layout.menu_pie().operator(SetAreaType.bl_idname, text="User Preferences", icon="PREFERENCES").type = "USER_PREFERENCES"
+
+class SetAreaType(bpy.types.Operator): #
+	bl_idname = "wm.set_area_type"
+	bl_label = "Change editor type"
+	bl_description = "I will change the editor type"
+	bl_options = {'REGISTER'}
+	
+	type = bpy.props.StringProperty(name="Area type")
+	
+	def execute(self, context):
+		context.area.type = self.type
 		return {'FINISHED'}
 
 class LayerPieOperator(bpy.types.Operator):
@@ -428,11 +409,11 @@ class ShortcutsMenu(bpy.types.Menu):
 class ViewSaveAndLoadMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_view_save_and_load"
 	bl_label = "View Save & load"
-	bl_description = "視点のセーブ/ロード操作のメニューです"
+	bl_description = "Save & Load Views"
 	
 	def draw(self, context):
-		self.layout.operator(SaveView.bl_idname, icon="PLUGIN")
-		self.layout.operator(DeleteViewSavedata.bl_idname, icon="PLUGIN")
+		self.layout.operator(SaveView.bl_idname, icon="SAVE_AS")
+		self.layout.operator(DeleteViewSavedata.bl_idname, icon="COLOR_RED")
 		self.layout.separator()
 		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
@@ -441,7 +422,7 @@ class ViewSaveAndLoadMenu(bpy.types.Menu):
 				index = line.split(':')[0]
 			except ValueError:
 				pass
-			self.layout.operator(LoadView.bl_idname, text=index+" をロード", icon="PLUGIN").index = index
+			self.layout.operator(LoadView.bl_idname, text=index+" View", icon="RECOVER_AUTO").index = index
 
 ################
 # メニュー追加 #
@@ -459,11 +440,12 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.menu(ViewSaveAndLoadMenu.bl_idname, icon="PLUGIN")
 		self.layout.prop(context.user_preferences.view, "use_rotate_around_active", icon="PLUGIN")
 		self.layout.separator()
-		self.layout.menu(ShortcutsMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(PieMenu.bl_idname, icon="PLUGIN")
+		self.layout.menu(ViewSaveAndLoadMenu.bl_idname, icon="SAVE_PREFS")
+		self.layout.separator()
+		self.layout.operator(LocalViewEx.bl_idname, icon="ZOOM_OUT")
+		self.layout.menu(PieMenu.bl_idname, icon="COLOR")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

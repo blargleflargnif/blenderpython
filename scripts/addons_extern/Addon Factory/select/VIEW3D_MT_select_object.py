@@ -9,13 +9,13 @@ import re
 
 class SelectBoundBoxSize(bpy.types.Operator):
 	bl_idname = "object.select_bound_box_size"
-	bl_label = "Select an object by comparing the size"
-	bl_description = "Large with respect to the maximum object, or I will select a small object"
+	bl_label = "Select Object By Size"
+	bl_description = "Select Object By Size"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
-		('LARGE', "Choose big thing", "", 1),
-		('SMALL', "Select a small thing", "", 2),
+		('LARGE', "Select Large Objects", "", 1),
+		('SMALL', "Select Small Objects", "", 2),
 		]
 	mode = bpy.props.EnumProperty(items=items, name="Selection mode")
 	items = [
@@ -74,8 +74,8 @@ class SelectBoundBoxSize(bpy.types.Operator):
 
 class SelectGroupedName(bpy.types.Operator):
 	bl_idname = "object.select_grouped_name"
-	bl_label = "Select the object of the same name"
-	bl_description = "I will select the visible objects with the same name as the active object (such as X X.001 X.002)"
+	bl_label = "Select Objects Same Name"
+	bl_description = "Select Objects with the same name as the Active Object (such as X X.001 X.002)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -89,8 +89,8 @@ class SelectGroupedName(bpy.types.Operator):
 
 class SelectGroupedMaterial(bpy.types.Operator):
 	bl_idname = "object.select_grouped_material"
-	bl_label = "Select the object of the same material structure"
-	bl_description = "I will choose the same visible objects and material structure of the active object"
+	bl_label = "Select Same Material"
+	bl_description = "Select Same Material Objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -109,8 +109,8 @@ class SelectGroupedMaterial(bpy.types.Operator):
 
 class SelectGroupedModifiers(bpy.types.Operator):
 	bl_idname = "object.select_grouped_modifiers"
-	bl_label = "Select the object of the same modifier structure"
-	bl_description = "Modifier structure of the active object will select the same visible object"
+	bl_label = "Select Same Modifier"
+	bl_description = "Select Same Modifier Objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -128,8 +128,8 @@ class SelectGroupedModifiers(bpy.types.Operator):
 
 class SelectGroupedSubsurfLevel(bpy.types.Operator):
 	bl_idname = "object.select_grouped_subsurf_level"
-	bl_label = "Select the object of the same sub-surf level"
-	bl_description = "Sub Surf level of active objects will select the same visible object"
+	bl_label = "Select Same Subsurf Level"
+	bl_description = "Select Same Subsurf Level"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -148,8 +148,8 @@ class SelectGroupedSubsurfLevel(bpy.types.Operator):
 
 class SelectGroupedArmatureTarget(bpy.types.Operator):
 	bl_idname = "object.select_grouped_armature_target"
-	bl_label = "Select an object that is deformed in the same armature"
-	bl_description = "And then select the visible objects that are deformed in the same armature as the active object"
+	bl_label = "Select Group Armature Target"
+	bl_description = "Select Group Armature Target"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -174,8 +174,8 @@ class SelectGroupedArmatureTarget(bpy.types.Operator):
 
 class SelectGroupedSizeThan(bpy.types.Operator):
 	bl_idname = "object.select_grouped_size_than"
-	bl_label = "Select an object by comparing the size"
-	bl_description = "Larger than the active object, or I will select additional small objects"
+	bl_label = "Select an object by Size"
+	bl_description = "Larger/Smaller"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
@@ -234,73 +234,13 @@ class SelectGroupedSizeThan(bpy.types.Operator):
 					obj.select = True
 		return {'FINISHED'}
 
-##########################
-# オペレーター(メッシュ) #
-##########################
-
-class SelectMeshFaceOnly(bpy.types.Operator):
-	bl_idname = "object.select_mesh_face_only"
-	bl_label = "Select a mesh with surface"
-	bl_description = "Face I will select one or more certain mesh"
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	def execute(self, context):
-		for obj in context.selectable_objects:
-			if (obj.type == 'MESH'):
-				me = obj.data
-				if (0 < len(me.polygons)):
-					obj.select = True
-		return {'FINISHED'}
-
-class SelectMeshEdgeOnly(bpy.types.Operator):
-	bl_idname = "object.select_mesh_edge_only"
-	bl_label = "Choose Edge only of mesh"
-	bl_description = "Surface is not, I choose the mesh of Edge only"
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	def execute(self, context):
-		for obj in context.selectable_objects:
-			if (obj.type == 'MESH'):
-				me = obj.data
-				if (len(me.polygons) == 0 and 0 < len(me.edges)):
-					obj.select = True
-		return {'FINISHED'}
-
-class SelectMeshVertexOnly(bpy.types.Operator):
-	bl_idname = "object.select_mesh_vertex_only"
-	bl_label = "Select a mesh of vertices only"
-	bl_description = "Surface and the sides are not, I will select the mesh vertices only"
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	def execute(self, context):
-		for obj in context.selectable_objects:
-			if (obj.type == 'MESH'):
-				me = obj.data
-				if (len(me.polygons) == 0 and len(me.edges) == 0 and 0 < len(me.vertices)):
-					obj.select = True
-		return {'FINISHED'}
-
-class SelectMeshNone(bpy.types.Operator):
-	bl_idname = "object.select_mesh_none"
-	bl_label = "Select a vertex not even mesh"
-	bl_description = "I will select the face and edges and vertices are empty no mesh object"
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	def execute(self, context):
-		for obj in context.selectable_objects:
-			if (obj.type == 'MESH'):
-				me = obj.data
-				if (len(me.polygons) == 0 and len(me.edges) == 0 and len(me.vertices) == 0):
-					obj.select = True
-		return {'FINISHED'}
-
 ################
 # サブメニュー #
 ################
 
 class SelectGroupedEX(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_select_object_grouped_ex"
-	bl_label = "Selected in the relationship (extended)"
+	bl_label = "Select Extended"
 	bl_description = "I will select all visible objects that are grouped by property"
 	
 	def draw(self, context):
@@ -317,25 +257,16 @@ class SelectGroupedEX(bpy.types.Menu):
 		self.layout.operator("object.select_grouped", text="Keyingset").type = 'KEYINGSET'
 		self.layout.operator("object.select_grouped", text="Lamp type").type = 'LAMP_TYPE'
 		self.layout.separator()
-		self.layout.operator(SelectGroupedSizeThan.bl_idname, text="Larger", icon="PLUGIN").mode = 'LARGER'
-		self.layout.operator(SelectGroupedSizeThan.bl_idname, text="Smaller", icon="PLUGIN").mode = 'SMALLER'
+		self.layout.operator(SelectGroupedSizeThan.bl_idname, text="Larger", icon="PMARKER_ACT").mode = 'LARGER'
+		self.layout.operator(SelectGroupedSizeThan.bl_idname, text="Smaller", icon="SPACE2").mode = 'SMALLER'
 		self.layout.separator()
-		self.layout.operator(SelectGroupedName.bl_idname, text="Object name", icon="PLUGIN")
-		self.layout.operator(SelectGroupedMaterial.bl_idname, text="Material", icon="PLUGIN")
-		self.layout.operator(SelectGroupedModifiers.bl_idname, text="Modifiers", icon="PLUGIN")
-		self.layout.operator(SelectGroupedSubsurfLevel.bl_idname, text="Sub Surf level", icon="PLUGIN")
-		self.layout.operator(SelectGroupedArmatureTarget.bl_idname, text="Same armature deformation", icon="PLUGIN")
+		self.layout.operator(SelectGroupedName.bl_idname, text="Object name", icon="OBJECT_DATA")
+		self.layout.operator(SelectGroupedMaterial.bl_idname, text="Material", icon="MATERIAL")
+		self.layout.operator(SelectGroupedModifiers.bl_idname, text="Modifiers", icon="MODIFIER")
+		self.layout.operator(SelectGroupedSubsurfLevel.bl_idname, text="Sub Surf level", icon="MOD_SUBSURF")
+		self.layout.operator(SelectGroupedArmatureTarget.bl_idname, text="Same armature deformation", icon="ARMATURE_DATA")
 
-class SelectMesh(bpy.types.Menu):
-	bl_idname = "VIEW3D_MT_select_object_mesh"
-	bl_label = "Selected in the features of the mesh"
-	bl_description = "This is a menu of features to select the visible mesh object"
-	
-	def draw(self, context):
-		self.layout.operator(SelectMeshFaceOnly.bl_idname, text="Face Only", icon="PLUGIN")
-		self.layout.operator(SelectMeshEdgeOnly.bl_idname, text="Edge Only", icon="PLUGIN")
-		self.layout.operator(SelectMeshVertexOnly.bl_idname, text="Vert Only", icon="PLUGIN")
-		self.layout.operator(SelectMeshNone.bl_idname, text="Without even vertex", icon="PLUGIN")
+
 
 ################
 # メニュー追加 #
@@ -353,11 +284,10 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(SelectBoundBoxSize.bl_idname, text="Choose small things", icon="PLUGIN").mode = 'SMALL'
-		self.layout.operator(SelectBoundBoxSize.bl_idname, text="Select a large", icon="PLUGIN").mode = 'LARGE'
+		self.layout.operator(SelectBoundBoxSize.bl_idname, text="Select Small Objects", icon="SPACE2").mode = 'SMALL'
+		self.layout.operator(SelectBoundBoxSize.bl_idname, text="Select Large Objects", icon="PMARKER_ACT").mode = 'LARGE'
 		self.layout.separator()
-		self.layout.menu(SelectMesh.bl_idname, icon="PLUGIN")
-		self.layout.menu(SelectGroupedEX.bl_idname, icon="PLUGIN")
+		self.layout.menu(SelectGroupedEX.bl_idname, icon="ROTATECOLLECTION")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

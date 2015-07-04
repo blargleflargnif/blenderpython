@@ -33,7 +33,7 @@ class ShapeKeyTools(Panel):
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
 	bl_context = "objectmode"
-	bl_category = "Commotion"
+	bl_category = "Animation"
 
 	@classmethod
 	def poll(cls, context):
@@ -233,7 +233,7 @@ class ObjectTools(Panel):
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
 	bl_context = "objectmode"
-	bl_category = "Commotion"
+	bl_category = "Animation"
 
 	@classmethod
 	def poll(cls, context):

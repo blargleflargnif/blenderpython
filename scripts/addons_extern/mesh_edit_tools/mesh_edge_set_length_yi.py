@@ -31,6 +31,7 @@ class LengthChange(bpy.types.Operator):
 	bl_idname = "object.mesh_edge_lengthchange"
 	#标签
 	bl_label = "length_change"
+	bl_description = " Set the Length of a single edge"
 	#返回
 	bl_options = {'REGISTER', 'UNDO'}
 	#缩放中心

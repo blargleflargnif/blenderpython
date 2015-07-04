@@ -746,6 +746,19 @@ class OffsetEdges(bpy.types.Operator):
         bpy.ops.object.mode_set(mode="EDIT")
         return self.execute(context)
 
+class offset_edges_help(bpy.types.Operator):
+	bl_idname = 'help.offset_edges'
+	bl_label = ''
+
+	def draw(self, context):
+		layout = self.layout
+		layout.label('To use:')
+		layout.label('Make a selection or selection of Edges.')
+		layout.label('Extrude, rotate extrusions & more.')
+
+	def invoke(self, context, event):
+		return context.window_manager.invoke_popup(self, width = 300)
+
 class OffsetEdgesMenu(bpy.types.Menu):
     bl_idname = "VIEW3D_MT_edit_mesh_offset_edges"
     bl_label = "Offset Edges"

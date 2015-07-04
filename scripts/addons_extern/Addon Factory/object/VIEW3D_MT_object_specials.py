@@ -9,7 +9,7 @@ import re, random
 
 class CopyObjectName(bpy.types.Operator):
 	bl_idname = "object.copy_object_name"
-	bl_label = "Copy the name of the object to the clipboard"
+	bl_label = "Copy Name To Clipboard"
 	bl_description = "I will copy the name of the active object to the clipboard"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -19,8 +19,8 @@ class CopyObjectName(bpy.types.Operator):
 
 class RenameObjectRegularExpression(bpy.types.Operator):
 	bl_idname = "object.rename_object_regular_expression"
-	bl_label = "Replace object name in the regular expression"
-	bl_description = "I will replace the name of the object being selected in the regular expression"
+	bl_label = "Replace Object name"
+	bl_description = "I will replace the name of the object"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	pattern = bpy.props.StringProperty(name="Before replacement (regular expression)", default="")
@@ -33,8 +33,8 @@ class RenameObjectRegularExpression(bpy.types.Operator):
 
 class EqualizeObjectNameAndDataName(bpy.types.Operator):
 	bl_idname = "object.equalize_objectname_and_dataname"
-	bl_label = "I to have the same object name and the data name"
-	bl_description = "I should be the same object name and the data name of the currently selected object"
+	bl_label = "Match Object/Data Name"
+	bl_description = "object name and the data name of the currently selected object"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -45,8 +45,8 @@ class EqualizeObjectNameAndDataName(bpy.types.Operator):
 
 class AddVertexColorSelectedObject(bpy.types.Operator):
 	bl_idname = "object.add_vertex_color_selected_object"
-	bl_label = "Collectively add vertices color"
-	bl_description = "Add the vertex color to all mesh objects in the selection by specifying the color and name"
+	bl_label = "Add Vertices Color"
+	bl_description = "Add the vertex color to all mesh objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	name = bpy.props.StringProperty(name="Vertex color name", default="Col")
@@ -66,7 +66,7 @@ class AddVertexColorSelectedObject(bpy.types.Operator):
 
 class CreateRopeMesh(bpy.types.Operator):
 	bl_idname = "object.create_rope_mesh"
-	bl_label = "Create a rope-like mesh from the curve"
+	bl_label = "Rope From Curve"
 	bl_description = "The mesh such as rope and snake along the active curve object to create a new"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -129,7 +129,7 @@ class VertexGroupTransferWeightObjmode(bpy.types.Operator):
 
 class AddGreasePencilPathMetaballs(bpy.types.Operator):
 	bl_idname = "object.add_grease_pencil_path_metaballs"
-	bl_label = "The Blobby placed in grease pencil"
+	bl_label = "Grease Pencil Metaballs"
 	bl_description = "Place the metaballs along the active grease pencil"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -173,7 +173,7 @@ class AddGreasePencilPathMetaballs(bpy.types.Operator):
 
 class CreateVertexToMetaball(bpy.types.Operator):
 	bl_idname = "object.create_vertex_to_metaball"
-	bl_label = "And hook the metaballs to vertex"
+	bl_label = "Metaballs Hook To Vert"
 	bl_description = "The top portion of the mesh objects in the selection I will not stick a new metaballs"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -220,7 +220,7 @@ class CreateVertexToMetaball(bpy.types.Operator):
 
 class ToggleSmooth(bpy.types.Operator):
 	bl_idname = "object.toggle_smooth"
-	bl_label = "Switch the smooth / flat"
+	bl_label = "Switch Smooth / Flat"
 	bl_description = "I will switch the smooth / flat state of mesh objects in the selection"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -248,7 +248,7 @@ class ToggleSmooth(bpy.types.Operator):
 
 class SetRenderHide(bpy.types.Operator):
 	bl_idname = "object.set_render_hide"
-	bl_label = "Limit rendering of selections"
+	bl_label = "Limit Render Selections"
 	bl_description = "You set not to render the objects in the selection"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -261,7 +261,7 @@ class SetRenderHide(bpy.types.Operator):
 
 class SyncRenderHide(bpy.types.Operator):
 	bl_idname = "object.sync_render_hide"
-	bl_label = "Sync whether to render the Show / Hide"
+	bl_label = "Sync Render Show / Hide"
 	bl_description = "Synchronize with the show / hide state whether to render the objects in the current layer"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -283,7 +283,7 @@ class SyncRenderHide(bpy.types.Operator):
 
 class SetHideSelect(bpy.types.Operator):
 	bl_idname = "object.set_hide_select"
-	bl_label = "And limit the choice of selections"
+	bl_label = "Limit Selection"
 	bl_description = "I will not be able to select the object in the selection"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -298,8 +298,8 @@ class SetHideSelect(bpy.types.Operator):
 
 class SetUnselectHideSelect(bpy.types.Operator):
 	bl_idname = "object.set_unselect_hide_select"
-	bl_label = "And limit the choice of the non-selected products"
-	bl_description = "I will not be able to select an object other than the selected products"
+	bl_label = "Limit Selection To"
+	bl_description = "I will not be able to select an object other than the selected"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	reverse = bpy.props.BoolProperty(name="Dimmed", default=True)
@@ -371,7 +371,7 @@ class VertexGroupTransfer(bpy.types.Operator):
 
 class CreateSolidifyEdge(bpy.types.Operator):
 	bl_idname = "object.create_solidify_edge"
-	bl_label = "Contour lines generated by the thickness with modifier"
+	bl_label = "Solidify Edges"
 	bl_description = "I'll add a contour drawing by the thickness with modifier to the selected object"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -441,7 +441,7 @@ class CreateSolidifyEdge(bpy.types.Operator):
 
 class ApplyObjectColor(bpy.types.Operator):
 	bl_idname = "object.apply_object_color"
-	bl_label = "Object color Enable + color settings"
+	bl_label = "Object Color Enable"
 	bl_description = "Enable the object color of the selected object, you can set the color"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -465,7 +465,7 @@ class ApplyObjectColor(bpy.types.Operator):
 
 class ClearObjectColor(bpy.types.Operator):
 	bl_idname = "object.clear_object_color"
-	bl_label = "Object color invalid + color settings"
+	bl_label = "Object Clear Color"
 	bl_description = "Disable the object color of the selected object, you can set the color"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -483,7 +483,7 @@ class ClearObjectColor(bpy.types.Operator):
 
 class CreateMeshImitateArmature(bpy.types.Operator):
 	bl_idname = "object.create_mesh_imitate_armature"
-	bl_label = "Create an armature to imitate the deformation of the mesh"
+	bl_label = "Armature at Vert"
 	bl_description = "The armature to follow the deformation of the active mesh object I create a new"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -554,7 +554,7 @@ class CreateMeshImitateArmature(bpy.types.Operator):
 
 class CreateVertexGroupsArmature(bpy.types.Operator):
 	bl_idname = "object.create_vertex_groups_armature"
-	bl_label = "The bone created vertex position where there is a vertex group"
+	bl_label = "Bone to Vert Group"
 	bl_description = "The vertex position the vertex group of selected objects have been assigned, I will create a bone of the vertex group name"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -606,7 +606,7 @@ class CreateVertexGroupsArmature(bpy.types.Operator):
 class ParentSetApplyModifiers(bpy.types.Operator):
 	bl_idname = "object.parent_set_apply_modifiers"
 	bl_label = "Set Parent Apply Modifiers"
-	bl_description = "親Set the Parent * apply all modifiers"
+	bl_description = "Set the Parent * apply all modifiers"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	items = [
@@ -618,10 +618,10 @@ class ParentSetApplyModifiers(bpy.types.Operator):
 	def execute(self, context):
 		active_obj = context.active_object
 		if (not active_obj):
-			self.report(type={'ERROR'}, message="アクティブオブジェクトがありません")
+			self.report(type={'ERROR'}, message="Error")
 			return {'CANCELLED'}
 		if (active_obj.type != 'MESH'):
-			self.report(type={'ERROR'}, message="アクティブがメッシュオブジェクトではありません")
+			self.report(type={'ERROR'}, message="Error")
 			return {'CANCELLED'}
 		active_obj.select = False
 		enable_modifiers = []
@@ -633,7 +633,7 @@ class ParentSetApplyModifiers(bpy.types.Operator):
 		old_me = active_obj.data
 		new_me = active_obj.to_mesh(context.scene, True, 'PREVIEW')
 		if (len(old_me.vertices) != len(new_me.vertices)):
-			self.report(type={'WARNING'}, message="モディファイア適用後に頂点数が変化してます、望んだ結果じゃないかもしれません")
+			self.report(type={'WARNING'}, message="Error")
 		active_obj.data = new_me
 		for mod in active_obj.modifiers:
 			if (mod.show_viewport):
@@ -677,10 +677,10 @@ class QuickCurveDeform(bpy.types.Operator):
 	def execute(self, context):
 		mesh_obj = context.active_object
 		if (mesh_obj.type != 'MESH'):
-			self.report(type={"ERROR"}, message="メッシュオブジェクトがアクティブな状態で実行して下さい")
+			self.report(type={"ERROR"}, message="error")
 			return {"CANCELLED"}
 		if (len(context.selected_objects) != 2):
-			self.report(type={"ERROR"}, message="メッシュ・カーブの2つのみ選択して実行して下さい")
+			self.report(type={"ERROR"}, message="error")
 			return {"CANCELLED"}
 		for obj in context.selected_objects:
 			if (mesh_obj.name != obj.name):
@@ -688,7 +688,7 @@ class QuickCurveDeform(bpy.types.Operator):
 					curve_obj = obj
 					break
 		else:
-			self.report(type={"ERROR"}, message="カーブオブジェクトも選択状態で実行して下さい")
+			self.report(type={"ERROR"}, message="error")
 			return {"CANCELLED"}
 		curve = curve_obj.data
 		pre_use_stretch = curve.use_stretch
@@ -728,10 +728,10 @@ class QuickArrayAndCurveDeform(bpy.types.Operator):
 	def execute(self, context):
 		mesh_obj = context.active_object
 		if (mesh_obj.type != 'MESH'):
-			self.report(type={'ERROR'}, message="メッシュオブジェクトがアクティブな状態で実行して下さい")
+			self.report(type={'ERROR'}, message="error")
 			return {'CANCELLED'}
 		if (len(context.selected_objects) != 2):
-			self.report(type={'ERROR'}, message="メッシュ・カーブの2つのみ選択して実行して下さい")
+			self.report(type={'ERROR'}, message="error")
 			return {'CANCELLED'}
 		for obj in context.selected_objects:
 			if (mesh_obj.name != obj.name):
@@ -739,7 +739,7 @@ class QuickArrayAndCurveDeform(bpy.types.Operator):
 					curve_obj = obj
 					break
 		else:
-			self.report(type={'ERROR'}, message="カーブオブジェクトも選択状態で実行して下さい")
+			self.report(type={'ERROR'}, message="error")
 			return {'CANCELLED'}
 		curve = curve_obj.data
 		pre_use_stretch = curve.use_stretch
@@ -805,18 +805,18 @@ class MoveBevelObject(bpy.types.Operator):
 		delete_objects = []
 		for obj in selected_objects:
 			if (obj.type != 'CURVE'):
-				self.report(type={'WARNING'}, message=obj.name+"はカーブではありません、無視します")
+				self.report(type={'WARNING'}, message=obj.name+"error")
 				continue
 			curve = obj.data
 			if (not curve.bevel_object):
-				self.report(type={'WARNING'}, message=obj.name+"にベベルオブジェクトが設定されていません、無視します")
+				self.report(type={'WARNING'}, message=obj.name+"error")
 				continue
 			bevel_object = curve.bevel_object
 			if (len(curve.splines) < 1):
-				self.report(type={'WARNING'}, message=obj.name+"内にカーブデータがありません、無視します")
+				self.report(type={'WARNING'}, message=obj.name+"error")
 				continue
 			if (len(curve.splines[0].points) <= 2):
-				self.report(type={'WARNING'}, message=obj.name+"のセグメント数が少なすぎます、無視します")
+				self.report(type={'WARNING'}, message=obj.name+"Error")
 				continue
 			for o in delete_objects:
 				if (obj.name == o.name):
@@ -852,7 +852,7 @@ class MoveBevelObject(bpy.types.Operator):
 					sub_point = obj.matrix_world * spline.points[i-1].co
 					tilt = spline.points[i].tilt
 				else:
-					self.report(type={'ERROR'}, message="オプションの値が不正です")
+					self.report(type={'ERROR'}, message="error")
 					return {'CANCELLED'}
 			elif (spline.type == 'BEZIER'):
 				if (self.move_position == 'START'):
@@ -869,10 +869,10 @@ class MoveBevelObject(bpy.types.Operator):
 					sub_point = obj.matrix_world * spline.bezier_points[i-1].handle_left
 					tilt = spline.bezier_points[i].tilt
 				else:
-					self.report(type={'ERROR'}, message="オプションの値が不正です")
+					self.report(type={'ERROR'}, message="error")
 					return {'CANCELLED'}
 			else:
-				self.report(type={'WARNING'}, message=obj.name+"は対応していないタイプのカーブです、無視します")
+				self.report(type={'WARNING'}, message=obj.name+"error")
 				continue
 			base_point.resize_3d()
 			sub_point.resize_3d()
@@ -906,26 +906,26 @@ class MoveBevelObject(bpy.types.Operator):
 class RenderHideMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_specials_render_hide"
 	bl_label = "Hide From Render"
-	bl_description = "オブジェクトのレンダリング制限関係のメニューです"
+	bl_description = "Hide Fron Render"
 	
 	def draw(self, context):
 		column = self.layout.column()
-		column.operator(SetRenderHide.bl_idname, text="選択物のレンダリングを制限", icon="PLUGIN").reverse = True
+		column.operator(SetRenderHide.bl_idname, text="Isolate Render Vis", icon="PLUGIN").reverse = True
 		column.operator('object.isolate_type_render')
 		column.separator()
-		column.operator(SetRenderHide.bl_idname, text="選択物のレンダリングを許可", icon="PLUGIN").reverse = False
+		column.operator(SetRenderHide.bl_idname, text="Hide Render Vis", icon="PLUGIN").reverse = False
 		column.operator('object.hide_render_clear_all')
 		column.separator()
 		column.operator(SyncRenderHide.bl_idname, icon="PLUGIN")
 
 class HideSelectMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_specials_hide_select"
-	bl_label = "選択制限"
-	bl_description = "オブジェクトの選択制限関係のメニューです"
+	bl_label = "Hide Selected"
+	bl_description = "Hide Selected"
 	
 	def draw(self, context):
 		column = self.layout.column()
-		column.operator(SetHideSelect.bl_idname, text="選択物の選択を制限", icon="PLUGIN").reverse = True
+		column.operator(SetHideSelect.bl_idname, text="Switch Show/hide", icon="PLUGIN").reverse = True
 		column.operator(SetUnselectHideSelect.bl_idname, icon="PLUGIN").reverse = True
 		column.separator()
 		column.operator(AllResetHideSelect.bl_idname, icon="PLUGIN").reverse = False
@@ -946,7 +946,7 @@ class ObjectNameMenu(bpy.types.Menu):
 class ObjectColorMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_specials_object_color"
 	bl_label = "Object Color"
-	bl_description = "オブジェクトカラー関係のメニューです"
+	bl_description = "Object Color"
 	
 	def draw(self, context):
 		column = self.layout.column()
@@ -956,16 +956,16 @@ class ObjectColorMenu(bpy.types.Menu):
 class ParentMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_specials_parent"
 	bl_label = "Parent Menu"
-	bl_description = "親子関係のメニューです"
+	bl_description = "Parent Menu"
 	
 	def draw(self, context):
 		column = self.layout.column()
-		column.operator(ParentSetApplyModifiers.bl_idname, icon="PLUGIN", text="モディファイア適用 => +頂点(三角形)").type = 'VERTEX_TRI'
+		column.operator(ParentSetApplyModifiers.bl_idname, icon="PLUGIN", text="Parent Apply Modifiers").type = 'VERTEX_TRI'
 
 class CurveMenu(bpy.types.Menu):
 	bl_idname = "view3d_mt_object_specials_curve"
 	bl_label = "Curve Menu"
-	bl_description = "カーブ関係の操作です"
+	bl_description = "Curve Menu"
 	
 	def draw(self, context):
 		self.layout.operator(QuickCurveDeform.bl_idname, icon="PLUGIN")
@@ -975,7 +975,7 @@ class CurveMenu(bpy.types.Menu):
 class SpecialsMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_object_specials_specials"
 	bl_label = "Specials"
-	bl_description = "特殊な処理をする操作のメニューです"
+	bl_description = "Some Specials"
 	
 	def draw(self, context):
 		column = self.layout.column()

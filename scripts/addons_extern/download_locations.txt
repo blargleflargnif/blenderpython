@@ -280,6 +280,3 @@ Dynamic Parent -- Eibriel
 	
 cardinalMouse -- Sean Olson (LiquidApe)
 	http://www.blenderartists.org/forum/showthread.php?337126
-
-Advanced BoomSmash -- Looch
-	http://blenderartists.org/forum/showthread.php?370217

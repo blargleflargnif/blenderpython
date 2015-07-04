@@ -44,6 +44,18 @@ import bpy.props
 from math import sqrt, acos, pi, radians, degrees, sin, acos
 from mathutils import Vector
 
+class roundify_help(bpy.types.Operator):
+	bl_idname = 'help.roundify'
+	bl_label = ''
+
+	def draw(self, context):
+		layout = self.layout
+		layout.label('To use:')
+		layout.label('Make a selection or selection of Edges.')
+		layout.label('Rounded Extrusions & more.')
+
+	def invoke(self, context, event):
+		return context.window_manager.invoke_popup(self, width = 300)
 # CONSTANTS
 two_pi = 2 * pi #PKHG>??? maybe other constantly used values too???
 XY = "XY"

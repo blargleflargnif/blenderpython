@@ -8,7 +8,7 @@ import bpy, bmesh
 
 class MakeLinkObjectName(bpy.types.Operator):
 	bl_idname = "object.make_link_object_name"
-	bl_label = "The object name is the same"
+	bl_label = "Link Object Name"
 	bl_description = "I will link the name of the active object to other selected objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -23,7 +23,7 @@ class MakeLinkObjectName(bpy.types.Operator):
 
 class MakeLinkLayer(bpy.types.Operator):
 	bl_idname = "object.make_link_layer"
-	bl_label = "The layer to the same"
+	bl_label = "Link Layers"
 	bl_description = "I will link the layers of active objects to other selected objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -35,7 +35,7 @@ class MakeLinkLayer(bpy.types.Operator):
 
 class MakeLinkDisplaySetting(bpy.types.Operator):
 	bl_idname = "object.make_link_display_setting"
-	bl_label = "The display settings of objects to the same"
+	bl_label = "Link Display settings"
 	bl_description = "I will copy the settings of the display panel of the active object to other selected objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -106,7 +106,7 @@ class MakeLinkUVNames(bpy.types.Operator):
 
 class MakeLinkArmaturePose(bpy.types.Operator):
 	bl_idname = "object.make_link_armature_pose"
-	bl_label = "Link the movement of the armature"
+	bl_label = "Link Armature Pose"
 	bl_description = "By constraint, and to imitate the movement of the active armature to other selection armature"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -138,7 +138,7 @@ class MakeLinkArmaturePose(bpy.types.Operator):
 
 class MakeLinkSoftbodySettings(bpy.types.Operator):
 	bl_idname = "object.make_link_softbody_settings"
-	bl_label = "Link the setting of soft body"
+	bl_label = "Link Soft Body"
 	bl_description = "The setting of the soft body of active objects, I will copy it to the other selected objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -188,8 +188,8 @@ class MakeLinkSoftbodySettings(bpy.types.Operator):
 
 class MakeLinkClothSettings(bpy.types.Operator):
 	bl_idname = "object.make_link_cloth_settings"
-	bl_label = "Link cross-setting of"
-	bl_description = "The cloth simulation setting of active objects, I will copy it to the other selected objects"
+	bl_label = "Link Cloth Settings"
+	bl_description = "The cloth simulation setting of active objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -203,7 +203,7 @@ class MakeLinkClothSettings(bpy.types.Operator):
 				active_cloth = mod
 				break
 		else:
-			self.report(type={'ERROR'}, message="Cross has not been set in the Active Object")
+			self.report(type={'ERROR'}, message="Cloth has not been set in the Active Object")
 			return {'CANCELLED'}
 		if (len(context.selected_objects) < 2):
 			self.report(type={'ERROR'}, message="Run by selecting two or more objects")
@@ -257,10 +257,10 @@ def menu(self, context):
 		self.layout.operator(MakeLinkDisplaySetting.bl_idname, text="Display Settings", icon="PLUGIN")
 		self.layout.separator()
 		self.layout.operator(MakeLinkSoftbodySettings.bl_idname, text="Soft body set", icon="PLUGIN")
-		self.layout.operator(MakeLinkClothSettings.bl_idname, text="Cross set", icon="PLUGIN")
+		self.layout.operator(MakeLinkClothSettings.bl_idname, text="Cloth set", icon="PLUGIN")
 		self.layout.separator()
 		self.layout.operator(MakeLinkUVNames.bl_idname, text="Sky UV", icon="PLUGIN")
-		self.layout.operator(MakeLinkArmaturePose.bl_idname, text="Movement of the armature", icon="PLUGIN")
+		self.layout.operator(MakeLinkArmaturePose.bl_idname, text="Armature Pose", icon="PLUGIN")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

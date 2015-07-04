@@ -248,7 +248,7 @@ class MapClass:
         else:
             self.textureless = False
         for path in sys.path:
-            if path.endswith("addons"):
+            if path.endswith("addons_extern"):
                 fn = path + "\\sun_position\\" + file_name
                 self.image.name = fn.replace("\\", "/")
                 if os.path.exists(self.image.name):

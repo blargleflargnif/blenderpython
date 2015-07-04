@@ -28,12 +28,11 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Mesh"}
+    "category": "Addon Factory"}
 
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(mesh_bump)
     importlib.reload(face_inset_fillet)
     importlib.reload(mesh_filletplus)
     importlib.reload(mesh_vertex_chamfer)
@@ -41,10 +40,12 @@ if "bpy" in locals():
     importlib.reload(mesh_offset_edges)
     importlib.reload(pkhg_faces)
     importlib.reload(mesh_edge_roundifier)
-    importlib.reload(mesh_edge_set_length_yi)
+    importlib.reload(mesh_cut_faces)
+    importlib.reload(split_solidify)
+    importlib.reload(mesh_to_wall)
+    importlib.reload(mesh_edges_length)
 
 else:
-    from . import mesh_bump
     from . import face_inset_fillet
     from . import mesh_filletplus
     from . import mesh_vertex_chamfer
@@ -52,8 +53,10 @@ else:
     from . import mesh_offset_edges
     from . import pkhg_faces
     from . import mesh_edge_roundifier
-    from . import mesh_edge_set_length_yi
-
+    from . import mesh_cut_faces
+    from . import split_solidify
+    from . import mesh_to_wall
+    from . import mesh_edges_length
 
 import bpy
 
@@ -69,8 +72,6 @@ class VIEW3D_MT_edit_mesh_extras(bpy.types.Menu):
             text="Multi Extrude")
         layout.operator("faceinfillet.op0_id",
             text="Face Inset Fillet")
-        layout.operator("mesh.bump",
-            text="Inset Extrude Bump")
         layout.operator("mesh.add_faces_to_object",
             text="PKHG Faces")
         layout.operator("fillet.op0_id",
@@ -81,8 +82,14 @@ class VIEW3D_MT_edit_mesh_extras(bpy.types.Menu):
             text="Vertex Chamfer")
         layout.operator("mesh.edge_roundifier",
             text="Edge Roundify")
-        layout.operator("object.mesh_edge_lengthchange",
-            text="Edge Length")
+        layout.operator("mesh.ext_cut_faces",
+            text="Cut Faces")
+        layout.operator("sp_sol.op0_id",
+            text="Split Solidify")
+        layout.operator("bpt.mesh_to_wall",
+            text="Edge(s) to Wall")
+        layout.operator("object.mesh_edge_length_set",
+            text="Set Edge Length")
 
 
 
@@ -91,7 +98,7 @@ class ExtrasPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = 'mesh_edit'
-    bl_category = 'Addons'
+    bl_category = 'Tools'
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -100,33 +107,38 @@ class ExtrasPanel(bpy.types.Panel):
         row.label(text="Face Tools:", icon="FACESEL")
         row = layout.split(0.70)
         row.operator('object.mextrude', text = 'Multi Extrude')
-        row.operator('help.mextrude', text = 'Info')
+        row.operator('help.mextrude', text = '', icon = 'INFO')
         row = layout.split(0.70)
         row.operator('faceinfillet.op0_id', text = 'Inset Fillet')
-        row.operator('help.face_inset', text = 'Info')
-        row = layout.split(0.70)
-        row.operator('mesh.bump', text = 'Inset Bump')
-        row.operator('help.bump', text = 'Info')
+        row.operator('help.face_inset', text = '', icon = 'INFO')
         row = layout.split(0.70)
         row.operator('mesh.add_faces_to_object', text = 'Face Extrude')
-        row.operator('help.pkhg_faces', text = 'Info')
+        row.operator('help.pkhg', text = '', icon = 'INFO')
+        row = layout.split(0.70)
+        row.operator('mesh.ext_cut_faces', text = 'Cut Faces')
+        row.operator('help.cut_faces', text = '', icon = 'INFO')
+        row = layout.row()
+        row.operator('sp_sol.op0_id', text = 'Split Solidify')
         row = layout.row()
         row.label(text="Edge Tools:", icon="EDGESEL")
         row = layout.split(0.70)
         row.operator('fillet.op0_id', text = 'Fillet plus')
-        row.operator('help.edge_fillet', text = 'Info')
+        row.operator('help.edge_fillet', text = '', icon = 'INFO')
         row = layout.split(0.70)
-        row.operator('mesh.offset_edges', text = 'Offset')
-        row.operator('help.offset_edges', text = 'Info')
-        row = layout.row()
+        row.operator('mesh.offset_edges', text = 'Offset Edges')
+        row.operator('help.offset_edges', text = '', icon = 'INFO')
+        row = layout.split(0.70)
         row.operator('mesh.edge_roundifier', text = 'Roundify')
+        row.operator('help.roundify', text = '', icon = 'INFO')
         row = layout.row()
-        row.operator('object.mesh_edge_lengthchange', text = 'Set One Edge Length')
+        row.operator('object.mesh_edge_length_set', text = 'Set Edge Length')
+        row = layout.row()
+        row.operator('bpt.mesh_to_wall', text = 'Extrude Flat')
         row = layout.row()
         row.label(text="Vert Tools:", icon="VERTEXSEL")
         row = layout.split(0.70)
         row.operator('mesh.vertex_chamfer', text = 'Chamfer')
-        row.operator('help.vertexchamfer', text = 'Info')
+        row.operator('help.vertexchamfer', text = '', icon = 'INFO')
         row = layout.row()
         row.label(text="Utilities:")
         row = layout.row()

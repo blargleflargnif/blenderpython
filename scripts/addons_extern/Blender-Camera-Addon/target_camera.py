@@ -707,7 +707,7 @@ def openDopeSheet():
 class TargetCameraPanel(bpy.types.Panel):
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "TOOLS"
-	bl_category = "Sniper"
+	bl_category = "Animation"
 	bl_label = "Sniper"
 	bl_context = "objectmode"
 	

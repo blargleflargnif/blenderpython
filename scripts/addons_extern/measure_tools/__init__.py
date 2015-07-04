@@ -28,7 +28,8 @@ bl_info = {
     "description": "Measure & Display types",
     "warning": "",
     "wiki_url": "",
-    "category": "3D View"}
+    "category": "Addon Factory"}
+
 if "bpy" in locals():
     import importlib
     importlib.reload(face_info_select)
@@ -412,7 +413,7 @@ class MeshStatisticsCollectionGroup(bpy.types.PropertyGroup):
     reference_point_auto = bpy.props.BoolProperty(
         name="Automatic Reference Point",
         description="Automatically pick up a reference point (the center of the vertices)",
-        default=True,
+        default=False,
         update=refreshScene)
     error_manifold = bpy.props.BoolProperty(
         default=False)

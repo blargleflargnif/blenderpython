@@ -30,7 +30,7 @@ class RestartBlender(bpy.types.Operator):
 class RecoverLatestAutoSave(bpy.types.Operator):
 	bl_idname = "wm.recover_latest_auto_save"
 	bl_label = "Load last AutoSave"
-	bl_description = "Open the file automatically in order to restore the most recent file"
+	bl_description = "Load last AutoSave"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -52,7 +52,7 @@ class RecoverLatestAutoSave(bpy.types.Operator):
 
 class SaveMainfileUnmassage(bpy.types.Operator):
 	bl_idname = "wm.save_mainfile_unmassage"
-	bl_label = "Save without prompting"
+	bl_label = "Save Without Prompt"
 	bl_description = "Save the changes without displaying the confirmation message"
 	bl_options = {'REGISTER'}
 	
@@ -70,8 +70,8 @@ class SaveMainfileUnmassage(bpy.types.Operator):
 
 class AllOnShowAllEdges(bpy.types.Operator):
 	bl_idname = "object.all_on_show_all_edges"
-	bl_label = "All show all sides turn"
-	bl_description = "Show all sides of all objects (can be off) turn the display settings"
+	bl_label = "Show All Edges"
+	bl_description = "Show Edges For All Objects"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	isOn = bpy.props.BoolProperty(name="To turn on", default=True)
@@ -83,7 +83,7 @@ class AllOnShowAllEdges(bpy.types.Operator):
 
 class AllSetDrawType(bpy.types.Operator):
 	bl_idname = "object.all_set_draw_type"
-	bl_label = "All the best drawing type schemes"
+	bl_label = "Set Draw Type"
 	bl_description = "Best drawing types in the object of all sets at once"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -118,7 +118,7 @@ class AllSetDrawType(bpy.types.Operator):
 
 class AllRenameObjectData(bpy.types.Operator):
 	bl_idname = "object.all_rename_object_data"
-	bl_label = "All the data name to object name and same"
+	bl_label = "Match Object Name & Data"
 	bl_description = "Replaces object name linked to name all the object data (mesh data etc)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -140,7 +140,7 @@ class AllRenameObjectData(bpy.types.Operator):
 
 class AllSetMaterialReceiveTransparent(bpy.types.Operator):
 	bl_idname = "material.all_set_material_receive_transparent"
-	bl_label = "On receiving the Semitransparent Shadow material of all"
+	bl_label = "Toggle Transparent Shadows"
 	bl_description = "Make the settings on receive a semi-transparent shadow all materials on (off)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -153,8 +153,8 @@ class AllSetMaterialReceiveTransparent(bpy.types.Operator):
 
 class AllSetMaterialColorRamp(bpy.types.Operator):
 	bl_idname = "material.all_set_material_color_ramp"
-	bl_label = "Copy the color ramp setting of active material in other"
-	bl_description = "copy the active material color lamp configuration to all other material (can be selected object only)"
+	bl_label = "Copy Color Ramp"
+	bl_description = "copy the active material color ramp configuration (can be selected object only)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	isOnlySelected = bpy.props.BoolProperty(name="Selected object only", default=False)
@@ -197,8 +197,8 @@ class AllSetMaterialColorRamp(bpy.types.Operator):
 
 class AllSetMaterialFreestyleColor(bpy.types.Operator):
 	bl_idname = "material.all_set_material_freestyle_color"
-	bl_label = "Copy FreeStyle color of the active material in other"
-	bl_description = "copy the color settings of FreeStyle of active material in all other material (can be selected object only)"
+	bl_label = "Copy FreeStyle Color"
+	bl_description = "copy the color settings of FreeStyle of active material(can be selected object only)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	isOnlySelected = bpy.props.BoolProperty(name="Selected object only", default=False)
@@ -236,7 +236,7 @@ class AllSetMaterialFreestyleColor(bpy.types.Operator):
 
 class AllSetMaterialFreestyleColorByDiffuse(bpy.types.Operator):
 	bl_idname = "material.all_set_material_freestyle_color_by_diffuse"
-	bl_label = "The FreeStyle color of all material to diffuse color"
+	bl_label = "FreeStyle color to Diffuse color"
 	bl_description = "The FreeStyle line color of all material replace the color that has diffuse color + blend the material"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -278,12 +278,12 @@ class AllSetMaterialFreestyleColorByDiffuse(bpy.types.Operator):
 
 class AllSetMaterialObjectColor(bpy.types.Operator):
 	bl_idname = "material.all_set_material_object_color"
-	bl_label = "全マテリアルのオブジェクトカラーを有効に"
-	bl_description = "全マテリアルのオブジェクトカラーの設定をオンもしくはオフにします"
+	bl_label = "Set Object Color"
+	bl_description = "Set Object Color All Materials"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	use_object_color = bpy.props.BoolProperty(name="オン/オフ", default=True)
-	only_selected = bpy.props.BoolProperty(name="選択オブジェクトのみ", default=False)
+	use_object_color = bpy.props.BoolProperty(name="On/Off", default=True)
+	only_selected = bpy.props.BoolProperty(name="Selected Only", default=False)
 	
 	def execute(self, context):
 		mats = []
@@ -407,7 +407,7 @@ class AllRenameImageFileName(bpy.types.Operator):
 
 class AllSetPhysicsFrames(bpy.types.Operator):
 	bl_idname = "scene.all_set_physics_frames"
-	bl_label = "Collectively set the start / end frame of physics"
+	bl_label = "Set Physics Frames"
 	bl_description = "Assign the number of rendering start / end frame to the part you want to set the start / end frames, such as physics"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -463,7 +463,7 @@ class AllSetPhysicsFrames(bpy.types.Operator):
 
 class FreeRigidBodyBake(bpy.types.Operator):
 	bl_idname = "world.free_rigid_body_bake"
-	bl_label = "Clear cache of RigidBody"
+	bl_label = "Clear Cache of RigidBody"
 	bl_description = "setting will re-create the rigid world by maintaining"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -496,20 +496,20 @@ class FreeRigidBodyBake(bpy.types.Operator):
 
 class EntireProcessMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process"
-	bl_label = "Batch Proccess)"
+	bl_label = "Batch Proccess"
 	bl_description = "all data is a function group to batch process a"
 	
 	def draw(self, context):
-		self.layout.menu(EntireProcessObjectMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(EntireProcessMaterialMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(EntireProcessTextureMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(EntireProcessImageMenu.bl_idname, icon="PLUGIN")
-		self.layout.menu(EntireProcessPhysicsMenu.bl_idname, icon="PLUGIN")
+		self.layout.menu(EntireProcessObjectMenu.bl_idname, icon="OBJECT_DATA")
+		self.layout.menu(EntireProcessMaterialMenu.bl_idname, icon="MATERIAL")
+		self.layout.menu(EntireProcessTextureMenu.bl_idname, icon="TEXTURE")
+		self.layout.menu(EntireProcessImageMenu.bl_idname, icon="IMAGE_DATA")
+		self.layout.menu(EntireProcessPhysicsMenu.bl_idname, icon="MOD_PHYSICS")
 
 class EntireProcessObjectMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process_object"
 	bl_label = "Object"
-	bl_description = "all objects is a function group to batch processing"
+	bl_description = "Batch Process All Objects"
 	
 	def draw(self, context):
 		self.layout.operator(AllOnShowAllEdges.bl_idname, icon="PLUGIN")
@@ -519,7 +519,7 @@ class EntireProcessObjectMenu(bpy.types.Menu):
 class EntireProcessMaterialMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process_material"
 	bl_label = "Material"
-	bl_description = "all material is a function group to batch processing"
+	bl_description = "Batch Process Materials Settings"
 	
 	def draw(self, context):
 		self.layout.operator(AllSetMaterialReceiveTransparent.bl_idname, icon="PLUGIN")
@@ -531,7 +531,7 @@ class EntireProcessMaterialMenu(bpy.types.Menu):
 class EntireProcessTextureMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process_texture"
 	bl_label = "Texture"
-	bl_description = "all texture is a function group to batch process a"
+	bl_description = "Batch Process Texture Settings"
 	
 	def draw(self, context):
 		self.layout.operator(AllRenameTextureFileName.bl_idname, icon="PLUGIN")
@@ -541,7 +541,7 @@ class EntireProcessTextureMenu(bpy.types.Menu):
 class EntireProcessImageMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process_image"
 	bl_label = "Image"
-	bl_description = "all image is a function group to batch process a"
+	bl_description = "Batch Process Images"
 	
 	def draw(self, context):
 		self.layout.operator(AllRenameImageFileName.bl_idname, icon="PLUGIN")
@@ -549,7 +549,7 @@ class EntireProcessImageMenu(bpy.types.Menu):
 class EntireProcessPhysicsMenu(bpy.types.Menu):
 	bl_idname = "INFO_MT_entire_process_physics"
 	bl_label = "Physics"
-	bl_description = "data of physics relationship is a function group of batch processing"
+	bl_description = "Batch Process Physics"
 	
 	def draw(self, context):
 		self.layout.operator(AllSetPhysicsFrames.bl_idname, icon="PLUGIN")
@@ -571,14 +571,12 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
-		self.layout.operator(RestartBlender.bl_idname, icon="PLUGIN")
+		self.layout.operator(RestartBlender.bl_idname, icon="COLOR_GREEN")
 		self.layout.separator()
-		self.layout.operator(SaveMainfileUnmassage.bl_idname, icon="PLUGIN")
-		self.layout.operator(RecoverLatestAutoSave.bl_idname, icon="PLUGIN")
+		self.layout.operator(SaveMainfileUnmassage.bl_idname, icon="FILE_TICK")
+		self.layout.operator(RecoverLatestAutoSave.bl_idname, icon="RECOVER_AUTO")
 		self.layout.separator()
-		self.layout.separator()
-		self.layout.separator()
-		self.layout.menu(EntireProcessMenu.bl_idname, icon="PLUGIN")
+		self.layout.menu(EntireProcessMenu.bl_idname, icon="SCRIPT")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

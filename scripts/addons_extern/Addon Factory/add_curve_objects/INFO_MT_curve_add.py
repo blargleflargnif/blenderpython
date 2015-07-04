@@ -44,6 +44,7 @@ if "bpy" in locals():
     importlib.reload(add_curve_formulacurves)
     importlib.reload(add_curve_wires)
     importlib.reload(add_curve_ivygen)
+    importlib.reload(curve_simplify)
 
 
 else:
@@ -58,6 +59,7 @@ else:
     from . import add_curve_formulacurves
     from . import add_curve_wires
     from . import add_curve_ivygen
+    from . import curve_simplify
 
 
 import bpy
@@ -107,6 +109,10 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
             text="Formula Curve")
         layout.operator("curve.wires",
             text="Curve Wires")
+        layout.separator()
+        layout.label(text="Curve Utils")
+        layout.operator("curve.simplify",
+            text="Simplify Curves")
 
 def IsMenuEnable(self_id):
 	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
@@ -130,6 +136,9 @@ def menu(self, context):
 		self.layout.operator("curve.curlycurve", text="Curly Curve", icon="CURVE_DATA")
 		self.layout.operator("curve.formulacurves", text="Formula Curve", icon="CURVE_DATA")
 		self.layout.operator("curve.wires", text="Curve Wires", icon="CURVE_DATA")
+		self.layout.separator()
+		layout.label(text="Curve Utils")
+		self.layout.operator("curve.simplify", text="Curve Simplify", icon="CURVE_DATA")
 
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()

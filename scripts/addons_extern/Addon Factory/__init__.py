@@ -23,7 +23,7 @@ from .image import IMAGE_MT_image
 from .image import IMAGE_MT_select
 from .image import IMAGE_MT_view
 from .materials import MATERIAL_MT_specials
-from .menu_tools import analyse_dicom_3d_models
+from .tools_panels import VIEW3D_MT_tools_panels
 from .modifiers import DATA_PT_modifiers
 from .node import NODE_MT_node
 from .object import VIEW3D_MT_make_links
@@ -51,6 +51,7 @@ from .view_3d import VIEW3D_MT_view
 from .view_3d import VIEW3D_MT_view_align
 from .view_3d import VIEW3D_MT_view_align_selected
 from .view_3d import VIEW3D_MT_snap
+from .shading import VIEW3D_PT_view3d_shading
 
 
 # Blender Addon Information
@@ -179,7 +180,7 @@ def register():
 	bpy.types.VIEW3D_MT_pose_specials.append(VIEW3D_MT_pose_specials.menu)
 	bpy.types.VIEW3D_MT_select_edit_mesh.append(VIEW3D_MT_select_edit_mesh.menu)
 	bpy.types.VIEW3D_MT_select_pose.append(VIEW3D_MT_select_pose.menu)
-	bpy.types.VIEW3D_MT_view.append(VIEW3D_MT_view.menu)
+	bpy.types.VIEW3D_MT_view.prepend(VIEW3D_MT_view.menu)
 	bpy.types.VIEW3D_MT_view_align.append(VIEW3D_MT_view_align.menu)
 	bpy.types.VIEW3D_MT_select_edit_armature.append(VIEW3D_MT_select_edit_armature.menu)
 	bpy.types.VIEW3D_MT_edit_mesh_vertices.append(VIEW3D_MT_edit_mesh_vertices.menu)
@@ -195,7 +196,8 @@ def register():
 	bpy.types.DATA_PT_modifiers.append(DATA_PT_modifiers.menu)
 	bpy.types.DATA_PT_uv_texture.append(DATA_PT_uv_texture.menu)
 	bpy.types.DATA_PT_vertex_colors.append(DATA_PT_vertex_colors.menu)
-		
+	bpy.types.VIEW3D_PT_view3d_shading.append(VIEW3D_PT_view3d_shading.menu)
+	
 # プラグインをアンインストールしたときの処理
 def unregister():
 
@@ -251,6 +253,7 @@ def unregister():
 	bpy.types.DATA_PT_modifiers.remove(DATA_PT_modifiers.menu)
 	bpy.types.DATA_PT_uv_texture.remove(DATA_PT_uv_texture.menu)
 	bpy.types.DATA_PT_vertex_colors.remove(DATA_PT_vertex_colors.menu)
+	bpy.types.VIEW3D_PT_view3d_shading.remove(VIEW3D_PT_view3d_shading.menu)
 
 	bpy.utils.unregister_module(__name__)
 # メイン関数

@@ -1,5 +1,12 @@
 # 3Dビュー > オブジェクトモード > Ctrl+Aキー
 
+if "bpy" in locals():
+    import importlib
+    importlib.reload(apply_transform_multiuser)
+
+else:
+    from . import apply_transform_multiuser
+
 import bpy
 
 ################
@@ -34,6 +41,8 @@ def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.separator()
 		operator = self.layout.operator(TransformApplyAll.bl_idname, text="Position and rotation and scaling", icon="PLUGIN")
+		self.layout.separator()
+		self.layout.menu("VIEW3D_MT_object_apply_transform_multiuser", icon="PLUGIN")
 	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

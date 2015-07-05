@@ -21,7 +21,7 @@
 bl_info = {
     "name": "Smart Join",
     "author": "Andrej Ivanis",
-    "version": (0, 1, 0),
+    "version": (1, 0, 3),
     "blender": (2, 73, 0),
     "location": "Relationships tab, Specials menu (w-key)",
     "warning": "",
@@ -57,7 +57,21 @@ def register():
     # update_lock = False
     
     
+class ExampleAddonPreferences(bpy.types.AddonPreferences):
+    # this must match the addon name, use '__package__'
+    # when defining this in a submodule of a python package.
+    bl_idname = __package__
 
+    allow_edit_mode = bpy.props.BoolProperty(
+            name="Allow edit mode",
+            default=False
+            )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "allow_edit_mode")
+        layout.label(text="NOTE: any changes to smart join in the edit mode will be reverted after expanding")
+        layout.label(text="You can Apply the join in the Relationships tab, but you won't be able to expand it any more")
 
 def special_menu_func(self, context):
     self.layout.separator()

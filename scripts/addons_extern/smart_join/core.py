@@ -35,6 +35,9 @@ def get_stored_sjobjects_unsafe(sj_mesh_name):
     return [o for o in bpy.data.objects if o.sjoin_mesh == sj_mesh_name]
 
 def check_fix_rename(sj_mesh, sj_obj = None, scn = None):
+
+    # sjoin check performed by update object
+
     # first, check if mesh is renamed or duplicated
     if sj_mesh.sjoin_link_name != sj_mesh.name and sj_mesh.sjoin_link_name != '':
         # make sure some delete mesh didn't leave objects
@@ -76,11 +79,13 @@ def check_fix_rename(sj_mesh, sj_obj = None, scn = None):
             sj_objs = get_stored_sjobjects_unsafe(sj_mesh.sjoin_link_name)
             for o in sj_objs:
                 o.sjoin_mesh = sj_mesh.name
-    # no matter what keep sjoin_link_name same as sj_mesh.name
-    sj_mesh.sjoin_link_name = sj_mesh.name
 
-    # make sure there are no two expended objects, actually ones that look expended
-    if check_is_sjoin_obj(sj_obj) and not check_is_expended(sj_obj):
+        # no matter what keep sjoin_link_name same as sj_mesh.name
+        sj_mesh.sjoin_link_name = sj_mesh.name
+
+
+    # make sure there are no two expended objects, actually ones that look expended, this can happen if expended sj is duplicated
+    if not check_is_expended(sj_obj):
         set_object_collapsed(sj_obj)
 
 
@@ -225,7 +230,12 @@ def set_object_expended(j_obj):
 def set_object_collapsed(j_obj):
     if j_obj.data.expanded_obj == j_obj.name:
         j_obj.data.expanded_obj = ''
-    j_obj.draw_type = 'TEXTURED'
+
+    #check to avoid rerendering
+    if j_obj.draw_type != 'TEXTURED':
+        j_obj.draw_type = 'TEXTURED'
+        # if somebody hide bounding box
+        j_obj.hide = False
 
 def expand_objects(j_obj, scn):
     if j_obj is None:
@@ -301,7 +311,10 @@ def scene_update(scene):
     update_lock = True
     active = scene.objects.active
     if check_is_sjoin_obj(scene.objects.active) and active.data.is_editmode:
-        bpy.ops.object.mode_set(mode='OBJECT')
+        user_preferences = bpy.context.user_preferences
+        addon_prefs = user_preferences.addons[__package__].preferences
+        if not addon_prefs.allow_edit_mode:
+            bpy.ops.object.mode_set(mode='OBJECT')
         # this below won't always work??
         '''
         scene.update()
@@ -309,23 +322,24 @@ def scene_update(scene):
         scene.update()
         '''
 
+    object_update(active, scene)
+
     # this won't detect modifier updates
     # according to the wiki it should http://wiki.blender.org/index.php/Dev:2.6/Source/Render/UpdateAPI
-    # if bpy.data.objects.is_updated:
-    for ob in scene.objects[:]:
-        if ob.is_updated:
-            object_update(ob, scene)
-        '''
-        if not check_is_sjoin_obj(ob) and ob.data and ob.is_updated_data:
-            print('updating object data for ', ob.data)
-            # update_data_rec(ob.data)
-        '''
+    '''
+    if bpy.data.objects.is_updated:
+        for ob in scene.objects[:]:
+            if ob.is_updated or ob.is_updated_data:
+                object_update(ob, scene)
+            # if not check_is_sjoin_obj(ob) and ob.data and ob.is_updated_data:
+            #     print('updating object data for ', ob.data)
+                # update_data_rec(ob.data)
+    '''
 
     update_lock = False
 
 
 def object_update(obj, scn):
-    global update_lock
     if check_is_sjoin_obj(obj):
         # update_lock = True
         check_fix_rename(obj.data, obj, scn)
@@ -336,7 +350,10 @@ def object_update(obj, scn):
 def before_save(dummy):
     # don't save any meshes that have fake user because of sjoin if sjoin is deleted or has 0 users
     for o in bpy.data.objects:
-        if o.fake_user and o.sjoin_mesh != '':
+        if o.sjoin_mesh != '':
             sjoin = get_sjmesh(o.sjoin_mesh)
-            if not sjoin or (sjoin and sjoin.users == 0):
+            if not sjoin or not sjoin.is_sjoin:
                 o.use_fake_user = False
+                o.sjoin_mesh = ''
+            else:
+                o.use_fake_user = sjoin.users != 0

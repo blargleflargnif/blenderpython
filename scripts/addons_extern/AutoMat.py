@@ -21,7 +21,7 @@ bl_info = {
     " action of yours is related to the error, please include a description"
     " of it too.):",
     "support": "COMMUNITY",
-    "category": "Render"}
+    "category": "Materials"}
 
 
 class AutomatOperatorFromTexture(bpy.types.Operator):
@@ -44,7 +44,7 @@ This is a subclass from bpy.types.Operator.
     directory = bpy.props.StringProperty(subtype="FILE_PATH")
     
     
-    def _addBlurSetup(self, context, mat, x, y):
+    def _addBlurSetup(self, context, mat, x, y, strength=0.5):
         
         """Function that adds the blur's nodes to the given material at the
 given position
@@ -87,6 +87,8 @@ This is private.
         nodes_dict["Correct strength"].inputs[1].default_value = (0, 0, 0, 1)
         nodes_dict["Transform to RGB"].inputs[1].default_value = (1, 1, 1, 1)
         nodes_dict["Transform to RGB"].inputs[2].default_value = (0, 0, 0, 1)
+        nodes_dict["Noise source"].inputs[1].default_value = 1000.0
+        nodes_dict["Blur strength"].outputs[0].default_value = strength
         
         # Link up the nodes.
         
@@ -127,10 +129,11 @@ This creates all the node setup."""
             nodes.remove(nodes[node])
                 
         
-        # Add the two blur setups
+        # Add the three blur setups
         
         blur_setup_1_IO = self._addBlurSetup(context, mat, -2000, -300)
         blur_setup_2_IO = self._addBlurSetup(context, mat, -1800, 300)
+        blur_setup_3_IO = self._addBlurSetup(context, mat, -1000, 600, 1000)
 
         # Create dictionary of the nodes to be used
 
@@ -140,15 +143,17 @@ This creates all the node setup."""
             "Bumpmap Mix RGB":("ShaderNodeMixRGB", (-1200, 0)),
             "Color Image":("ShaderNodeTexImage", (-450, 100)),
             "Bump Image":("ShaderNodeTexImage", (-850, -150)),
-            "Layer Weight":("ShaderNodeLayerWeight", (-300, 300)),
+            "Layer Weight":("ShaderNodeLayerWeight", (-500, 500)),
             "Multiply bumpmap":("ShaderNodeMixRGB", (-450, -150)),
             "Add bumpmap":("ShaderNodeMixRGB", (-650, -150)),
-            "Add fresnel reflection":("ShaderNodeMixRGB", (-100, 300)),
+            "Add fresnel reflection":("ShaderNodeMixRGB", (-300, 500)),
             "Diffuse component":("ShaderNodeBsdfDiffuse", (-100, 100)),
             "Glossy component":("ShaderNodeBsdfGlossy", (-100, -100)),
             "Mix shader":("ShaderNodeMixShader", (100, 0)),
             "Desaturate reflection":("ShaderNodeMixRGB", (-270, 0)),
-            "Output":("ShaderNodeOutputMaterial", (400, 0))}
+            "Output":("ShaderNodeOutputMaterial", (400, 0)),
+            "Average color":("ShaderNodeTexImage", (-750, 400)),
+            "Substract average":("ShaderNodeMath", (-100, 350))}
 
         # Create the actual nodes
 
@@ -174,12 +179,15 @@ This creates all the node setup."""
         nodes_dict["Add fresnel reflection"].inputs[0].default_value = 1
         nodes_dict["Glossy component"].distribution = "ASHIKHMIN_SHIRLEY"
         nodes_dict["Desaturate reflection"].inputs[0].default_value = 0.7
-
+        nodes_dict["Substract average"].operation = "SUBTRACT"
+        nodes_dict["Substract average"].use_clamp = True
+        
         # Open the Image nodes' textures.
         
         image_data = bpy.data.images.load(self.filepath)
         nodes_dict["Color Image"].image = image_data
         nodes_dict["Bump Image"].image = image_data
+        nodes_dict["Average color"].image = image_data
 
         # Connect the nodes up
 
@@ -215,7 +223,7 @@ This creates all the node setup."""
                   nodes_dict["Add fresnel reflection"].inputs[2])
         links.new(nodes_dict["Color Image"].outputs["Color"],
                   nodes_dict["Add fresnel reflection"].inputs[1])
-        links.new(nodes_dict["Add fresnel reflection"].outputs["Color"],
+        links.new(nodes_dict["Substract average"].outputs[0],
                   nodes_dict["Mix shader"].inputs[0])
         links.new(nodes_dict["Diffuse component"].outputs["BSDF"],
                   nodes_dict["Mix shader"].inputs[1])
@@ -228,7 +236,13 @@ This creates all the node setup."""
         links.new(nodes_dict["Texture Co-ordinate"].outputs["UV"],
                   nodes_dict["Bumpmap Mix RGB"].inputs[1])
         links.new(nodes_dict["Texture Co-ordinate"].outputs["UV"],
-                             blur_setup_1_IO["in"][0].inputs[0])
+                  blur_setup_1_IO["in"][0].inputs[0])
+        links.new(nodes_dict["Average color"].outputs["Color"],
+                  nodes_dict["Substract average"].inputs[0])
+        links.new(nodes_dict["Add fresnel reflection"].outputs["Color"],
+                  nodes_dict["Substract average"].inputs[1])
+        links.new(blur_setup_3_IO["out"][0].outputs[0], 
+                  nodes_dict["Average color"].inputs[0])
 
         # Try to add the material to the selected object
         

@@ -30,14 +30,14 @@ def export_object(self, context):
         properties = ET.SubElement(root, "properties")        
             
         #properties
-        props = ["mat", "if_tin", "if_wood", "if_vinyl", "is_cut", "cut_name", "object_add", "from_dims", "is_slope", "over_height", "over_width", "board_width", 
+        props = ["mat", "if_tin", "if_wood", "if_vinyl", "is_cut", "cut_name", "object_add", "from_dims", "angle_off", "is_slope", "over_height", "over_width", "board_width", 
                 "batten_width", "board_space", "slope", "is_width_vary", "width_vary", "is_cutout", "num_cutouts", "is_length_vary", "length_vary", "max_boards", 
                 "res", "is_screws", "bevel_width", "x_offset", "b_width", "b_height", "b_ran_offset", "b_offset", "b_gap", "m_depth", "b_vary", "is_bevel", 
                 "bump_type", "color_style", "mat_color2", "mat_color3", "color_sharp", "mortar_color", "mortar_bump", "brick_bump", "color_scale", "bump_scale", 
                 "is_corner", "is_invert", "is_soldier", "is_left", "is_right", "av_width", "av_height", "s_random", "b_random", "s_mortar", "s_mat", "is_material", 
                 "mat_color", "is_preview", "im_scale", "col_image", "is_bump", "norm_image", "bump_amo", "unwrap", "is_rotate", "random_uv", "nc1", "nc2", "nc3", 
                 "nc4", "nc5", "nc6", "f_object_add", "f_cut_name", "f_is_cut", "f_mat", "f_if_wood", "f_if_tile", "f_over_width", "f_over_length", "f_b_width", 
-                "f_b_length", "f_b_length2", "f_is_length_vary", "f_length_vary", "f_max_boards", "f_is_width_vary", "f_width_vary", "f_num_boards", "f_space_l", 
+                "f_b_length", "f_b_length2", "f_is_length_vary", "f_length_vary", "f_max_boards", "f_thickness", "f_is_width_vary", "f_width_vary", "f_num_boards", "f_space_l", 
                 "f_space_w", "f_spacing", "f_is_bevel", "f_res", "f_bevel_amo", "f_is_ran_height", "f_ran_height", "f_t_width", "f_t_length", "f_grout_depth", 
                 "f_is_offset", "f_offset", "f_is_random_offset", "f_offset_vary", "f_t_width2", "f_is_material", "f_is_preview", "f_im_scale", "f_col_image", 
                 "f_is_bump", "f_norm_image", "f_bump_amo", "f_unwrap", "f_mortar_color", "f_mortar_bump", "f_is_rotate", "f_random_uv", "s_object_add", "s_style", 
@@ -47,7 +47,7 @@ def export_object(self, context):
                 "s_riser_height1", "s_landing_depth1", "s_over_front1", "s_over_sides1", "s_overhang1", "s_is_back1", "s_w_rot", "s_num_rot", "s_rot", 
                 "s_pole_dia", "s_pole_res", "s_tread_res", "s_is_material", "s_is_preview", "s_im_scale", "s_col_image", "s_is_bump", "s_norm_image", 
                 "s_bump_amo", "s_is_rotate", "s_im_scale2", "s_col_image2", "s_is_bump2", "s_norm_image2", "s_bump_amo2", "s_is_rotate2", "s_unwrap", 
-                "s_random_uv"]                
+                "s_random_uv", "dims"]                
                 
         for prop in props:
             #determine type

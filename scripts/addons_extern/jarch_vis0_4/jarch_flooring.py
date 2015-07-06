@@ -7,7 +7,7 @@ import bmesh
 from . jarch_materials import Image, Mortar
 
 def create_flooring(mat, if_wood, if_tile, over_width, over_length, b_width, b_length, b_length2, is_length_vary, length_vary, num_boards, space_l, space_w,
-        spacing, t_width, t_length, is_offset, offset, is_ran_offset, offset_vary, t_width2, is_width_vary, width_vary, max_boards, is_ran_height, ran_height):
+        spacing, t_width, t_length, is_offset, offset, is_ran_offset, offset_vary, t_width2, is_width_vary, width_vary, max_boards, is_ran_height, ran_height, th):
     verts = []; faces = []
     #convert measurments
     ow = over_width
@@ -20,31 +20,31 @@ def create_flooring(mat, if_wood, if_tile, over_width, over_length, b_width, b_l
     s = spacing
     tw = t_width
     tl = t_length
-    tw2 = t_width2
+    tw2 = t_width2    
     
     #create siding
     if mat == "1": #Wood
         if if_wood == "1": #Regular
-            verts, faces = wood_regular(ow, ol, bw, bl, s_l, s_w, is_length_vary, length_vary, is_width_vary, width_vary, max_boards, is_ran_height, ran_height)
+            verts, faces = wood_regular(ow, ol, bw, bl, s_l, s_w, is_length_vary, length_vary, is_width_vary, width_vary, max_boards, is_ran_height, ran_height, th)
         elif if_wood == "2": #Parquet
-            verts, faces = wood_parquet(ow, ol, bw, s, num_boards)
+            verts, faces = wood_parquet(ow, ol, bw, s, num_boards, th)
     elif mat == "2": #Tile
         if if_tile == "1": #Regular
-            verts, faces = tile_regular(ow, ol, tw, tl, s, is_offset, offset, is_ran_offset, offset_vary)
+            verts, faces = tile_regular(ow, ol, tw, tl, s, is_offset, offset, is_ran_offset, offset_vary, th)
         elif if_tile == "2": #Large + Small
-            verts, faces = tile_ls(ow, ol, tw, tl, s)
+            verts, faces = tile_ls(ow, ol, tw, tl, s, th)
         elif if_tile == "3": #Large + Many Small
-            verts, faces = tile_lms(ow, ol, tw, s)
+            verts, faces = tile_lms(ow, ol, tw, s, th)
         elif if_tile == "4": #Hexagonal
-            verts, faces = tile_hexagon(ow, ol, tw2, s)
+            verts, faces = tile_hexagon(ow, ol, tw2, s, th)
     
     return (verts, faces)
 
 #tile large + small
-def tile_ls(ow, ol, tw, tl, s):
+def tile_ls(ow, ol, tw, tl, s, th):
     verts = []; faces = []
     hw = (tw / 2) - (s / 2); hl = (tl / 2) - (s / 2)
-    cur_y = tl + hl + s + s; z = 0.01270
+    cur_y = tl + hl + s + s; z = th
     while cur_y < ol:
         cur_x = -hw - s; st_y = float(cur_y)
         while cur_x < ow:
@@ -86,8 +86,8 @@ def tile_ls(ow, ol, tw, tl, s):
     return (verts, faces)
 
 #tile hexagonal
-def tile_hexagon(ow, ol, tw, s):
-    verts = []; faces = []; offset = False; z = 0.01270
+def tile_hexagon(ow, ol, tw, s, th):
+    verts = []; faces = []; offset = False; z = th
     w = tw / 2; cur_y = 0.0
     h = w * tan(radians(30))
     r = sqrt((w * w) + (h * h))
@@ -115,8 +115,8 @@ def tile_hexagon(ow, ol, tw, s):
 
 
 #tile large + many small
-def tile_lms(ow, ol, tw, s):
-    verts = []; faces = []; small = True; z = 0.01270
+def tile_lms(ow, ol, tw, s, th):
+    verts = []; faces = []; small = True; z = th
     cur_y = 0.0; ref = (tw - s) / 2
     while cur_y < ol:
         cur_x = 0.0
@@ -163,9 +163,9 @@ def tile_lms(ow, ol, tw, s):
     return (verts, faces)
 
 #tile regular
-def tile_regular(ow, ol, tw, tl, s, is_offset, offset, is_ran_offset, offset_vary):
+def tile_regular(ow, ol, tw, tl, s, is_offset, offset, is_ran_offset, offset_vary, th):
     verts = []; faces = []; off = False; o = 1 / (100 / offset)  
-    cur_y = 0.0; z = 0.01270
+    cur_y = 0.0; z = th
     while cur_y < ol:
         cur_x = 0.0; tl2 = tl
         if cur_y < ol and cur_y + tl > ol:
@@ -190,8 +190,8 @@ def tile_regular(ow, ol, tw, tl, s, is_offset, offset, is_ran_offset, offset_var
     return (verts, faces)
 
 #wood parquet
-def wood_parquet(ow, ol, bw, s, num_boards):
-    verts = []; faces = []; cur_x = 0.0; z = 0.01905; start_o = "length"
+def wood_parquet(ow, ol, bw, s, num_boards, th):
+    verts = []; faces = []; cur_x = 0.0; z = th; start_o = "length"
     #figure board length
     bl = (bw * num_boards) + (s * (num_boards - 1))
     while cur_x < ow:
@@ -234,8 +234,8 @@ def wood_parquet(ow, ol, bw, s, num_boards):
     return (verts, faces)
 
 #wood regular
-def wood_regular(ow, ol, bw, bl, s_l, s_w, is_length_vary, length_vary, is_width_vary, width_vary, max_boards, is_r_h, r_h):
-    verts = []; faces = []; cur_x = 0.0; zt = 0.01905
+def wood_regular(ow, ol, bw, bl, s_l, s_w, is_length_vary, length_vary, is_width_vary, width_vary, max_boards, is_r_h, r_h, th):
+    verts = []; faces = []; cur_x = 0.0; zt = th
     while cur_x < ow:
         if is_width_vary == True:
             v = bw * width_vary * 0.0048
@@ -268,8 +268,8 @@ def wood_regular(ow, ol, bw, bl, s_l, s_w, is_length_vary, length_vary, is_width
         cur_x += bw2 + s_w                
     return (verts, faces)
 
-def tile_grout(ow, ol, depth):
-    verts = []; faces = []; z = 0.01270 - depth
+def tile_grout(ow, ol, depth, th):
+    verts = []; faces = []; z = th - depth
     x = ow; y = ol
     v = ((0.0, 0.0, 0.0), (0.0, 0.0, z), (x, 0.0, z), (x, 0.0, 0.0), (0.0, y, 0.0), (0.0, y, z), (x, y, z), (x, y, 0.0))
     for vert in v: verts.append(vert)
@@ -299,11 +299,11 @@ def UpdateFlooring(self, context):
     if o.f_object_add == "add":
         verts, faces = create_flooring(o.f_mat, o.f_if_wood, o.f_if_tile, o.f_over_width, o.f_over_length, o.f_b_width, o.f_b_length, o.f_b_length2, o.f_is_length_vary, o.f_length_vary, o.f_num_boards, 
                 o.f_space_l, o.f_space_w, o.f_spacing, o.f_t_width, o.f_t_length, o.f_is_offset, o.f_offset, o.f_is_random_offset, 
-                o.f_offset_vary, o.f_t_width2, o.f_is_width_vary, o.f_width_vary, o.f_max_boards, o.f_is_ran_height, o.f_ran_height)
+                o.f_offset_vary, o.f_t_width2, o.f_is_width_vary, o.f_width_vary, o.f_max_boards, o.f_is_ran_height, o.f_ran_height, o.f_thickness)
     elif o.f_object_add == "convert":
         verts, faces = create_flooring(o.f_mat, o.f_if_wood, o.f_if_tile, dim[0], dim[1], o.f_b_width, o.f_b_length, o.f_b_length2, o.f_is_length_vary, o.f_length_vary, o.f_num_boards, 
                 o.f_space_l, o.f_space_w, o.f_spacing, o.f_t_width, o.f_t_length, o.f_is_offset, o.f_offset, o.f_is_random_offset, 
-                o.f_offset_vary, o.f_t_width2, o.f_is_width_vary, o.f_width_vary, o.f_max_boards, o.f_is_ran_height, o.f_ran_height)
+                o.f_offset_vary, o.f_t_width2, o.f_is_width_vary, o.f_width_vary, o.f_max_boards, o.f_is_ran_height, o.f_ran_height, o.f_thickness)
     if o.f_object_add in ("convert", "add"):     
         emesh = o.data
         mesh = bpy.data.meshes.new(name = "flooring")
@@ -388,10 +388,10 @@ def UpdateFlooring(self, context):
     #create grout
     if o.f_mat == "2":
         if o.f_object_add == "add":
-            verts2, faces2 = tile_grout(o.f_over_width, o.f_over_length, o.f_grout_depth)
+            verts2, faces2 = tile_grout(o.f_over_width, o.f_over_length, o.f_grout_depth, o.f_thickness)
         else:
             c = bpy.data.objects[o.f_cut_name]
-            verts2, faces2 = tile_grout(c.dimensions[0], c.dimensions[1], o.f_grout_depth)
+            verts2, faces2 = tile_grout(c.dimensions[0], c.dimensions[1], o.f_grout_depth, o.f_thickness)
         grout = bpy.data.meshes.new(name = "grout")
         grout.from_pydata(verts2, [], faces2)
         grout_ob = bpy.data.objects.new("grout", grout)  
@@ -550,11 +550,12 @@ bpy.types.Object.f_mat = EnumProperty(items = (("1", "Wood", ""), ("2", "Tile", 
 bpy.types.Object.f_if_wood = EnumProperty(items = (("1", "Regular", ""), ("2", "Parquet", "")), default = "1", description = "Wood Type", update = UpdateFlooring, name = "")
 bpy.types.Object.f_if_tile = EnumProperty(items = (("1", "Regular", ""), ("2", "Large + Small", ""), ("3", "Large + Many Small", ""), ("4", "Hexagonal", "")), default = "1", description = "Tile Type", update = UpdateFlooring, name = "")
 #measurements
-bpy.types.Object.f_over_width = FloatProperty(name = "Overall Width", min = 2.00 / 3.28084, max = 100.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Overall Width In Feet", update = UpdateFlooring)
-bpy.types.Object.f_over_length = FloatProperty(name = "Overall Length", min = 2.0 / 3.28084, max = 100.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Overall Length In Feet", update = UpdateFlooring)
-bpy.types.Object.f_b_width = FloatProperty(name = "Board Width", min = 2.00 / 39.3701, max = 14.00 / 39.3701, default = 6.00 / 39.3701, subtype = "DISTANCE", description = "Board Width In Inches", update = UpdateFlooring)
-bpy.types.Object.f_b_length = FloatProperty(name = "Board Length", min = 4.00 / 3.28084, max = 20.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Board Length In Feet", update = UpdateFlooring)
-bpy.types.Object.f_b_length2 = FloatProperty(name = "Board Length", min = 1.00 / 3.28084, max = 4.00 / 3.28084, default = 1.5 / 3.28084, subtype = "DISTANCE", description = "Board Length In Feet", update = UpdateFlooring)
+bpy.types.Object.f_over_width = FloatProperty(name = "Overall Width", min = 2.00 / 3.28084, max = 100.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Overall Width", update = UpdateFlooring)
+bpy.types.Object.f_over_length = FloatProperty(name = "Overall Length", min = 2.0 / 3.28084, max = 100.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Overall Length", update = UpdateFlooring)
+bpy.types.Object.f_b_width = FloatProperty(name = "Board Width", min = 2.00 / 39.3701, max = 14.00 / 39.3701, default = 6.00 / 39.3701, subtype = "DISTANCE", description = "Board Width", update = UpdateFlooring)
+bpy.types.Object.f_b_length = FloatProperty(name = "Board Length", min = 4.00 / 3.28084, max = 20.00 / 3.28084, default = 8.00 / 3.28084, subtype = "DISTANCE", description = "Board Length", update = UpdateFlooring)
+bpy.types.Object.f_b_length2 = FloatProperty(name = "Board Length", min = 1.00 / 3.28084, max = 4.00 / 3.28084, default = 1.5 / 3.28084, subtype = "DISTANCE", description = "Board Length", update = UpdateFlooring)
+bpy.types.Object.f_thickness = FloatProperty(name = "Floor Thickness", min = 0.75 / 39.3701, max = 1.5 / 39.3701, default = 1 / 39.3701, subtype = "DISTANCE", description = "Thickness Of Flooring", update = UpdateFlooring)
 bpy.types.Object.f_is_length_vary = BoolProperty(name = "Vary Length?", default = False, description = "Vary Lengths?", update = UpdateFlooring)
 bpy.types.Object.f_length_vary = FloatProperty(name = "Length Varience", min = 1.00, max = 100.0, default = 50.0, subtype = "PERCENTAGE", description = "Length Varience", update = UpdateFlooring)
 bpy.types.Object.f_max_boards = IntProperty(name = "Max # Of Boards", min = 2, max = 10, default = 2, description = "Maximum Number Of Boards Possible In One Length", update = UpdateFlooring)
@@ -570,14 +571,14 @@ bpy.types.Object.f_bevel_amo = FloatProperty(name = "Bevel Amount", min = 0.001 
 bpy.types.Object.f_is_ran_height = BoolProperty(name = "Random Heights?", default = False, update = UpdateFlooring)
 bpy.types.Object.f_ran_height = FloatProperty(name = "Height Varience", min = 0.1, max = 100.0, default = 50.0, subtype = "PERCENTAGE", update = UpdateFlooring)
 #tile specific
-bpy.types.Object.f_t_width = FloatProperty(name = "Tile Width", min = 2.00 / 39.3701, max = 24.00 / 39.3701, default = 8.00 / 39.3701, subtype = "DISTANCE", description = "Tile Width In Inches", update = UpdateFlooring)
-bpy.types.Object.f_t_length = FloatProperty(name = "Tile Length", min = 2.00 / 39.3701, max = 24.00 / 39.3701, default = 8.00 / 39.3701, subtype = "DISTANCE", description = "Tile Length In Inches", update = UpdateFlooring)
-bpy.types.Object.f_grout_depth = FloatProperty(name = "Grout Depth", min = 0.01 / 39.3701, max = 0.40 / 39.701, default = 0.10 / 39.3701, subtype = "DISTANCE", description = "Grout Depth In Inches", update = UpdateFlooring)
+bpy.types.Object.f_t_width = FloatProperty(name = "Tile Width", min = 2.00 / 39.3701, max = 24.00 / 39.3701, default = 8.00 / 39.3701, subtype = "DISTANCE", description = "Tile Width", update = UpdateFlooring)
+bpy.types.Object.f_t_length = FloatProperty(name = "Tile Length", min = 2.00 / 39.3701, max = 24.00 / 39.3701, default = 8.00 / 39.3701, subtype = "DISTANCE", description = "Tile Length", update = UpdateFlooring)
+bpy.types.Object.f_grout_depth = FloatProperty(name = "Grout Depth", min = 0.01 / 39.3701, max = 0.40 / 39.701, default = 0.10 / 39.3701, subtype = "DISTANCE", description = "Grout Depth", update = UpdateFlooring)
 bpy.types.Object.f_is_offset = BoolProperty(name = "Offset Tiles?", default = False, description = "Offset Tile Rows", update = UpdateFlooring)
 bpy.types.Object.f_offset = FloatProperty(name = "Offset", min = 0.001, max = 100.0, default = 50.0, subtype = "PERCENTAGE", description = "Tile Offset Amount", update = UpdateFlooring)
 bpy.types.Object.f_is_random_offset = BoolProperty(name = "Random Offset?", default = False, description = "Offset Tile Rows Randomly", update = UpdateFlooring)
 bpy.types.Object.f_offset_vary = FloatProperty(name = "Offset Varience", min = 0.001, max = 100.0, default = 50.0, subtype = "PERCENTAGE", description = "Offset Varience", update = UpdateFlooring)
-bpy.types.Object.f_t_width2 = FloatProperty(name = "Small Tile Width", min = 2.00 / 39.3701, max = 10.00 / 39.3701, default = 6.00 / 39.3701, subtype = "DISTANCE", description = "Small Tile Width In Inches", update = UpdateFlooring)
+bpy.types.Object.f_t_width2 = FloatProperty(name = "Small Tile Width", min = 2.00 / 39.3701, max = 10.00 / 39.3701, default = 6.00 / 39.3701, subtype = "DISTANCE", description = "Small Tile Width", update = UpdateFlooring)
 #materials
 bpy.types.Object.f_is_material = BoolProperty(name = "Cycles Materials?", default = False, description = "Adds Cycles Materials", update = DeleteMaterials)
 bpy.types.Object.f_is_preview = BoolProperty(name = "Preview Material?", default = False, description = "Preview Material On Object", update = PreviewMaterials)
@@ -626,6 +627,7 @@ class FlooringPanel(bpy.types.Panel):
                             if o.f_object_add == "add":
                                 layout.prop(o, "f_over_width"); layout.prop(o, "f_over_length"); layout.separator()
                             #width and lengths
+                            layout.prop(o, "f_thickness"); layout.separator()
                             if o.f_mat == "1":
                                 layout.prop(o, "f_b_width")
                                 if o.f_if_wood == "1": layout.prop(o, "f_b_length")

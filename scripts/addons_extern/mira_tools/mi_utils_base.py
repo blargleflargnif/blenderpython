@@ -15,15 +15,22 @@ import random
 from mathutils import Vector
 
 
-def get_obj_dup_meshes(objects_array, context):
+def get_obj_dup_meshes(obj_snap_mode, convert_instances, context):
     """Get all meshes"""
+
+    objects_array = None
+    active_obj = context.scene.objects.active
+    if obj_snap_mode == 'Selected':
+        objects_array = [obj for obj in context.selected_objects if obj != active_obj]
+    else:
+        objects_array = [obj for obj in context.visible_objects if obj != active_obj]
 
     listObjMatrix = []
     for obj in objects_array:
         if obj.type == 'MESH':
             listObjMatrix.append((obj, obj.matrix_world.copy()))
 
-        if obj.dupli_type != 'NONE':
+        if obj.dupli_type != 'NONE' and convert_instances is True:
             obj.dupli_list_create(context.scene)
             for dob in obj.dupli_list:
                 obj_dupli = dob.object
@@ -43,13 +50,13 @@ def get_mouse_raycast(context, objects_list, coords_2d, ray_max):
     best_obj, hit_normal, hit_position = None, None, None
     best_length_squared = ray_max * ray_max
 
-    for obj, matrix in objects_list:
-        # get the ray from the viewport and mouse
-        view_vector = view3d_utils.region_2d_to_vector_3d(
-            region, rv3d, coords_2d)
-        ray_origin = view3d_utils.region_2d_to_origin_3d(
-            region, rv3d, coords_2d)
+    # get the ray from the viewport and mouse
+    view_vector = view3d_utils.region_2d_to_vector_3d(
+        region, rv3d, coords_2d)
+    ray_origin = view3d_utils.region_2d_to_origin_3d(
+        region, rv3d, coords_2d)
 
+    for obj, matrix in objects_list:
         # Do RayCast! t1,t2,t3,t4 - temp values
         t1, t2, t3 = obj_raycast(
             obj, matrix, view_vector, ray_origin, ray_max)
@@ -96,8 +103,8 @@ def obj_raycast(obj, matrix, view_vector, ray_origin, ray_max):
         length_squared = (hit_world - ray_origin).length_squared
 
         if face_index != -1:
-            normal_world = matrix.to_quaternion() * normal
-            return normal_world.normalized(), hit_world, length_squared
+            normal_world = (matrix.to_quaternion() * normal).normalized()
+            return normal_world, hit_world, length_squared
 
     return None, None, None
 
@@ -319,3 +326,23 @@ def multiply_vecs(vec1, vec2):
     vec3[1] = vec1[1] * vec2[1]
     vec3[2] = vec1[2] * vec2[2]
     return vec3
+
+
+# get verts by custom bmesh layer(integer)
+def get_verts_from_ids(ids, id_layer, bm):
+    verts_dict = {}
+    verts_sorted = []
+
+    for vert in bm.verts:
+        if vert[id_layer] in ids:
+            #print(vert[id_layer])
+            verts_dict[vert[id_layer]] = vert
+
+    for id_this in ids:
+        if id_this in verts_dict.keys():
+            verts_sorted.append(verts_dict.get(id_this))
+
+    if len(verts_sorted) == len(ids):
+        return verts_sorted
+
+    return None

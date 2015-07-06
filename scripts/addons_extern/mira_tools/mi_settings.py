@@ -20,30 +20,39 @@
 import bpy
 import bgl
 import blf
+import string
 
 from bpy.props import *
+from bpy.types import Operator, AddonPreferences
+
+from bpy_extras import view3d_utils
+
 import math
 import mathutils as mathu
 import random
 from mathutils import Vector
 
 
-# Curve Colors
-cur_point_base = (0.5, 0.8, 1.0, 1.0)
-cur_point_selected = (0.9, 0.5, 0.1, 1.0)
-cur_point_active = (0.9, 0.7, 0.3, 1.0)
+class MI_Settings(bpy.types.PropertyGroup):
+    # For all tools
+    surface_snap = BoolProperty(default=False)
+    snap_objects = EnumProperty(
+        name = "Objects To Snap",
+        items = (('Selected', 'Selected', ''),
+                ('Visible', 'Visible', '')
+                ),
+        default = 'Visible'
+    )
+    convert_instances = BoolProperty(default=False)  # This feat converts off duplis and group instances into meshes
 
-cur_point_closed_start = (0.7, 0.4, 0.9, 1.0)
-cur_point_closed_end = (0.3, 0.4, 0.9, 1.0)
+    # Curve Settings
+    curve_resolution = IntProperty(default=13, min=1, max=128)
+    draw_handlers = BoolProperty(default=False)
 
-cur_line_base = (0.5, 0.8, 0.9, 1.0)
-
-cur_handle_1_base = (0.0, 0.5, 1.0, 1.0)
-cur_handle_2_base = (1.0, 0.5, 0.0, 1.0)
-
-
-# Draw Extrude Colors
-dre_point_base = (0.5, 0.8, 1.0, 1.0)
-
-# PolyLoop colors
-pl_point_col = (0.95, 0.7, 1.0, 1.0)
+    spread_mode = EnumProperty(
+        name = "Spread Mode",
+        items = (('Original', 'Original', ''),
+                ('Uniform', 'Uniform', '')
+                ),
+        default = 'Original'
+    )

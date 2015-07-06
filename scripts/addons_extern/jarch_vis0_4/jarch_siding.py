@@ -1,30 +1,18 @@
 import bpy
 from bpy.props import FloatVectorProperty, BoolProperty, FloatProperty, StringProperty, IntProperty, EnumProperty
-from math import sqrt, radians
+from math import sqrt, radians, atan, degrees
 from random import uniform, choice, random
 from mathutils import Euler, Vector
 from . jarch_materials import *
 import bmesh
+from . jarch_utils import object_rotation, object_dimensions
 
 #manages sorting out which type of siding needs to be create, gets corner data for cutout objects
-def create_siding(context, mat, if_tin, if_wood, if_vinyl, is_slope, over_width, over_height, board_width,
-        slope, is_width_vary, width_vary, is_cutout, num_cutouts, nc1, nc2, nc3, nc4, nc5, batten_width, board_space, is_length_vary,
-        length_vary, max_boards, b_width, b_height, b_offset, b_gap, m_depth, b_ran_offset, b_vary, is_corner, is_invert, is_soldier, 
-        is_left, is_right, av_width, av_height, s_random, b_random, x_offset):
-    
-    #convert measurements to imperial and round
-    ow = over_width
-    oh = over_height
-    bw = board_width
-    baw = batten_width
-    bs = board_space
-    b_w = b_width
-    b_h = b_height
-    b_gap = b_gap
-    m_d = m_depth
-    avw = av_width
-    avh = av_height
-    x_off = x_offset
+def create_siding(context, mat, if_tin, if_wood, if_vinyl, is_slope, ow, oh, bw, slope, is_width_vary, width_vary, 
+        is_cutout, num_cutouts, nc1, nc2, nc3, nc4, nc5, baw, bs, is_length_vary, length_vary, max_boards, b_w, 
+        b_h, b_offset, b_gap, m_d, b_ran_offset, b_vary, is_corner, is_invert, is_soldier,  is_left, is_right, 
+        avw, avh, s_random, b_random, x_off):
+
     #percentages
     width_vary = 1 / (100 / width_vary)
     length_vary = 1 / (100 / length_vary)   
@@ -81,7 +69,7 @@ def create_siding(context, mat, if_tin, if_wood, if_vinyl, is_slope, over_width,
     #Wood
     if mat == "1" and if_wood == "1": #Wood > Vertical
         data_back = wood_vertical(oh, ow, is_slope, slope, is_width_vary, width_vary, bw, verts, faces, bs, is_length_vary, length_vary, max_boards)
-        verts = data_back[0]; faces = data_back[1]                     
+        verts = data_back[0]; faces = data_back[1]                  
     elif mat == "1" and if_wood == "2": #Wood > Vertical: Tongue & Groove
         data_back = wood_ton_gro(oh, ow, is_slope, slope, bw, verts, faces, is_length_vary, length_vary, max_boards)
         verts = data_back[0]; faces = data_back[1]
@@ -91,7 +79,7 @@ def create_siding(context, mat, if_tin, if_wood, if_vinyl, is_slope, over_width,
         batten_pos = data_back[2]
         #add battens
         if is_slope == True:
-            z_dif = round(((slope * batten_width) / 12), 5)
+            z_dif = round(((slope * baw) / 12), 5)
         else:
             z_dif = 0.0
         p = len(v) 
@@ -1791,37 +1779,47 @@ def stone_pos(num, columns, hh, hw, g):
     x = (n * hw) + g; z = (hh * row) + g
     return (x, z)
 
-def UpdateSiding(self, context):
+def UpdateSiding(self, context):    
     o = context.object; mats = []
+    print(o.location)
     for i in o.data.materials:
         mats.append(i.name) 
     pre_scale = tuple(o.scale.copy())
     if tuple(o.scale.copy()) != (1.0, 1.0, 1.0) and o.from_dims != "none": #apply scale     
-        bpy.ops.object.transform_apply(scale = True)         
+        bpy.ops.object.transform_apply(scale = True)              
     #update from_dims
-    dim = []
-    for i in tuple(o.dimensions.copy()):
-        i += 0.1; i *= 3.28084; dim.append(i)
+    if o.dims == "none":
+        dim = object_dimensions(o)
+        o.dims = str(dim[0]) + ", " + str(dim[1])
+    else:
+        dim_temp = o.dims.split(",")
+        dim = [float(dim_temp[0]), float(dim_temp[1])]
+    #caclculate dimensions based on vertex locations
+    #create object
     if o.object_add == "add":
         verts, faces, corner_data, corner_data_l, v, f = create_siding(context, o.mat, o.if_tin, o.if_wood, o.if_vinyl, o.is_slope, o.over_width,
                 o.over_height, o.board_width, o.slope, o.is_width_vary, o.width_vary, o.is_cutout, o.num_cutouts,
                 o.nc1, o.nc2, o.nc3, o.nc4, o.nc5, o.batten_width, o.board_space, o.is_length_vary, o.length_vary,
                 o.max_boards, o.b_width, o.b_height, o.b_offset, o.b_gap, o.m_depth, o.b_ran_offset, o.b_vary, o.is_corner, o.is_invert, 
                 o.is_soldier, o.is_left, o.is_right, o.av_width, o.av_height, o.s_random, o.b_random, o.x_offset)   
-    elif o.object_add == "convert":
-        if o.from_dims == "none": ow = dim[0]; oh = dim[1]
-        else: ow = dim[0]; oh = dim[2]
-        o.from_dims = "something"          
+    elif o.object_add == "convert":       
+        #figure out whether the x axis or the y axis is the long side
+        if o.from_dims == "none": 
+            ow = dim[0]; oh = dim[1]
+        else: ow = dim[0]; oh = dim[1]
+        o.from_dims = "something"       
         verts, faces, corner_data, corner_data_l, v, f = create_siding(context, o.mat, o.if_tin, o.if_wood, o.if_vinyl, o.is_slope, ow,
                 oh, o.board_width, o.slope, o.is_width_vary, o.width_vary, o.is_cutout, o.num_cutouts,
                 o.nc1, o.nc2, o.nc3, o.nc4, o.nc5, o.batten_width, o.board_space, o.is_length_vary, o.length_vary,
                 o.max_boards, o.b_width, o.b_height, o.b_offset, o.b_gap, o.m_depth, o.b_ran_offset, o.b_vary, o.is_corner, o.is_invert, 
                 o.is_soldier, o.is_left, o.is_right, o.av_width, o.av_height, o.s_random, o.b_random, o.x_offset) 
-    emesh = o.data   
+    emesh = o.data
+       
     if o.object_add == "add":   
         mesh = bpy.data.meshes.new(name = "siding")
         mesh.from_pydata(verts, [], faces)
-        mesh.update(calc_edges = True)  
+        mesh.update(calc_edges = True)
+         
     elif o.object_add == "convert": #from object
         mesh = bpy.data.meshes.new(name = "siding")
         mesh.from_pydata(verts, [], faces)
@@ -1840,21 +1838,29 @@ def UpdateSiding(self, context):
             verts = [vert.co for vert in o.data.vertices] #get vertex data
             tup_verts = [vert.to_tuple() for vert in verts] #convert to tuples
             x = None; z = None; y = None; coords = []
+            #find smallest x, y, and z positions
             for i in tup_verts: #find smallest x and z values
-                if x == None: x = i[0]
-                elif i[0] < x: x = i[0]
+                if x == None: 
+                    x = i[0]
+                    y = i[1]
+                elif i[0] < x:
+                    x = i[0]
+                    y = i[1]
                 if z == None: z = i[2]
                 elif i[2] < z: z = i[2]
-                if y == None: y = i[1]
-                elif i[1] < y: y = i[1]
+            #find object rotation
+            angle = object_rotation(o)
             position = o.matrix_world * Vector((x, y, z)) #get world space
+            print(position)
             coords.append(tuple(position)); eur = (o.rotation_euler).copy()
             if o.is_cut == "none":
-                eur.rotate_axis("X", radians(-90.0)) #subtract rotation from object to make up for rotating up
+                o.angle_off = str(angle)
+                eur.rotate_axis("Z", angle) #subtract rotation from object to make up for rotating up
             coords.append(eur)
         elif o.cut_name in bpy.data.objects: 
             (bpy.data.objects[o.cut_name]).name = o.name + "_cutter"; o.cut_name = o.name + "_cutter"; coords = [o.location.copy(), o.rotation_euler.copy()]
-        else: self.report({"ERROR"}, "Can't Find Cutter Object"); bpy.ops.object.delete() #cutter been deleted? 
+        else: 
+            self.report({"ERROR"}, "Can't Find Cutter Object")
     for i in bpy.data.objects:
         if i.data == emesh:
             i.data = mesh
@@ -1881,12 +1887,14 @@ def UpdateSiding(self, context):
         bpy.ops.object.modifier_add(type = "SOLIDIFY"); pos = len(o.modifiers) - 1 
         bpy.context.object.modifiers[pos].thickness = 0.002
         bpy.ops.object.modifier_apply(apply_as = "DATA", modifier = o.modifiers[pos].name)
+    #solidify tin
     elif o.mat == "3": #tin
         bpy.context.scene.objects.active = o
         bpy.ops.object.modifier_add(type = "SOLIDIFY"); pos = len(o.modifiers) - 1 
         bpy.context.object.modifiers[pos].thickness = 0.0003429
         bpy.ops.object.modifier_apply(apply_as = "DATA", modifier = o.modifiers[pos].name) 
-    elif (o.mat in ("5", "6") or (o.mat == "1" and o.if_wood == "1")) and o.is_bevel == True: #bevel brick
+    #bevel brick
+    elif (o.mat in ("5", "6") or (o.mat == "1" and o.if_wood == "1")) and o.is_bevel == True:
         bpy.context.scene.objects.active = o
         bpy.ops.object.modifier_add(type = "BEVEL"); pos = len(o.modifiers) - 1
         if o.mat == "1": width = o.bevel_width
@@ -1895,7 +1903,8 @@ def UpdateSiding(self, context):
         bpy.context.object.modifiers[pos].use_clamp_overlap = False 
         bpy.context.object.modifiers[pos].segments = o.res
         bpy.ops.object.modifier_apply(apply_as = "DATA", modifier = o.modifiers[pos].name)  
-    if o.mat in ("5", "6") and o.object_add == "add": #brick
+    #cut slope in brick or stone
+    if o.mat in ("5", "6") and o.object_add == "add":
         if o.is_slope == True:
             verts2, faces2 = bricks_cut(o.over_height, o.over_width, o.slope, o.is_corner, o.b_width)
             bc_s = bpy.data.meshes.new("slope_cut")
@@ -1916,7 +1925,7 @@ def UpdateSiding(self, context):
         if o.mat == "5": depth = round(o.m_depth, 5); bricks = True
         else: depth = round(o.s_mortar, 5); bricks = False
         if o.object_add == "convert":          
-            verts3, faces3 = bricks_mortar(dim[0], dim[2], depth, o.is_slope, o.slope, o.is_corner, o.is_left, o.is_right, o.object_add, o.b_width, o.b_gap, bricks, o.x_offset)
+            verts3, faces3 = bricks_mortar(dim[0], dim[1], depth, o.is_slope, o.slope, o.is_corner, o.is_left, o.is_right, o.object_add, o.b_width, o.b_gap, bricks, o.x_offset)
         else:
             verts3, faces3 = bricks_mortar(o.over_height, o.over_width, depth, o.is_slope, o.slope, o.is_corner, o.is_left, o.is_right, o.object_add, o.b_width, o.b_gap, bricks, o.x_offset)
         bc_m = bpy.data.meshes.new("mortar"); bc_m.from_pydata(verts3, [], faces3)  
@@ -1934,12 +1943,12 @@ def UpdateSiding(self, context):
         mortar.modifiers["Bevel"].width = 0.001524
         bpy.ops.object.modifier_apply(apply_as = "DATA", modifier = "Bevel")
         o.select = True; mortar.select = False; context.scene.objects.active = o
-    if o.mat == "3" and o.is_screws == True: #tin screws
-        dims = [i for i in tuple(o.dimensions)]
+    #tin screws
+    if o.mat == "3" and o.is_screws == True:
         if o.object_add == "convert":   
-            verts2, faces2 = tin_screws(dims[2], dims[0], o.is_slope, o.slope)
+            verts2, faces2 = tin_screws(dim[1], dim[0], o.is_slope, o.slope)
         else:
-            verts2, faces2 = tin_screws(dims[2], dims[0], o.is_slope, o.slope)
+            verts2, faces2 = tin_screws(dim[1], dim[0], o.is_slope, o.slope)
         screws = bpy.data.meshes.new(name = "screws")
         screws.from_pydata(verts2, [], faces2)
         screwOb = bpy.data.objects.new("screws", screws)
@@ -1947,8 +1956,9 @@ def UpdateSiding(self, context):
         screwOb.location = o.location; screwOb.rotation_euler = o.rotation_euler
         for ob in context.scene.objects:
             ob.select = False
-        screwOb.select = True; o.select = True; bpy.context.scene.objects.active = o; bpy.ops.object.join() 
-    if o.is_cutout == True and o.object_add == "add": #cutouts
+        screwOb.select = True; o.select = True; bpy.context.scene.objects.active = o; bpy.ops.object.join()
+    #cutouts
+    if o.is_cutout == True and o.object_add == "add":
         bool_stuff = bool(corner_data)
         if o.mat == "5" and o.is_soldier == True:
             verts3, faces3 = bool(corner_data_l)
@@ -1989,6 +1999,7 @@ def UpdateSiding(self, context):
                 bpy.ops.object.modifier_apply(apply_as = "DATA", modifier = mortar.modifiers[pos].name); mortar.select = False
             if "bool2" in bpy.data.objects: bool_ob_l.select = True
             bool_ob.select = True; bpy.ops.object.delete(); o.select = True; bpy.context.scene.objects.active = o
+    
     if o.object_add == "convert": #set position
         o.location = coords[0]; o.rotation_euler = coords[1]
         cutter = bpy.data.objects[o.cut_name] #update cutter object scale, rotation, location, origin point  
@@ -2001,7 +2012,8 @@ def UpdateSiding(self, context):
             bpy.ops.object.origin_set(type = "ORIGIN_CURSOR")
             bpy.ops.object.move_to_layer(layers = (False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True))          
             cutter.select = False; o.is_cut = "cut"
-        o.select = True; bpy.context.scene.objects.active = o; eur.rotate_axis("X", radians(90.0))   
+        eur.rotate_axis("Z", -(float(o.angle_off)))
+        o.select = True; bpy.context.scene.objects.active = o  
         cutter.location = o.location.copy(); cutter.rotation_euler = eur
         if pre_scale != (1.0, 1.0, 1.0):
             layers = [i for i in bpy.context.scene.layers]; counter = 1; true = []
@@ -2207,12 +2219,14 @@ bpy.types.Object.is_cut = StringProperty(default = "none")
 bpy.types.Object.cut_name = StringProperty(default = "none")
 bpy.types.Object.object_add = StringProperty(default = "none", update = UpdateSiding)
 bpy.types.Object.from_dims = StringProperty(default = "none")
+bpy.types.Object.angle_off = StringProperty(default = "none")
+bpy.types.Object.dims = StringProperty(default = "none")
 bpy.types.Object.is_slope = BoolProperty(name = "Slope Top?", default = False, update = UpdateSiding)
-bpy.types.Object.over_height = FloatProperty(name = "Overall Height", min = 0.6096, max = 15.2399, default = 2.4384, subtype = "DISTANCE", description = "Height in Feet", update = UpdateSiding)
-bpy.types.Object.over_width = FloatProperty(name = "Overall Width", min = 0.3048, max = 30.4799, default = 6.0959, subtype = "DISTANCE", description = "Width From Left To Right In Feet", update = UpdateSiding)
-bpy.types.Object.board_width = FloatProperty(name = "Board Width", min = 0.1016, max = 0.3048, default = 1.524, subtype = "DISTANCE", description = "Board Width (Or Average If Width Varience Is Checked) In Inches", update = UpdateSiding)
-bpy.types.Object.batten_width = FloatProperty(name = "Batten Width", min = 0.5 / 39.3701, max = 4 / 39.3701, default = 2 / 39.3701, subtype = "DISTANCE", description = "Width Of Batten In Inches", update = UpdateSiding)
-bpy.types.Object.board_space = FloatProperty(name = "Board Gap", min = 0.05 / 39.3701, max = 2 / 39.3701, default = 0.25 / 39.3701, subtype = "DISTANCE", description = "Gap Between Boards In Inches", update = UpdateSiding)
+bpy.types.Object.over_height = FloatProperty(name = "Overall Height", min = 0.6096, max = 15.2399, default = 2.4384, subtype = "DISTANCE", description = "Height", update = UpdateSiding)
+bpy.types.Object.over_width = FloatProperty(name = "Overall Width", min = 0.3048, max = 30.4799, default = 6.0959, subtype = "DISTANCE", description = "Width From Left To Right", update = UpdateSiding)
+bpy.types.Object.board_width = FloatProperty(name = "Board Width", min = 0.1016, max = 0.3048, default = 0.1524, subtype = "DISTANCE", description = "Board Width (Or Average If Width Varience Is Checked)", update = UpdateSiding)
+bpy.types.Object.batten_width = FloatProperty(name = "Batten Width", min = 0.5 / 39.3701, max = 4 / 39.3701, default = 2 / 39.3701, subtype = "DISTANCE", description = "Width Of Batten", update = UpdateSiding)
+bpy.types.Object.board_space = FloatProperty(name = "Board Gap", min = 0.05 / 39.3701, max = 2 / 39.3701, default = 0.25 / 39.3701, subtype = "DISTANCE", description = "Gap Between Boards", update = UpdateSiding)
 bpy.types.Object.slope = FloatProperty(name = "Slope (X/12)", min = 1.0, max = 12.0, default = 4.0, description = "Slope In RISE/RUN Format In Inches", update = UpdateSiding)
 bpy.types.Object.is_width_vary = BoolProperty(name = "Vary Width?", default = False, update = UpdateSiding)
 bpy.types.Object.width_vary = FloatProperty(name = "Width Varience", min = 0.001, max = 100.0, default = 50.0, subtype = "PERCENTAGE", update = UpdateSiding)
@@ -2250,11 +2264,11 @@ bpy.types.Object.is_soldier = BoolProperty(name = "Soldier Bricks?", default = F
 bpy.types.Object.is_left = BoolProperty(name = "Corners Left?", default = True, description = "Usable Corners On Left", update = UpdateSiding)
 bpy.types.Object.is_right = BoolProperty(name = "Corners Right?", default = True, description = "Usable Corners On Right", update = UpdateSiding)
 #stone
-bpy.types.Object.av_width = FloatProperty(name = "Average Width", default = 10.00 / 39.3701, min = 4.00 / 39.3701, max = 36.00 / 39.3701, subtype = "DISTANCE", description = "Average Width Of Stones In Inches", update = UpdateSiding)
-bpy.types.Object.av_height = FloatProperty(name = "Average Height", default = 6.00 / 39.3701, min = 2.00 / 39.3701, max = 36.00 / 39.3701, subtype = "DISTANCE", description = "Average Height Of Stones In Inches", update = UpdateSiding)
+bpy.types.Object.av_width = FloatProperty(name = "Average Width", default = 10.00 / 39.3701, min = 4.00 / 39.3701, max = 36.00 / 39.3701, subtype = "DISTANCE", description = "Average Width Of Stones", update = UpdateSiding)
+bpy.types.Object.av_height = FloatProperty(name = "Average Height", default = 6.00 / 39.3701, min = 2.00 / 39.3701, max = 36.00 / 39.3701, subtype = "DISTANCE", description = "Average Height Of Stones", update = UpdateSiding)
 bpy.types.Object.s_random = FloatProperty(name = "Size Randomness", default = 25.00, max = 100.00, min = 0.00, subtype = "PERCENTAGE", description = "Size Randomness Of Stones", update = UpdateSiding)
 bpy.types.Object.b_random = FloatProperty(name = "Bump Randomness", default = 25.00, max = 100.00, min = 0.00, subtype = "PERCENTAGE", description = "Bump Randomness Of Stones", update = UpdateSiding)
-bpy.types.Object.s_mortar = FloatProperty(name = "Mortar Depth", default = 1.5 / 39.3701, min = 0.5 / 39.3701, max = 3.0 / 39.3701, subtype = "DISTANCE", description = "Depth Of Mortar In Inches", update = UpdateSiding)
+bpy.types.Object.s_mortar = FloatProperty(name = "Mortar Depth", default = 1.5 / 39.3701, min = 0.5 / 39.3701, max = 3.0 / 39.3701, subtype = "DISTANCE", description = "Depth Of Mortar", update = UpdateSiding)
 bpy.types.Object.s_mat = EnumProperty(name = "", items = (("1", "Image", ""), ("2", "Procedural", "")), default = "1", description = "Stone Material Type")
 #materials
 bpy.types.Object.is_material = BoolProperty(name = "Cycles Materials?", default = False, description = "Adds Cycles Materials", update = DeleteMaterials)
@@ -2407,21 +2421,21 @@ class SidingPanel(bpy.types.Panel):
                             if o.object_add == "add":                                                
                                 layout.prop(o, "is_slope", icon = "TRIA_UP")
                                 if o.is_slope == True:
-                                    layout.label("Pitch x/12", icon = "LINCURVE"); layout.prop(o, "slope")
+                                    layout.label("Pitch x/12", icon = "LINCURVE"); layout.prop(o, "slope"); units = " m"
                                     if o.is_corner == False:
-                                        ht = round(o.over_height - ((o.slope * (o.over_width / 2)) / (12 / 39.3701)), 2)
+                                        ht = round(o.over_height - ((o.slope * (o.over_width / 2)) / 12), 2)
                                         if ht <= 0:
-                                            slope = round((((24 / 39.3701) * o.over_height) / o.over_width) - 0.01, 2)
-                                            ht = round(o.over_height - ((slope * (o.over_width / 2)) / (12 / 39.3701)), 2)
+                                            slope = round(((24 * o.over_height) / o.over_width) - 0.01, 2)
+                                            ht = round(o.over_height - ((slope * (o.over_width / 2)) / 12), 2)
                                             layout.label("Max Slope: " + str(slope), icon = "ERROR")
                                     else:
-                                        ht = round(o.over_height - ((o.slope * ((o.over_width + (2 * o.b_width)) / 2)) / (12 / 39.3701)), 2)
+                                        ht = round(o.over_height - ((o.slope * ((o.over_width + (2 * o.b_width)) / 2)) / 12), 2)
                                         if ht <= 0:
-                                            slope = round((((24 / 39.3701) * o.over_height) / o.over_width + (2 * o.b_width)) - 0.01, 2)
-                                            ht = round(o.over_height - ((slope * ((o.over_width + (2 * o.b_width)) / 2)) / (12 / 39.3701)), 2)                
+                                            slope = round(((24 * o.over_height) / o.over_width + (2 * o.b_width)) - 0.01, 2)
+                                            ht = round(o.over_height - ((slope * ((o.over_width + (2 * o.b_width)) / 2)) / 12), 2)                
                                             layout.label("Max Slope: " + str(slope), icon = "ERROR")
-                                            if context.scene.unit_settings.system == "IMPERIAL": ht *= 3.28084
-                                    layout.label("Height At Edges: " + str(ht) + " ft/m", icon = "TEXT")
+                                    if context.scene.unit_settings.system == "IMPERIAL": ht = round(3.28084 * ht, 2); units = " ft"
+                                    layout.label("Height At Edges: " + str(ht) + units, icon = "TEXT")
                             if o.mat not in ("5", "6"):
                                 if o.mat == "1":
                                     if o.if_wood == "1":
@@ -2431,10 +2445,11 @@ class SidingPanel(bpy.types.Panel):
                                 if o.is_length_vary == True: layout.prop(o, "length_vary"); layout.prop(o, "max_boards")
                                 if o.mat == "2": layout.separator(); layout.prop(o, "res", icon = "OUTLINER_DATA_CURVE"); layout.separator()
                             if o.object_add == "add":
-                                layout.prop(o, "is_cutout", icon = "MOD_BOOLEAN")
+                                layout.prop(o, "is_cutout", icon = "MOD_BOOLEAN"); units = " m"
+                                if context.scene.unit_settings.system == "IMPERIAL": units = " ft"
                                 if o.is_cutout == True:
                                     if o.mat == "5": layout.separator(); layout.prop(o, "is_soldier", icon = "DOTSUP"); layout.separator()
-                                    layout.prop(o, "num_cutouts"); layout.separator(); layout.label("X, Z, Height, Width in (ft)")
+                                    layout.prop(o, "num_cutouts"); layout.separator(); layout.label("X, Z, Height, Width in" + units)
                                     for i in range(1, o.num_cutouts + 1):
                                         layout.label("Cutout " + str(i) + ":", icon = "MOD_BOOLEAN"); layout.prop(o, "nc" + str(i))
                             layout.separator(); layout.prop(o, "unwrap", icon = "GROUP_UVS")
@@ -2500,4 +2515,4 @@ class SidingConvert(bpy.types.Operator):
     def execute(self, context):
         o = context.object
         o.object_add = "convert"
-        return {"FINISHED"}                      
+        return {"FINISHED"}     

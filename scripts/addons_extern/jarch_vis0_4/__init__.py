@@ -1,7 +1,7 @@
 bl_info = {
     "name" : "JARCH Vis",
     "author" : "Jacob Morris",
-    "version" : (0, 2),
+    "version" : (0, 4),
     "blender" : (2, 74, 0),
     "location" : "View 3D > Toolbar > JARCH Vis",
     "description" : "Adds Architectural Objects Like Siding, Flooring, Stairs",

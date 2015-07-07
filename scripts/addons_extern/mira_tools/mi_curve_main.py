@@ -50,7 +50,7 @@ from . import mi_utils_base as ut_base
     #active_point = StringProperty(default="")
 
 
-class MI_CurveObject():
+class MI_CurveObject(object):
 
     # class constructor
     def __init__(self, other_curves):
@@ -243,9 +243,10 @@ def pick_curve_point(curve, context, mouse_coords):
 
     picked_point = None
     picked_point_length = None
+    mouse_vec = Vector(mouse_coords)
     for cu_point in curve.curve_points:
         point_pos_2d = view3d_utils.location_3d_to_region_2d(region, rv3d, cu_point.position)
-        the_length = (point_pos_2d - Vector(mouse_coords)).length
+        the_length = (point_pos_2d - mouse_vec).length
         if the_length <= 9.0:
             if picked_point is None:
                 picked_point = cu_point
@@ -353,6 +354,13 @@ def get_selected_points(points):
     return sel_points
 
 
+def deselect_all_curves(all_curves, reset_acive_point):
+    for curve in all_curves:
+        select_all_points(curve.curve_points, False)  # deselect points
+        if reset_acive_point is True:
+            curve.active_point = None
+
+
 # CODE FOR LOOPS
 def pass_line(vecs, is_closed_line):
     line_length = 0.0
@@ -398,28 +406,37 @@ def pass_line(vecs, is_closed_line):
 def get_bezier_line(curve, active_obj, local_coords):
     curve_vecs = []
     for point in curve.curve_points:
+        # 0 point has b_points in only closed curve
         if curve.curve_points.index(point) == 0 and curve.closed is True:
             continue  # only for closed curve
 
         b_points = curve.display_bezier.get(point.point_id)
         if b_points:
+            # get lengths
+            b_point_len =  len(b_points)
+            curve_points_len = len(curve.curve_points)
             #b_points = b_points.copy()
+
             for b_p in b_points:
-                if local_coords is True:
-                    curve_vecs.append(active_obj.matrix_world.inverted() * b_p)
-                else:
-                    curve_vecs.append(b_p)
+                # if b_p is not the last in the point. But if b_p is the last in the end of the curve.
+                if b_points.index(b_p) != b_point_len - 1 or curve.curve_points.index(point) == curve_points_len - 1:
+                    if local_coords is True:
+                        curve_vecs.append(active_obj.matrix_world.inverted() * b_p)
+                    else:
+                        curve_vecs.append(b_p)
 
     # only for closed curve to apply last bezier points
     if curve.closed is True:
         b_points = curve.display_bezier.get(curve.curve_points[0].point_id)
         if b_points:
             #b_points = b_points.copy()
+
             for b_p in b_points:
-                if local_coords is True:
-                    curve_vecs.append(active_obj.matrix_world.inverted() * b_p)
-                else:
-                    curve_vecs.append(b_p)
+                if b_points.index(b_p) != 0:
+                    if local_coords is True:
+                        curve_vecs.append(active_obj.matrix_world.inverted() * b_p)
+                    else:
+                        curve_vecs.append(b_p)
 
     line = pass_line(curve_vecs, curve.closed)
     return line
@@ -492,3 +509,20 @@ def verts_to_line(verts, line_data, verts_data, is_closed_line):
                 vert.co = line_data[j][0] + (line_data[j][3] * (point_len - line_data[j][1]))
                 point_passed = j
                 break
+
+
+# SURFACE SNAP FOR CURVE POINTS
+def snap_to_surface(context, selected_points, picked_meshes, region, rv3d, move_offset):
+    for point in selected_points:
+        # get the ray from the viewport and mouse
+        final_pos = point.position
+        if move_offset:
+            final_pos = point.position + move_offset
+        
+        point_pos_2d = view3d_utils.location_3d_to_region_2d(region, rv3d, final_pos)
+
+        if point_pos_2d:
+            best_obj, hit_normal, hit_position = ut_base.get_mouse_raycast(context, picked_meshes, point_pos_2d, 10000.0)
+            #best_obj, hit_normal, hit_position = ut_base.get_3dpoint_raycast(context, self.picked_meshes, final_pos, camera_dir, 10000.0)
+        if hit_position:
+            point.position = hit_position

@@ -265,7 +265,18 @@ class UpdateRec(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ApplySJ(bpy.types.Operator):
+    bl_idname = "sjoin.apply"
+    bl_label = "Apply Smart Join"
+    bl_options = {'REGISTER', 'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object and core.check_is_sjoin_obj(context.active_object) and not core.check_is_expended(context.active_object)
+
+    def execute(self, context):
+        context.active_object.data.is_sjoin = False
+        return {'FINISHED'}
 
 class SJ_BasePanel(bpy.types.Panel):
     bl_label = "Smart Join"
@@ -290,3 +301,4 @@ class SJ_BasePanel(bpy.types.Panel):
         row.operator('sjoin.expand')
         row.operator('sjoin.collapse')
         layout.operator('sjoin.update_rec')
+        layout.operator('sjoin.apply')

@@ -145,6 +145,7 @@ class CancelOperator(bpy.types.Operator):
         return {"FINISHED"}
 
 def register():
+    bpy.utils.register_module(__name__)
     bpy.utils.register_class(PaneldeArranjarObjetosNumaCurva)
     bpy.utils.register_class(ArranjarObjetosNumaCurva)
     bpy.utils.register_class(CancelOperator)
@@ -168,12 +169,13 @@ def register():
 def unregister() :
     bpy.utils.unregister_class(PaneldeArranjarObjetosNumaCurva)
     bpy.utils.unregister_class(ArranjarObjetosNumaCurva)
-    bpy.utils.register_class(CancelOperator)
-    bpy.utils.register_class(ContinueOperator)
+    bpy.utils.unregister_class(CancelOperator)
+    bpy.utils.unregister_class(ContinueOperator)
     del bpy.types.Object.objeto_arranjar
     #del bpy.types.Object.group_arranjar
     del bpy.types.Scene.distancia_entre_objetos
     del bpy.types.Scene.select_type
+    bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__" :
     register()

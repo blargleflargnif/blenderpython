@@ -6,3 +6,5 @@ __pycache__
 /scripts/presets/interface_theme/elsyiun.xml
 /scripts/presets/interface_theme/hexagon.xml
 /scripts/presets/interface_theme/ubuntu_ambiance.xml
+archive
+/archive/*

@@ -394,7 +394,7 @@ class LayerPieRun(bpy.types.Operator): #
 
 class ShortcutsMenu(bpy.types.Menu):
 	bl_idname = "VIEW3D_MT_view_shortcuts"
-	bl_label = "For shortcut registration"
+	bl_label = "Shortcuts"
 	bl_description = "This is might be useful function group When you register to shortcut"
 	
 	def draw(self, context):

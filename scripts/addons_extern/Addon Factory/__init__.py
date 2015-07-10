@@ -6,7 +6,10 @@ import os, csv, codecs
 
 from .INFO_MT_add_MA import INFO_MT_add
 from .INFO_MT_curve_add_MA import INFO_MT_curve_add
+from .INFO_MT_file_MA import INFO_MT_file
+from .INFO_MT_help_MA import INFO_MT_help
 from .INFO_MT_mesh_add_MA import INFO_MT_mesh_add
+from .INFO_MT_render_MA import INFO_MT_render
 from .INFO_MT_surface_add_MA import INFO_MT_surface_add
 from .VIEW3D_MT_object_apply_MA import VIEW3D_MT_object_apply
 from .VIEW3D_MT_object_MA import VIEW3D_MT_object

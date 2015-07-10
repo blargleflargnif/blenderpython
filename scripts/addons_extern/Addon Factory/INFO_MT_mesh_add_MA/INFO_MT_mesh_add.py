@@ -339,7 +339,7 @@ def menu(self, context):
 		self.layout.separator()
 		layout.label(text="Object Factory")
 		self.layout.menu("INFO_MT_mesh_vert_add", text="Single Vert", icon="LAYER_ACTIVE")
-		self.layout.menu("INFO_MT_mesh_round_cube_add", text="Round Cube", icon="WIRE")
+		self.layout.operator("mesh.primitive_round_cube_add", text="Round Cube", icon="WIRE")
 		self.layout.menu("INFO_MT_mesh_ant_add", text="Landscape", icon="RNDCURVE")
 		self.layout.menu("INFO_MT_mesh_math_add", text="Math Function", icon="PACKAGE")
 		self.layout.menu("INFO_MT_mesh_mech_add", text="Mechanical", icon="SCRIPTWIN")

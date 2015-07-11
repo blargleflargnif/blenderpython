@@ -45,6 +45,7 @@ if "bpy" in locals():
     importlib.reload(circle_array)
     importlib.reload(crear_cuerda)
     importlib.reload(dupli_spin)
+    importlib.reload(aggregate_mesh)
 
 else:
     from . import scene_camera
@@ -59,6 +60,7 @@ else:
     from . import circle_array
     from . import crear_cuerda
     from . import dupli_spin
+    from . import aggregate_mesh
 
 import bpy
 
@@ -106,8 +108,8 @@ class INFO_MT_array_mods_add(bpy.types.Menu):
             text="Circle Array", icon='MOD_ARRAY')
         layout.operator("object.procedural_dupli_spin",
             text="Dupli Spin", icon='MOD_ARRAY')
-        layout.operator("ball.rope",
-            text="Wrecking Ball", icon='PHYSICS')
+        layout.operator("object.agregar",
+            text="Aggregate Mesh", icon='MOD_ARRAY')
 
 class INFO_MT_quick_tools_add(bpy.types.Menu):
     # Define the "mesh objects" menu
@@ -120,6 +122,8 @@ class INFO_MT_quick_tools_add(bpy.types.Menu):
         layout.operator("object.drop_on_active",
             text="Drop To Ground")
         layout.operator('object.pixelate', icon='MESH_GRID')
+        layout.operator("ball.rope",
+            text="Wrecking Ball", icon='PHYSICS')
 
 
 class INFO_MT_scene_elements_add(bpy.types.Menu):

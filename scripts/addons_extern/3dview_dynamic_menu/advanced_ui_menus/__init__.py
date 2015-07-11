@@ -29,7 +29,7 @@ bl_info = {
     "warning": '',  # used for warning icon and text in addons panel
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/3D_interaction/Advanced_UI_Menus",
     "category": "3D View"}
-
+import bpy
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'advanced_ui_menus'))
 
@@ -98,6 +98,7 @@ def register():
     global blender_on
     
     # register all files
+
     for addon_file in addon_files:
             addon_file.register()
     
@@ -112,7 +113,7 @@ def register():
         
     # mark blender as on
     blender_on = True
- 
+    bpy.utils.register_module(__name__)
 def unregister():
     
     # unregister all files
@@ -125,5 +126,6 @@ def unregister():
     # delete all the properties you have created
     del_props()
 
+    bpy.utils.unregister_module(__name__)
 if __name__ == "__main__":
     register()

@@ -40,7 +40,7 @@ if "bpy" in locals():
 	importlib.reload(IMAGE_MT_image)
 	importlib.reload(IMAGE_MT_select)
 	importlib.reload(IMAGE_MT_view)
-	importlib.reload(INFO_MT_file)
+#	importlib.reload(INFO_MT_file)
 	importlib.reload(INFO_MT_file_external_data)
 #	importlib.reload(INFO_MT_mesh_add)
 	importlib.reload(INFO_MT_render)
@@ -67,7 +67,7 @@ if "bpy" in locals():
 	importlib.reload(VIEW3D_MT_pose_specials)
 	importlib.reload(VIEW3D_MT_select_edit_mesh)
 	importlib.reload(VIEW3D_MT_select_pose)
-	importlib.reload(VIEW3D_MT_view)
+#	importlib.reload(VIEW3D_MT_view)
 	importlib.reload(VIEW3D_MT_view_align)
 	importlib.reload(VIEW3D_MT_select_edit_armature)
 	importlib.reload(VIEW3D_MT_edit_mesh_vertices)
@@ -121,7 +121,7 @@ else:
 	from . import IMAGE_MT_image
 	from . import IMAGE_MT_select
 	from . import IMAGE_MT_view
-	from . import INFO_MT_file
+#	from . import INFO_MT_file
 	from . import INFO_MT_file_external_data
 #	from . import INFO_MT_mesh_add
 	from . import INFO_MT_render
@@ -148,7 +148,7 @@ else:
 	from . import VIEW3D_MT_pose_specials
 	from . import VIEW3D_MT_select_edit_mesh
 	from . import VIEW3D_MT_select_pose
-	from . import VIEW3D_MT_view
+#	from . import VIEW3D_MT_view
 	from . import VIEW3D_MT_view_align
 	from . import VIEW3D_MT_select_edit_armature
 	from . import VIEW3D_MT_edit_mesh_vertices

@@ -7,7 +7,7 @@ bl_info = {
     "description": "Arrange objects along a curve",
     "warning": "Select curve",
     "wiki_url" : "http://blenderartists.org/forum/showthread.php?361029-Specify-an-object-from-a-list-with-all-selectable-objects",
-    "category": "Object"}
+    "category": "Add Curve"}
 
 import bpy
 import winsound

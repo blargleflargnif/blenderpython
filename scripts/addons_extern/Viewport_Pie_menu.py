@@ -110,7 +110,7 @@ class PieAreaViews(Menu):
         box = pie.split().box().column()
         col = box.column(align=True)
         col.operator("object.view_menu", text="Timeline", icon= 'TIME').variable="TIMELINE"
-        col.operator("object.view_menu", text="Dope Sheet", icon= 'ACTION').variable="DOPE_SHEET"
+        col.operator("object.view_menu", text="Dope Sheet", icon= 'ACTION').variable="DOPESHEET_EDITOR"
         col.operator("object.view_menu", text="Graph Editor", icon= 'IPO').variable="GRAPH_EDITOR"
         col.operator("object.view_menu", text="Movie Clip Editor", icon= 'CLIP').variable="CLIP_EDITOR"
         col.operator("object.view_menu", text="Video Sequece Editor", icon= 'SEQUENCE').variable="SEQUENCE_EDITOR"

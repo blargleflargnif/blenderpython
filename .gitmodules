@@ -1,0 +1,21 @@
+[submodule "scripts/addons_extern/animation_nodes"]
+	path = scripts/addons_extern/animation_nodes
+	url = git@github.com:JacquesLucke/animation_nodes.git
+[submodule "scripts/addons_extern/kinoraw_tools"]
+	path = scripts/addons_extern/kinoraw_tools
+	url = git@github.com:kinoraw/kinoraw_tools.git
+[submodule "scripts/addons_extern/add_mesh_asset_flinger"]
+	path = scripts/addons_extern/add_mesh_asset_flinger
+	url = git@github.com:BlenderAid/Asset-Flinger.git
+[submodule "scripts/addons_extern/tissue"]
+	path = scripts/addons_extern/tissue
+	url = git@github.com:alessandro-zomparelli/tissue.git
+[submodule "scripts/addons_extern/blam"]
+	path = scripts/addons_extern/blam
+	url = git@github.com:GottfriedHofmann/blam.git
+[submodule "scripts/addons_extern/blenderquicktalk"]
+	path = scripts/addons_extern/blenderquicktalk
+	url = git@github.com:revpriest/blenderquicktalk.git
+[submodule "scripts/addons_extern/easy-logging"]
+	path = scripts/addons_extern/easy-logging
+	url = git@github.com:Nikos-Prinios/easy-logging.git

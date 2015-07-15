@@ -5,7 +5,10 @@ import zipfile, urllib.request, os, sys, re
 import csv
 import collections
 import subprocess
-import winreg
+try:
+	import winreg
+except:
+	pass
 
 ################
 # オペレーター #

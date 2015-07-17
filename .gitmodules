@@ -28,3 +28,24 @@
 [submodule "scripts/addons_extern/BoundingBox2D"]
 	path = scripts/addons_extern/BoundingBox2D
 	url = git@github.com:TynkaTopi/BoundingBox2D.git
+[submodule "scripts/addons_extern/blender_render_music"]
+	path = scripts/addons_extern/blender_render_music
+	url = git@github.com:Fweeb/blender_render_music.git
+[submodule "scripts/addons_extern/render_music"]
+	path = scripts/addons_extern/render_music
+	url = git@github.com:Fweeb/blender_render_music.git
+[submodule "scripts/addons_extern/dual_mesh"]
+	path = scripts/addons_extern/dual_mesh
+	url = git@github.com:BorisTheBrave/dual_mesh.git
+[submodule "scripts/addons_extern/sverchok"]
+	path = scripts/addons_extern/sverchok
+	url = git@github.com:nortikin/sverchok.git
+[submodule "scripts/addons_extern/Surf"]
+	path = scripts/addons_extern/Surf
+	url = git@github.com:Takanu/Surf.git
+[submodule "scripts/addons_extern/Capsule"]
+	path = scripts/addons_extern/Capsule
+	url = git@github.com:Takanu/Capsule.git
+[submodule "scripts/addons_extern/commotion"]
+	path = scripts/addons_extern/commotion
+	url = git@github.com:mrachinskiy/blender-addon-commotion.git

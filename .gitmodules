@@ -19,3 +19,12 @@
 [submodule "scripts/addons_extern/easy-logging"]
 	path = scripts/addons_extern/easy-logging
 	url = git@github.com:Nikos-Prinios/easy-logging.git
+[submodule "scripts/addons_extern/Urf_Pie"]
+	path = scripts/addons_extern/Urf_Pie
+	url = git@github.com:Urfthreed/Urf_Pie.git
+[submodule "scripts/addons_extern/ObjectToCircle"]
+	path = scripts/addons_extern/ObjectToCircle
+	url = git@github.com:TynkaTopi/Blender-Addon-ObjectToCircle.git
+[submodule "scripts/addons_extern/BoundingBox2D"]
+	path = scripts/addons_extern/BoundingBox2D
+	url = git@github.com:TynkaTopi/BoundingBox2D.git

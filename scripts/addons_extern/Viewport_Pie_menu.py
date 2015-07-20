@@ -101,7 +101,7 @@ class PieAreaViews(Menu):
         box = pie.split().box().column()
         col = box.column(align=True)
         col.operator("object.view_menu", text="Properties", icon= 'BUTS').variable="PROPERTIES"
-        col.operator("object.view_menu", text="Outliner", icon= 'OOPS').variable="CONSOLE"
+        col.operator("object.view_menu", text="Outliner", icon= 'OOPS').variable="OUTLINER"
         col.operator("object.view_menu", text="File Browser", icon= 'FILESEL').variable="FILE_BROWSER"
         col.operator("object.view_menu", text="Text Editor", icon= 'TEXT').variable="TEXT_EDITOR"
         col.operator("object.view_menu", text="Python Console", icon= 'CONSOLE').variable="CONSOLE"

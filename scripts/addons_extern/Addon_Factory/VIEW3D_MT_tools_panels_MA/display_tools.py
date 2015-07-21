@@ -941,9 +941,11 @@ class VIEW3D_PT_DisplayTools(bpy.types.Panel):
         row.alignment = 'EXPAND'
         row.operator("view3d.display_textured")
         row.operator("view3d.display_solid")
+        row = layout.row(align=True)
+        row.alignment = 'EXPAND'
         row.operator("view3d.display_wire")
         row.operator("view3d.display_bounds")
-        
+   
         layout.label("Shading", icon='RETOPO')
         row = layout.row(align=True)
         row.alignment = 'EXPAND'

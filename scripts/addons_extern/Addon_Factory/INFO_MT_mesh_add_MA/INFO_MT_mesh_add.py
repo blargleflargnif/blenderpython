@@ -285,8 +285,6 @@ class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
             text = "Bound Box Add")
         layout.operator("object.min_bounds",
             text="Minimum Bounds")
-        layout.operator("object.bounding_boxers",
-            text="BBOX")
 
 class INFO_MT_mesh_mech_add(bpy.types.Menu):
     # Define the "Mech" menu
@@ -322,7 +320,7 @@ class INFO_MT_mesh_building_add(bpy.types.Menu):
             text="Stair Builder")
 
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -347,7 +345,7 @@ def menu(self, context):
 		self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
 		self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="LATTICE_DATA")
 
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text = 'Toggle Object Factory', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 

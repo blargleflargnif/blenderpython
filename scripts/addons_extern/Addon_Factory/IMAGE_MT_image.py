@@ -483,11 +483,11 @@ class ExternalEditEX(bpy.types.Operator):
 		path = bpy.path.abspath(img.filepath)
 		pre_path = context.user_preferences.filepaths.image_editor
 		if (self.index == 1):
-			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_1
+			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_1
 		elif (self.index == 2):
-			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_2
+			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_2
 		elif (self.index == 3):
-			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_3
+			context.user_preferences.filepaths.image_editor = context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_3
 		bpy.ops.image.external_edit(filepath=path)
 		context.user_preferences.filepaths.image_editor = pre_path
 		return {'FINISHED'}
@@ -904,16 +904,16 @@ class ExternalEditEXMenu(bpy.types.Menu):
 	bl_label = "External editor (enhanced)"
 	
 	def draw(self, context):
-		if (context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_1):
-			path = os.path.basename(context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_1)
+		if (context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_1):
+			path = os.path.basename(context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_1)
 			name, ext = os.path.splitext(path)
 			self.layout.operator(ExternalEditEX.bl_idname, icon='PLUGIN', text=name).index = 1
-		if (context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_2):
-			path = os.path.basename(context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_2)
+		if (context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_2):
+			path = os.path.basename(context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_2)
 			name, ext = os.path.splitext(path)
 			self.layout.operator(ExternalEditEX.bl_idname, icon='PLUGIN', text=name).index = 2
-		if (context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_3):
-			path = os.path.basename(context.user_preferences.addons['Addon Factory'].preferences.image_editor_path_3)
+		if (context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_3):
+			path = os.path.basename(context.user_preferences.addons['Addon_Factory'].preferences.image_editor_path_3)
 			name, ext = os.path.splitext(path)
 			self.layout.operator(ExternalEditEX.bl_idname, icon='PLUGIN', text=name).index = 3
 
@@ -966,7 +966,7 @@ class FilterMenu(bpy.types.Menu):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons['Addon Factory'].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons['Addon_Factory'].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -990,6 +990,6 @@ def menu(self, context):
 		self.layout.operator(AllRenameImageFileName.bl_idname, icon='PLUGIN')
 		self.layout.separator()
 		self.layout.operator(ReloadAllImage.bl_idname, icon='PLUGIN')
-	if (context.user_preferences.addons['Addon Factory'].preferences.use_disabled_menu):
+	if (context.user_preferences.addons['Addon_Factory'].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

@@ -20,7 +20,7 @@ bl_info = {
 
 import bpy
 
-bpy.types.Scene.WT_only_selection = bpy.props.BoolProperty(name="Only Selection")
+bpy.types.Scene.WT_only_selection = bpy.props.BoolProperty(name="Only Selection", default=True)
 bpy.types.Scene.WT_invert = bpy.props.BoolProperty(name="Invert")
    
 class HideAllWire(bpy.types.Operator):
@@ -103,24 +103,36 @@ class DrawOnlyWire(bpy.types.Operator):
                     obj.show_wire,obj.show_all_edges = True,False
         return {'FINISHED'}
 
+def IsMenuEnable(self_id):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
+		if (id == self_id):
+			return False
+	else:
+		return True
+# Define "Extras" menu
+def menu(self, context):
+	if (IsMenuEnable(__name__.split('.')[-1])):
+		layout = self.layout
+		layout.operator_context = 'INVOKE_REGION_WIN'
+		layout.label(text="Shading Type")
+		split = layout.split(percentage=.75, align=True)
+		split.prop(context.scene,"WT_only_selection", toggle=True, icon="BORDER_RECT")
+		row = split.row(align=True)
+		row.enabled = context.scene.WT_only_selection
+		row.prop(context.scene,"WT_invert",toggle=True)
+		
+		
+		col = layout.column(align=True)
+		col.operator("object.draw_wire_and_edges", icon="WIRE", text="Wire + Edges")
+		col.operator("object.draw_only_wire", icon="SOLID", text="Wire")
+		col.operator("object.hide_all_wire", icon="RESTRICT_VIEW_ON", text="Hide All")
+		col = layout.column(align=True)
+		col.operator("object.draw_only_box", icon="BBOX", text="Only Bounds")
+		col.operator("object.draw_textured", icon="MATCUBE", text="Textured")
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
+		self.layout.separator()
+		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Shading Type", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 
-def menu (self, context):
-	layout = self.layout
-	
-	split = layout.split(percentage=.75, align=True)
-	split.prop(context.scene,"WT_only_selection", toggle=True, icon="BORDER_RECT")
-	row = split.row(align=True)
-	row.enabled = context.scene.WT_only_selection
-	row.prop(context.scene,"WT_invert",toggle=True)
-	
-	
-	col = layout.column(align=True)
-	col.operator("object.draw_wire_and_edges", icon="WIRE", text="Wire + Edges")
-	col.operator("object.draw_only_wire", icon="SOLID", text="Wire")
-	col.operator("object.hide_all_wire", icon="RESTRICT_VIEW_ON", text="Hide All")
-	col = layout.column(align=True)
-	col.operator("object.draw_only_box", icon="BBOX", text="Only Bounds")
-	col.operator("object.draw_textured", icon="MATCUBE", text="Textured")
 
 def register():
     bpy.utils.register_class(DrawWireEdges)

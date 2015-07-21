@@ -40,13 +40,13 @@ class SaveView(bpy.types.Operator):
 	
 	def execute(self, context):
 		data = ""
-		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+		for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
 				continue
 			try:
 				index = line.split(':')[0]
 			except ValueError:
-				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
+				context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
 				self.report(type={'ERROR'}, message="Does Not Compute")
 				return {'CANCELLED'}
 			if (str(self.index) == index):
@@ -59,7 +59,7 @@ class SaveView(bpy.types.Operator):
 		text = text + str(ro[0]) + ',' + str(ro[1]) + ',' + str(ro[2]) + ',' + str(ro[3]) + ':'
 		text = text + str(context.region_data.view_distance) + ':'
 		text = text + context.region_data.view_perspective
-		context.user_preferences.addons["Addon Factory"].preferences.view_savedata = text
+		context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = text
 		self.report(type={'INFO'}, message="Saved"+str(self.index)+"Current View")
 		return {'FINISHED'}
 	def invoke(self, context, event):
@@ -74,13 +74,13 @@ class LoadView(bpy.types.Operator):
 	index = bpy.props.StringProperty(name="Index", default="Name Me!")
 	
 	def execute(self, context):
-		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+		for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
 				continue
 			try:
 				index, loc, rot, distance, view_perspective = line.split(':')
 			except ValueError:
-				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
+				context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
 				self.report(type={'ERROR'}, message="You broke it!")
 				return {'CANCELLED'}
 			if (str(self.index) == index):
@@ -103,7 +103,7 @@ class DeleteViewSavedata(bpy.types.Operator):
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
-		context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
+		context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
 		return {'FINISHED'}
 
 ################
@@ -415,7 +415,7 @@ class ViewSaveAndLoadMenu(bpy.types.Menu):
 		self.layout.operator(SaveView.bl_idname, icon="SAVE_AS")
 		self.layout.operator(DeleteViewSavedata.bl_idname, icon="COLOR_RED")
 		self.layout.separator()
-		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+		for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
 				continue
 			try:
@@ -430,7 +430,7 @@ class ViewSaveAndLoadMenu(bpy.types.Menu):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -446,6 +446,6 @@ def menu(self, context):
 		self.layout.separator()
 		self.layout.operator(LocalViewEx.bl_idname, icon="ZOOM_OUT")
 		self.layout.menu(PieMenu.bl_idname, icon="COLOR")
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

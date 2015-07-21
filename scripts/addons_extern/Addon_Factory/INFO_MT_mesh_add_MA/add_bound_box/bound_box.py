@@ -30,13 +30,13 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(add_bbox_origin_setup)
+#    importlib.reload(add_bbox_origin_setup)
     importlib.reload(add_bound_box)
     importlib.reload(object_bounding_box)
 
 
 else:
-    from . import add_bbox_origin_setup
+#    from . import add_bbox_origin_setup
     from . import add_bound_box
     from . import object_bounding_box
 
@@ -54,8 +54,8 @@ class INFO_MT_mesh_boundbox_add(bpy.types.Menu):
             text = "Bound Box Add")
         layout.operator("object.min_bounds",
             text="Minimum Bounds")
-        layout.operator("object.bounding_boxers",
-            text="BBOX")
+#        layout.operator("object.bounding_boxers",
+#            text="BBOX")
 # Register all operators and panels
 
 # Define "Extras" menu

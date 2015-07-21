@@ -37,7 +37,7 @@ from . import add_surface_plane_cone
 import bpy
 
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -60,7 +60,7 @@ def menu(self, context):
 
 
 
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text = 'Toggle Surface Factory', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 

@@ -2,7 +2,7 @@
 
 import os, csv, codecs
 
-### Addon Factory Imports ### meta-androcto ###
+### Addon_Factory Imports ### meta-androcto ###
 
 from .INFO_MT_add_MA import INFO_MT_add
 from .INFO_MT_curve_add_MA import INFO_MT_curve_add
@@ -11,17 +11,22 @@ from .INFO_MT_help_MA import INFO_MT_help
 from .INFO_MT_mesh_add_MA import INFO_MT_mesh_add
 from .INFO_MT_render_MA import INFO_MT_render
 from .INFO_MT_surface_add_MA import INFO_MT_surface_add
+from .INFO_MT_window_MA import INFO_MT_window
 from .VIEW3D_MT_object_apply_MA import VIEW3D_MT_object_apply
 from .VIEW3D_MT_object_MA import VIEW3D_MT_object
 from .VIEW3D_MT_select_object_MA import VIEW3D_MT_select_object
 from .VIEW3D_MT_tools_panels_MA import VIEW3D_MT_tools_panels
-from .VIEW3D_PT_view3d_shading_MA import VIEW3D_PT_view3d_shading
 from .VIEW3D_MT_view_MA import VIEW3D_MT_view
+from .VIEW3D_PT_view3d_cursor_MA import VIEW3D_PT_view3d_cursor
+from .VIEW3D_PT_view3d_shading_MA import VIEW3D_PT_view3d_shading
+from .VIEW3D_PT_view3d_name_MA import VIEW3D_PT_view3d_name
+from .VIEW3D_PT_view3d_properties_MA import VIEW3D_PT_view3d_properties
+
 
 
 # Blender Addon Information
 bl_info = {
-	"name" : "Addon Factory",
+	"name" : "Addon_Factory",
 	"author" : "Saidenka, meta-androcto, various",
 	"version" : (0, 1, 1),
 	"blender" : (2, 7, 5),
@@ -44,7 +49,7 @@ if "bpy" in locals():
 	importlib.reload(INFO_MT_file_external_data)
 #	importlib.reload(INFO_MT_mesh_add)
 	importlib.reload(INFO_MT_render)
-	importlib.reload(INFO_MT_window)
+#	importlib.reload(INFO_MT_window)
 	importlib.reload(MATERIAL_MT_specials)
 	importlib.reload(MESH_MT_shape_key_specials)
 	importlib.reload(MESH_MT_vertex_group_specials)
@@ -90,10 +95,10 @@ if "bpy" in locals():
 	importlib.reload(OBJECT_PT_display)
 	importlib.reload(RENDER_PT_render)
 	importlib.reload(MATERIAL_PT_context_material)
-	importlib.reload(VIEW3D_PT_view3d_properties)
+#	importlib.reload(VIEW3D_PT_view3d_properties)
 	importlib.reload(SCENE_PT_rigid_body_world)
 	importlib.reload(NODE_MT_view)
-	importlib.reload(VIEW3D_PT_view3d_name)
+#	importlib.reload(VIEW3D_PT_view3d_name)
 	importlib.reload(OBJECT_PT_context_object)
 	importlib.reload(BONE_PT_context_bone)
 	importlib.reload(DATA_PT_skeleton)
@@ -108,7 +113,7 @@ if "bpy" in locals():
 	importlib.reload(VIEW3D_PT_transform_orientations)
 	importlib.reload(VIEW3D_PT_layers)
 	importlib.reload(DATA_PT_pose_library)
-	importlib.reload(VIEW3D_PT_view3d_cursor)
+#	importlib.reload(VIEW3D_PT_view3d_cursor)
 	importlib.reload(DATA_PT_bone_groups)
 	importlib.reload(OBJECT_PT_transform)
 	importlib.reload(BONE_PT_inverse_kinematics)
@@ -125,7 +130,7 @@ else:
 	from . import INFO_MT_file_external_data
 #	from . import INFO_MT_mesh_add
 	from . import INFO_MT_render
-	from . import INFO_MT_window
+#	from . import INFO_MT_window
 	from . import MATERIAL_MT_specials
 	from . import MESH_MT_shape_key_specials
 	from . import MESH_MT_vertex_group_specials
@@ -171,10 +176,10 @@ else:
 	from . import OBJECT_PT_display
 	from . import RENDER_PT_render
 	from . import MATERIAL_PT_context_material
-	from . import VIEW3D_PT_view3d_properties
+#	from . import VIEW3D_PT_view3d_properties
 	from . import SCENE_PT_rigid_body_world
 	from . import NODE_MT_view
-	from . import VIEW3D_PT_view3d_name
+#	from . import VIEW3D_PT_view3d_name
 	from . import OBJECT_PT_context_object
 	from . import BONE_PT_context_bone
 	from . import DATA_PT_skeleton
@@ -189,7 +194,7 @@ else:
 	from . import VIEW3D_PT_transform_orientations
 	from . import VIEW3D_PT_layers
 	from . import DATA_PT_pose_library
-	from . import VIEW3D_PT_view3d_cursor
+#	from . import VIEW3D_PT_view3d_cursor
 	from . import DATA_PT_bone_groups
 	from . import OBJECT_PT_transform
 	from . import BONE_PT_inverse_kinematics
@@ -250,7 +255,7 @@ class ToggleMenuEnable(bpy.types.Operator):
 	def execute(self, context):
 		recovery = ""
 		is_on = False
-		for id in context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+		for id in context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 			if (id == ""):
 				continue
 			if (id == self.id):
@@ -262,7 +267,7 @@ class ToggleMenuEnable(bpy.types.Operator):
 		if (recovery != ""):
 			if (recovery[-1] == ","):
 				recovery = recovery[:-1]
-		context.user_preferences.addons["Addon Factory"].preferences.disabled_menu = recovery
+		context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu = recovery
 		for area in context.screen.areas:
 			area.tag_redraw()
 		return {'FINISHED'}
@@ -295,14 +300,17 @@ def register():
 	translation_dict = GetTranslationDict()
 	bpy.app.translations.register(__name__, translation_dict)
 
-### Addon Factory Register ### meta-androcto ###
+### Addon_Factory Register ### meta-androcto ###
 
 	bpy.types.INFO_MT_add.append(INFO_MT_add.menu)
 	bpy.types.INFO_MT_mesh_add.append(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_curve_add.append(INFO_MT_curve_add.menu)
 	bpy.types.INFO_MT_surface_add.append(INFO_MT_surface_add.menu)
+	bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
 	bpy.types.VIEW3D_MT_object_apply.append(VIEW3D_MT_object_apply.menu)
 	bpy.types.VIEW3D_MT_object.append(VIEW3D_MT_object.menu)
+	bpy.types.VIEW3D_PT_view3d_cursor.append(VIEW3D_PT_view3d_cursor.menu)
+	bpy.types.VIEW3D_PT_view3d_name.append(VIEW3D_PT_view3d_name.menu)
 	bpy.types.VIEW3D_PT_view3d_shading.append(VIEW3D_PT_view3d_shading.menu)
 
 
@@ -315,7 +323,7 @@ def register():
 	bpy.types.INFO_MT_file_external_data.append(INFO_MT_file_external_data.menu)
 #	bpy.types.INFO_MT_mesh_add.append(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_render.append(INFO_MT_render.menu)
-	bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
+#	bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
 	bpy.types.MATERIAL_MT_specials.append(MATERIAL_MT_specials.menu)
 	bpy.types.MESH_MT_shape_key_specials.append(MESH_MT_shape_key_specials.menu)
 	bpy.types.MESH_MT_vertex_group_specials.append(MESH_MT_vertex_group_specials.menu)
@@ -338,7 +346,7 @@ def register():
 	bpy.types.VIEW3D_MT_pose_specials.append(VIEW3D_MT_pose_specials.menu)
 	bpy.types.VIEW3D_MT_select_edit_mesh.append(VIEW3D_MT_select_edit_mesh.menu)
 	bpy.types.VIEW3D_MT_select_pose.append(VIEW3D_MT_select_pose.menu)
-	bpy.types.VIEW3D_MT_view.append(VIEW3D_MT_view.menu)
+	bpy.types.VIEW3D_MT_view.prepend(VIEW3D_MT_view.menu)
 	bpy.types.VIEW3D_MT_view_align.append(VIEW3D_MT_view_align.menu)
 	bpy.types.VIEW3D_MT_select_edit_armature.append(VIEW3D_MT_select_edit_armature.menu)
 	bpy.types.VIEW3D_MT_edit_mesh_vertices.append(VIEW3D_MT_edit_mesh_vertices.menu)
@@ -364,7 +372,7 @@ def register():
 	bpy.types.VIEW3D_PT_view3d_properties.append(VIEW3D_PT_view3d_properties.menu)
 	bpy.types.SCENE_PT_rigid_body_world.append(SCENE_PT_rigid_body_world.menu)
 	bpy.types.NODE_MT_view.append(NODE_MT_view.menu)
-	bpy.types.VIEW3D_PT_view3d_name.append(VIEW3D_PT_view3d_name.menu)
+#	bpy.types.VIEW3D_PT_view3d_name.append(VIEW3D_PT_view3d_name.menu)
 	bpy.types.OBJECT_PT_context_object.append(OBJECT_PT_context_object.menu)
 	bpy.types.BONE_PT_context_bone.append(BONE_PT_context_bone.menu)
 	bpy.types.DATA_PT_skeleton.append(DATA_PT_skeleton.menu)
@@ -377,7 +385,7 @@ def register():
 	bpy.types.DATA_PT_geometry_curve.append(DATA_PT_geometry_curve.menu)
 	bpy.types.VIEW3D_PT_transform_orientations.append(VIEW3D_PT_transform_orientations.menu)
 	bpy.types.DATA_PT_pose_library.append(DATA_PT_pose_library.menu)
-	bpy.types.VIEW3D_PT_view3d_cursor.append(VIEW3D_PT_view3d_cursor.menu)
+#	bpy.types.VIEW3D_PT_view3d_cursor.append(VIEW3D_PT_view3d_cursor.menu)
 	bpy.types.DATA_PT_bone_groups.append(DATA_PT_bone_groups.menu)
 	bpy.types.OBJECT_PT_transform.append(OBJECT_PT_transform.menu)
 	bpy.types.BONE_PT_inverse_kinematics.append(BONE_PT_inverse_kinematics.menu)
@@ -393,14 +401,17 @@ def unregister():
 	
 	bpy.app.translations.unregister(__name__)
 
-### Addon Factory unregister ### meta-androcto ###
+### Addon_Factory unregister ### meta-androcto ###
 
 	bpy.types.INFO_MT_add.remove(INFO_MT_add.menu)
 	bpy.types.INFO_MT_mesh_add.remove(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_curve_add.remove(INFO_MT_curve_add.menu)
 	bpy.types.INFO_MT_surface_add.remove(INFO_MT_surface_add.menu)
+	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
 	bpy.types.VIEW3D_MT_object_apply.remove(VIEW3D_MT_object_apply.menu)
 	bpy.types.VIEW3D_MT_object.remove(VIEW3D_MT_object.menu)
+	bpy.types.VIEW3D_PT_view3d_cursor.remove(VIEW3D_PT_view3d_cursor.menu)
+	bpy.types.VIEW3D_PT_view3d_name.remove(VIEW3D_PT_view3d_name.menu)
 	bpy.types.VIEW3D_PT_view3d_shading.remove(VIEW3D_PT_view3d_shading.menu)
 
 
@@ -413,7 +424,7 @@ def unregister():
 	bpy.types.INFO_MT_file_external_data.remove(INFO_MT_file_external_data.menu)
 #	bpy.types.INFO_MT_mesh_add.remove(INFO_MT_mesh_add.menu)
 	bpy.types.INFO_MT_render.remove(INFO_MT_render.menu)
-	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
+#	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
 	bpy.types.MATERIAL_MT_specials.remove(MATERIAL_MT_specials.menu)
 	bpy.types.MESH_MT_shape_key_specials.remove(MESH_MT_shape_key_specials.menu)
 	bpy.types.MESH_MT_vertex_group_specials.remove(MESH_MT_vertex_group_specials.menu)
@@ -462,7 +473,7 @@ def unregister():
 	bpy.types.VIEW3D_PT_view3d_properties.remove(VIEW3D_PT_view3d_properties.menu)
 	bpy.types.SCENE_PT_rigid_body_world.remove(SCENE_PT_rigid_body_world.menu)
 	bpy.types.NODE_MT_view.remove(NODE_MT_view.menu)
-	bpy.types.VIEW3D_PT_view3d_name.remove(VIEW3D_PT_view3d_name.menu)
+#	bpy.types.VIEW3D_PT_view3d_name.remove(VIEW3D_PT_view3d_name.menu)
 	bpy.types.OBJECT_PT_context_object.remove(OBJECT_PT_context_object.menu)
 	bpy.types.BONE_PT_context_bone.remove(BONE_PT_context_bone.menu)
 	bpy.types.DATA_PT_skeleton.remove(DATA_PT_skeleton.menu)
@@ -475,7 +486,7 @@ def unregister():
 	bpy.types.DATA_PT_geometry_curve.remove(DATA_PT_geometry_curve.menu)
 	bpy.types.VIEW3D_PT_transform_orientations.remove(VIEW3D_PT_transform_orientations.menu)
 	bpy.types.DATA_PT_pose_library.remove(DATA_PT_pose_library.menu)
-	bpy.types.VIEW3D_PT_view3d_cursor.remove(VIEW3D_PT_view3d_cursor.menu)
+#	bpy.types.VIEW3D_PT_view3d_cursor.remove(VIEW3D_PT_view3d_cursor.menu)
 	bpy.types.DATA_PT_bone_groups.remove(DATA_PT_bone_groups.menu)
 	bpy.types.OBJECT_PT_transform.remove(OBJECT_PT_transform.menu)
 	bpy.types.BONE_PT_inverse_kinematics.remove(BONE_PT_inverse_kinematics.menu)

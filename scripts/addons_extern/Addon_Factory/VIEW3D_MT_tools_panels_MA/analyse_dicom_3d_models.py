@@ -16,6 +16,16 @@ from bpy.props import StringProperty, FloatProperty, BoolProperty, EnumProperty,
 from bpy_extras.io_utils import ImportHelper
 import mathutils
 
+def rendershowselected():
+	for ob in bpy.data.objects:
+		if ob.select == True:
+			ob.hide_render = False
+
+def renderhideselected():
+	for ob in bpy.data.objects:
+		if ob.select == True:
+			ob.hide_render = True
+
 def f_trim_x_fix(self, context):
 	if context.scene.trim_x_start >= context.scene.trim_x_end:
 		context.scene.trim_x_start -= 1
@@ -1805,6 +1815,27 @@ class ApplyScl(bpy.types.Operator):
 		
 		return {'FINISHED'}
 
+class ShowRenderAllSelected(bpy.types.Operator):   #nb: CamelCase
+	bl_idname = "view3d.render_show_all_selected" #nb underscore_case
+	bl_label = "Render On"
+	bl_description = 'Render all objects'
+	trigger = BoolProperty(default = False)
+	mode = BoolProperty(default = False)
+		 
+	def execute(self, context):
+		rendershowselected()
+		return {'FINISHED'}
+
+class HideRenderAllSelected(bpy.types.Operator):    
+	bl_idname = "view3d.render_hide_all_selected"
+	bl_label = "Render Off"
+	bl_description = 'Hide Selected Object(s) from Render'
+	trigger = BoolProperty(default = False)
+	mode = BoolProperty(default = False)
+		 
+	def execute(self, context):
+		renderhideselected()     
+		return {'FINISHED'}    
 				
 class Selection(bpy.types.Panel):
 	bl_idname = 'pan.selection'
@@ -1816,22 +1847,28 @@ class Selection(bpy.types.Panel):
 	
 	def draw(self, context):
 		layout = self.layout
-		
+		row = layout.row(align=True)
+		row.alignment = 'LEFT'		
 		if context.object != None:
 			if context.object.mode == 'OBJECT':
 				layout.operator('opr.show_hide_object', text = 'Show/Hide', icon = 'GHOST_ENABLED')
 				
 		layout.operator('opr.show_all_objects', text = 'Show All', icon = 'RESTRICT_VIEW_OFF')
 		layout.operator('opr.hide_all_objects', text = 'Hide All', icon = 'RESTRICT_VIEW_ON')
-		
+		row = layout.row(align=True)
+		row.operator("view3d.render_show_all_selected", icon='RESTRICT_VIEW_OFF')
+		row.operator("view3d.render_hide_all_selected", icon='RESTRICT_VIEW_ON')
+		row = layout.row(align=True)  		
 		if context.object != None:
 			if context.object.mode == 'OBJECT':
 				layout.operator('opr.select_all', icon = 'MOD_MESHDEFORM')
 				layout.operator('opr.inverse_selection', icon = 'MOD_REMESH')
-				layout.operator('view3d.select_border', icon = 'MESH_PLANE')
-				layout.operator('view3d.select_circle', icon = 'MESH_CIRCLE')
-				layout.operator('object.duplicate_move', text = 'Duplicate', icon = 'MOD_ARRAY')
-				layout.operator('object.delete', text = 'Delete', icon = 'X')
+				row = layout.row(align=True)
+				row.operator('view3d.select_border', icon = 'MESH_PLANE')
+				row.operator('view3d.select_circle', icon = 'MESH_CIRCLE')
+				row = layout.row(align=True)
+				row.operator('object.duplicate_move', text = 'Duplicate', icon = 'MOD_ARRAY')
+				row.operator('object.delete', text = 'Delete', icon = 'X')
 				
 			if context.object.type == 'MESH':
 				if context.object.mode == 'EDIT':

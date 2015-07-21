@@ -44,7 +44,7 @@ class RenderBackground(bpy.types.Operator):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -54,5 +54,5 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		self.layout.operator(RenderBackground.bl_idname, icon='CONSOLE')
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

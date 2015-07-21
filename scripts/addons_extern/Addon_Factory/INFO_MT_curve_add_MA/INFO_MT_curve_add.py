@@ -115,7 +115,7 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
             text="Simplify Curves")
 
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -140,7 +140,7 @@ def menu(self, context):
 		layout.label(text="Curve Utils")
 		self.layout.operator("curve.simplify", text="Curve Simplify", icon="CURVE_DATA")
 
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text = 'Toggle Curve Factory', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 

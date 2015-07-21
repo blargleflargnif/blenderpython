@@ -8,22 +8,22 @@ import bpy
 
 class SaveView(bpy.types.Operator):
 	bl_idname = "view3d.save_view"
-	bl_label = "Save view"
-	bl_description = "Save the current 3D view perspective"
+	bl_label = "Temp Save Views"
+	bl_description = "Save the current 3D view perspective. Will not save with .blend"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	save_name = bpy.props.StringProperty(name="The name", default="View saved games")
+	save_name = bpy.props.StringProperty(name="Current Temp View", default="Saved View")
 	
 	def execute(self, context):
 		data = ""
-		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+		for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
 				continue
 			try:
 				save_name = line.split(':')[0]
 			except ValueError:
-				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
-				self.report(type={'ERROR'}, message="Failed to load of the SaveGame resets")
+				context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
+				self.report(type={'ERROR'}, message="Failed to load of the Save View resets")
 				return {'CANCELLED'}
 			if (str(self.save_name) == save_name):
 				continue
@@ -35,7 +35,7 @@ class SaveView(bpy.types.Operator):
 		text = text + str(ro[0]) + ',' + str(ro[1]) + ',' + str(ro[2]) + ',' + str(ro[3]) + ':'
 		text = text + str(context.region_data.view_distance) + ':'
 		text = text + context.region_data.view_perspective
-		context.user_preferences.addons["Addon Factory"].preferences.view_savedata = text
+		context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = text
 		for area in context.screen.areas:
 			area.tag_redraw()
 		return {'FINISHED'}
@@ -44,21 +44,21 @@ class SaveView(bpy.types.Operator):
 
 class LoadView(bpy.types.Operator):
 	bl_idname = "view3d.load_view"
-	bl_label = "Point of load"
+	bl_label = "Load View"
 	bl_description = "Load the current 3D view perspective"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	index = bpy.props.StringProperty(name="View saved names", default="View saved games")
+	index = bpy.props.StringProperty(name="Saved View", default="Saved View")
 	
 	def execute(self, context):
-		for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+		for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 			if (line == ""):
 				continue
 			try:
 				index, loc, rot, distance, view_perspective = line.split(':')
 			except ValueError:
-				context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
-				self.report(type={'ERROR'}, message="Failed to load of the SaveGame resets")
+				context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
+				self.report(type={'ERROR'}, message="Failed to load of the Save View resets")
 				return {'CANCELLED'}
 			if (str(self.index) == index):
 				for i, v in enumerate(loc.split(',')):
@@ -81,11 +81,11 @@ class DeleteViewSavedata(bpy.types.Operator):
 	
 	@classmethod
 	def poll(cls, context):
-		if (context.user_preferences.addons["Addon Factory"].preferences.view_savedata == ""):
+		if (context.user_preferences.addons["Addon_Factory"].preferences.view_savedata == ""):
 			return False
 		return True
 	def execute(self, context):
-		context.user_preferences.addons["Addon Factory"].preferences.view_savedata = ""
+		context.user_preferences.addons["Addon_Factory"].preferences.view_savedata = ""
 		return {'FINISHED'}
 
 ################
@@ -94,7 +94,7 @@ class DeleteViewSavedata(bpy.types.Operator):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -108,19 +108,19 @@ def menu(self, context):
 		self.layout.prop(context.scene, 'sync_mode')
 		box = self.layout.box()
 		col = box.column(align=True)
-		col.operator(SaveView.bl_idname, icon="PLUGIN")
-		if (context.user_preferences.addons["Addon Factory"].preferences.view_savedata != ""):
-			col.operator(DeleteViewSavedata.bl_idname, icon="PLUGIN")
-		if (context.user_preferences.addons["Addon Factory"].preferences.view_savedata):
+		col.operator(SaveView.bl_idname, icon="SAVE_PREFS")
+		if (context.user_preferences.addons["Addon_Factory"].preferences.view_savedata != ""):
+			col.operator(DeleteViewSavedata.bl_idname, icon="COLOR_RED")
+		if (context.user_preferences.addons["Addon_Factory"].preferences.view_savedata):
 			col = box.column(align=True)
-			col.label(text="View save to load", icon='PLUGIN')
-			for line in context.user_preferences.addons["Addon Factory"].preferences.view_savedata.split('|'):
+			col.label(text="View save to load", icon='SAVE_PREFS')
+			for line in context.user_preferences.addons["Addon_Factory"].preferences.view_savedata.split('|'):
 				if (line == ""):
 					continue
 				try:
 					index = line.split(':')[0]
 				except ValueError:
 					pass
-				col.operator(LoadView.bl_idname, text=index, icon="PLUGIN").index = index
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+				col.operator(LoadView.bl_idname, text=index, icon="COLOR_GREEN").index = index
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

@@ -12,7 +12,7 @@ import bpy
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -22,17 +22,20 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 	if (IsMenuEnable(__name__.split('.')[-1])):
 		row = self.layout.row(align=True)
-		row.alignment = 'RIGHT'
-		row.label("To the Clipboard", icon='COPYDOWN')
+		row.alignment = 'LEFT'
+		row.label("Quick Rename", icon='LINKED')
+		row = self.layout.row(align=True)
+		row.alignment = 'LEFT'
+		row.label("Clipboard", icon='COPYDOWN')
 		row.operator('object.copy_object_name', icon='OBJECT_DATAMODE', text="")
 		if (context.active_bone or context.active_pose_bone):
-			row.operator('object.copy_bone_name', icon='BONE_DATA', text="")
+		    row.operator('object.copy_bone_name', icon='BONE_DATA', text="")
 		row.operator('object.copy_data_name', icon='EDITMODE_HLT', text="")
 		row = self.layout.row(align=True)
-		row.alignment = 'RIGHT'
-		row.label("Name synchronization", icon='LINKED')
+		row.alignment = 'LEFT'
+		row.label("Name Sync", icon='LINKED')
 		row.operator('object.object_name_to_data_name', icon='TRIA_DOWN_BAR', text="")
 		row.operator('object.data_name_to_object_name', icon='TRIA_UP_BAR', text="")
-		self.layout.template_ID(context.object, 'data')
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
-		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
+
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
+		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Quick Rename", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

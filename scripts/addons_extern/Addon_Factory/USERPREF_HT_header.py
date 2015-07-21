@@ -579,7 +579,7 @@ class ImportKeyConfigXml(bpy.types.Operator):
 	mode = bpy.props.EnumProperty(items=items, name="Mode", default='ADD')
 	
 	def execute(self, context):
-		context.user_preferences.addons["Addon Factory"].preferences.key_config_xml_path = self.filepath
+		context.user_preferences.addons["Addon_Factory"].preferences.key_config_xml_path = self.filepath
 		try:
 			tree = ElementTree.parse(self.filepath)
 		except:
@@ -664,7 +664,7 @@ class ImportKeyConfigXml(bpy.types.Operator):
 							continue
 		return {'FINISHED'}
 	def invoke(self, context, event):
-		self.filepath = context.user_preferences.addons["Addon Factory"].preferences.key_config_xml_path
+		self.filepath = context.user_preferences.addons["Addon_Factory"].preferences.key_config_xml_path
 		context.window_manager.fileselect_add(self)
 		return {'RUNNING_MODAL'}
 
@@ -677,7 +677,7 @@ class ExportKeyConfigXml(bpy.types.Operator):
 	filepath = bpy.props.StringProperty(subtype='FILE_PATH')
 	
 	def execute(self, context):
-		context.user_preferences.addons["Addon Factory"].preferences.key_config_xml_path = self.filepath
+		context.user_preferences.addons["Addon_Factory"].preferences.key_config_xml_path = self.filepath
 		data = ElementTree.Element('BlenderKeyConfig', {'Version':'1.2'})
 		for keyconfig in [context.window_manager.keyconfigs.user]:
 			keyconfig_elem = ElementTree.SubElement(data, 'KeyConfig', {'name':keyconfig.name})
@@ -732,7 +732,7 @@ class ExportKeyConfigXml(bpy.types.Operator):
 		f.close()
 		return {'FINISHED'}
 	def invoke(self, context, event):
-		self.filepath = context.user_preferences.addons["Addon Factory"].preferences.key_config_xml_path
+		self.filepath = context.user_preferences.addons["Addon_Factory"].preferences.key_config_xml_path
 		context.window_manager.fileselect_add(self)
 		return {'RUNNING_MODAL'}
 
@@ -899,7 +899,7 @@ class UpdateScrambleAddon(bpy.types.Operator):
 			if not os.path.basename(f):
 				pass
 			else:
-				if ("Addon Factory" in f):
+				if ("Addon_Factory" in f):
 					uzf = open(os.path.join(addonDir, os.path.basename(f)), 'wb')
 					uzf.write(zf.read(f))
 					uzf.close()
@@ -914,7 +914,7 @@ class ToggleDisabledMenu(bpy.types.Operator):
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
-		context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu = not context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu
+		context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu = not context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu
 		for area in context.screen.areas:
 			area.tag_redraw()
 		return {'FINISHED'}
@@ -945,7 +945,7 @@ class AddonsMenu(bpy.types.Menu):
 	
 	def draw(self, context):
 		self.layout.operator(ToggleDisabledMenu.bl_idname, icon="PLUGIN")
-		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
+#		self.layout.operator(UpdateScrambleAddon.bl_idname, icon="PLUGIN")
 
 ################
 # メニュー追加 #
@@ -953,7 +953,7 @@ class AddonsMenu(bpy.types.Menu):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -992,5 +992,5 @@ def menu(self, context):
 		row = self.layout.row(align=True)
 		row.operator(ChangeUserPreferencesTab.bl_idname, icon='TRIA_LEFT', text="").is_left = True
 		row.operator(ChangeUserPreferencesTab.bl_idname, icon='TRIA_RIGHT', text="").is_left = False
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

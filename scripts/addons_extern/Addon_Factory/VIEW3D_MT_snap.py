@@ -65,7 +65,7 @@ class Move3DCursorFar(bpy.types.Operator):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -78,6 +78,6 @@ def menu(self, context):
 		self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor-position", icon="PLUGIN")
 		self.layout.operator(Move3DCursorFar.bl_idname, text="Cursor to hide (to)", icon="PLUGIN")
 		self.layout.operator(SnapMesh3DCursor.bl_idname, text="Cursor → mesh surface", icon="PLUGIN")
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

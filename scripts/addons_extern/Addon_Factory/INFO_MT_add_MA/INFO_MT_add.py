@@ -161,7 +161,7 @@ class INFO_MT_mesh_lamps_add(bpy.types.Menu):
             text="Add 3 Point Setup")
 
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -177,7 +177,7 @@ def menu(self, context):
 		self.layout.menu("INFO_MT_scene_lamps", icon="LAMP_SPOT")
 		self.layout.menu("INFO_MT_array_mods", icon="MOD_ARRAY")
 		self.layout.menu("INFO_MT_quick_tools", icon="MOD_BUILD")
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.separator()
 		self.layout.operator('wm.toggle_menu_enable', text= "Toggle Add Factory", icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]
 

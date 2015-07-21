@@ -40,7 +40,7 @@ class ShowAllBoneLayers(bpy.types.Operator):
 
 # メニューのオン/オフの判定
 def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon Factory"].preferences.disabled_menu.split(','):
+	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
 		if (id == self_id):
 			return False
 	else:
@@ -52,5 +52,5 @@ def menu(self, context):
 		row = self.layout.row(align=True)
 		row.operator('pose.toggle_pose_position', icon='POSE_HLT', text="Enables or disables the pause")
 		row.operator(ShowAllBoneLayers.bl_idname, icon='RESTRICT_VIEW_OFF', text="All layers display")
-	if (context.user_preferences.addons["Addon Factory"].preferences.use_disabled_menu):
+	if (context.user_preferences.addons["Addon_Factory"].preferences.use_disabled_menu):
 		self.layout.operator('wm.toggle_menu_enable', icon='VISIBLE_IPO_ON').id = __name__.split('.')[-1]

@@ -20,7 +20,7 @@
 
 # Blender Addon Information
 bl_info = {
-	"name" : "CGCookie",
+	"name" : "CG Cookie",
 	"author" : "meta-androcto",
 	"version" : (0, 1, 1),
 	"blender" : (2, 7, 5),
@@ -29,7 +29,7 @@ bl_info = {
 	"warning" : "",
 	"wiki_url" : "http://github.com/",
 	"tracker_url" : "http://github.com/",
-	"category" : "CGCookie"
+	"category" : "CG Cookie"
 }
 
 import bpy
@@ -47,14 +47,13 @@ class Info_MT_cookie_links(bpy.types.Menu):
 		layout.operator("wm.url_open", text="CG Cookie.com", icon='URL').url = "https://cgcookie.com/"
 		layout.operator("wm.url_open", text="CG Cookie Tutorials", icon='URL').url = "https://cgcookie.com/learn-blender/"
 		layout.operator("wm.url_open", text="Blender Artists Forum", icon='URL').url = "http://blenderartists.org/forum/index.php"
-
+		layout.operator("wm.url_open", text="Blender Market", icon='URL').url = "https://cgcookiemarkets.com/blender/"
 
 def menu_func(self, context):
 	layout = self.layout
 	self.layout.separator()
 
 	self.layout.menu(Info_MT_cookie_links.bl_idname, icon="URL")
-
 
 def register():
     bpy.utils.register_module(__name__)

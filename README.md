@@ -30,7 +30,7 @@ Note:
 * This allows you to delete any scripts you don't need & repopulate with ones you like at any time.
 * The added benifit of this is there's no need to mix in your favorite external addons into blenders addons folders, 
 then have to find & replace for each new Blender version. 
-* simply update the addons_utils.py to activete addons_extern folder & paste into new blender scripts directory & your favorites are right there.
+* simply update the addons_utils.py to activate addons_extern folder & paste into new blender scripts directory & your favorites are right there.
 
 Note 2:
 =====================

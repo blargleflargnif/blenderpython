@@ -50,11 +50,11 @@ replace it with the original space_view3d.py for your Blender Version.
 
 Disclaimer:
 ==================
-*Be careful using addons, some addons may cause crashes if used in wrong context or using huge amounts of verts.
+* Be careful using addons, some addons may cause crashes if used in wrong context or using huge amounts of verts.
 
-** I'm not responsible for any lost effort or broken addons. Save Often.
+* I'm not responsible for any lost effort or broken addons. Save Often.
 
-*** Use at Own Risk!
+* Use at Own Risk!
 
 Enjoy
 =======

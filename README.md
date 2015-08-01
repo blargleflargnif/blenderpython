@@ -44,6 +44,13 @@ Note 2:
 
 Duplicate addons may occur as the collection is very large, just delete any duplicates you don't need.
 
+Editing/Updating:
+=====================
+
+* Some "in their own folder" addons may have hard coded path to addons folder. 
+* open the __init__.py file for the addon & shortly below the addon information there will be text with path & addons in it.
+* change addons to addons_extern to make work in external folder.
+
 Windows Pre built version for 2.75a: http://www.graphicall.org/1155
 ===================
 

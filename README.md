@@ -11,13 +11,20 @@ installation
 * Currently Blender 2.75a is supported also & would represent a minimum requirement for all features.
 
 * Download the blenderpython zip file & unpack.
-* Copy the scripts folder & paste over the Blender scripts directory on your os.
+* Copy the "scripts" folder or it's contents & paste over the Blender "scripts" folder on your os or to the buildbot build "scripts" folder.
 * This will replace addons_utils.py in modules to activate the addons extern folder.
+* It will also replace space_view3d.py from startup/bl_ui folder for my custom menu's design. If you paste contents you can miss this file/folder if it bugs out.
 
 Addons Extern Folder
 ====================
 * you need patched addons_utils.py to use this folder. see note.
 
+* addons_extern is a very useful folder, once set up, you can drop any addon in there & it's recognized.
+* This allows you to delete any scripts you don't need & repopulate with ones you like at any time.
+* The added benifit of this is there's no need to mix in your favorite external addons into blenders addons folders, 
+then have to find & replace for each new Blender version.
+* 
+ 
 * The addons_extern folder contains many working addons I've collected over the years.
 * Currently the addons_extern is reasonably up to date for blender 2.75a.
 * However, I cannot guarentee every addon will be up to date at any given time.
@@ -26,11 +33,11 @@ Addons Extern Folder
 
 Note: 
 ====================
-* addons_extern is a very useful folder, once set up, you can drop any addon in there & it's recognized.
-* This allows you to delete any scripts you don't need & repopulate with ones you like at any time.
-* The added benifit of this is there's no need to mix in your favorite external addons into blenders addons folders, 
-then have to find & replace for each new Blender version. 
-* simply update the addons_utils.py to activate addons_extern folder & paste into new blender scripts directory & your favorites are right there.
+* addons_extern should be placed next to addons & addons contrib in "blender version"\2.75\scripts
+* some addons in the repo are hard coded to addons_extern folder
+
+* Update the addons_utils.py to activate addons_extern folder & paste into new blender scripts directory & your favorites are right there.
+* addons_utils.py is found in the modules folder.
 
 Note 2:
 =====================

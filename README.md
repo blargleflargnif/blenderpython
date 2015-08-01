@@ -44,8 +44,9 @@ Known Issues:
 ===================
 * Addons Factory script is huge, it may take a few seconds to load. 
 It contains all the add_mesh/curve & much more in the one activate & provides nice menu structure.
+
 * If it fails to load, let me know, I may need to split into smaller modules again.
-**In the startup/bl_ui folder, is my patched version of space_view3d.py, if this file gives problems,
+* In the startup/bl_ui folder, is my patched version of space_view3d.py, if this file gives problems,
 replace it with the original space_view3d.py for your Blender Version.
 
 Disclaimer:

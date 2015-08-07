@@ -3,7 +3,7 @@ blenderpython
 
 My collection of Blender Addons
 
-installation 
+Installation 
 ============
 
 * Download recent Blender Build from here: https://builder.blender.org/download/
@@ -14,6 +14,15 @@ installation
 * Copy the "scripts" folder or it's contents & paste over the Blender "scripts" folder on your os or to the buildbot build "scripts" folder.
 * This will replace addons_utils.py in modules to activate the addons extern folder.
 * It will also replace space_view3d.py from startup/bl_ui folder for my custom menu's design. If you paste contents you can miss this file/folder if it bugs out.
+
+Optional Config Folder 
+=======================
+
+* I reccommend for all d/l zip builds & custom builds you make yourself to add the secret config folder.
+* After downloading a build from buildbot:
+* Create the config folder here: 'blender_version'/2.75/config
+* The config folder makes the build save the user preferences & user settings into that folder & bypasses appdata, which is used by Blender Installers.
+* By keeping your modified build seperate from blender, there's little chance of anything going wrong with your install.
 
 Addons Extern Folder
 ====================

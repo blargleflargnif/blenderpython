@@ -71,7 +71,7 @@ def draw_segments(context, myobj, op, region, rv3d):
             pos_x, pos_y = get_scale_txt_location(context)
             tx_dsp = fmts % scene.measureit_scale_factor
             tx_scale = scene.measureit_gl_scaletxt + " 1:" + tx_dsp
-            draw_text(pos_x, pos_y,
+            draw_text(myobj, pos_x, pos_y,
                       tx_scale, scene.measureit_scale_color, scene.measureit_scale_font)
         # --------------------
         # Loop
@@ -357,7 +357,8 @@ def draw_segments(context, myobj, op, region, rv3d):
                             if scene.measureit_gl_show_n is True and ms.glnames is True:
                                 msg += ms.gltxt
                             if scene.measureit_gl_show_d is True or scene.measureit_gl_show_n is True:
-                                draw_text(txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, msg, rgb, fsize)
+                                draw_text(myobj, txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty,
+                                          msg, rgb, fsize)
 
                             # ------------------------------
                             # if axis loc, show a indicator
@@ -372,7 +373,7 @@ def draw_segments(context, myobj, op, region, rv3d):
                                 if ms.glocz is True:
                                     txt += "Z"
                                 txt += "]"
-                                draw_text(txtpoint2d[0], txtpoint2d[1], txt, rgb, fsize-1)
+                                draw_text(myobj, txtpoint2d[0], txtpoint2d[1], txt, rgb, fsize-1)
 
                         except:
                             pass
@@ -437,16 +438,20 @@ def draw_segments(context, myobj, op, region, rv3d):
 
                                     gap3d = (b_p1[0] + via[0], b_p1[1] + via[1], b_p1[2] + via[2])
                                     txtpoint2d = get_2d_point(region, rv3d, gap3d)
-                                    draw_text(txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, msg, rgb,
+                                    draw_text(myobj, txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, msg, rgb,
                                               fsize, right)
                                 # Radius
                                 if scene.measureit_gl_show_d is True and ms.gldist is True and ms.glarc_rad is True:
                                     tx_dist = ms.glarc_txradio + format_distance(fmt, units, dist)
                                 else:
                                     tx_dist = " "
-                            gap3d = (a_p1[0], a_p1[1], a_p1[2])
+                            if ms.gltype == 2:
+                                gap3d = (v11a[0], v11a[1], v11a[2])
+                            else:
+                                gap3d = (a_p1[0], a_p1[1], a_p1[2])
+
                             txtpoint2d = get_2d_point(region, rv3d, gap3d)
-                            draw_text(txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, tx_dist, rgb,
+                            draw_text(myobj, txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, tx_dist, rgb,
                                       fsize, right)
                         except:
                             pass
@@ -460,7 +465,8 @@ def draw_segments(context, myobj, op, region, rv3d):
                             tx_dist = ms.gltxt
                             gap3d = (vn1[0], vn1[1], vn1[2])
                             txtpoint2d = get_2d_point(region, rv3d, gap3d)
-                            draw_text(txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, tx_dist, rgb, fsize)
+                            draw_text(myobj, txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty,
+                                      tx_dist, rgb, fsize)
                         except:
                             pass
                     # ------------------------------------
@@ -625,13 +631,16 @@ def draw_segments(context, myobj, op, region, rv3d):
                             if scene.measureit_gl_show_n is True and ms.glnames is True:
                                 msg += ms.gltxt
                             if scene.measureit_gl_show_d is True or scene.measureit_gl_show_n is True:
-                                draw_text(txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty, msg, ms.glcolorarea,
+                                draw_text(myobj, txtpoint2d[0] + ms.glfontx, txtpoint2d[1] + ms.glfonty,
+                                          msg, ms.glcolorarea,
                                           fsize)
 
+                except IndexError:
+                    ms.glfree = True
                 except:
                     # print("Unexpected error:" + str(sys.exc_info()))
                     # if error, disable segment
-                    ms.glfree = True
+                    pass
 
     return
 
@@ -714,16 +723,91 @@ def get_2d_point(region, rv3d, point3d):
 
 
 # -------------------------------------------------------------
+# Get sum of a group
+#
+# myobj: Current object
+# Tag: group
+# -------------------------------------------------------------
+def get_group_sum(myobj, tag):
+    # noinspection PyBroadException
+    try:
+        tx = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
+              "T", "U", "V", "W", "X", "Y", "Z"]
+        g = tag[2:3]
+        mp = myobj.MeasureGenerator[0]
+        flag = False
+        # -----------------
+        # Sum loop segments
+        # -----------------
+        scale = bpy.context.scene.unit_settings.scale_length
+        tot = 0.0
+        obverts = get_mesh_vertices(myobj)
+        for idx in range(0, mp.measureit_num):
+            ms = mp.measureit_segments[idx]
+            if (ms.gltype == 1 or ms.gltype == 12
+               or ms.gltype == 13 or ms.gltype == 14) and ms.gltot != '99' \
+                    and ms.glfree is False and g == tx[int(ms.gltot)]:  # only segments
+                if ms.glpointa <= len(obverts) and ms.glpointb <= len(obverts):
+                    p1 = get_point(obverts[ms.glpointa].co, myobj)
+                    if ms.gltype == 1:
+                        p2 = get_point(obverts[ms.glpointb].co, myobj)
+                    elif ms.gltype == 12:
+                        p2 = get_point((0.0,
+                                        obverts[ms.glpointa].co[1],
+                                        obverts[ms.glpointa].co[2]), myobj)
+                    elif ms.gltype == 13:
+                        p2 = get_point((obverts[ms.glpointa].co[0],
+                                        0.0,
+                                        obverts[ms.glpointa].co[2]), myobj)
+                    else:
+                        p2 = get_point((obverts[ms.glpointa].co[0],
+                                        obverts[ms.glpointa].co[1],
+                                        0.0), myobj)
+
+                    dist, distloc = distance(p1, p2, ms.glocx, ms.glocy, ms.glocz)
+                    if dist == distloc:
+                        usedist = dist
+                    else:
+                        usedist = distloc
+                    usedist *= scale
+                    tot += usedist
+                    flag = True
+
+        if flag is True:
+            # Return value
+            pr = bpy.context.scene.measureit_gl_precision
+            fmt = "%1." + str(pr) + "f"
+            units = bpy.context.scene.measureit_units
+
+            return format_distance(fmt, units, tot)
+        else:
+            return " "
+    except:
+            return " "
+
+
+# -------------------------------------------------------------
 # Create OpenGL text
 #
 # right: Align to right
 # -------------------------------------------------------------
-def draw_text(x_pos, y_pos, display_text, rgb, fsize, right=False):
+def draw_text(myobj, x_pos, y_pos, display_text, rgb, fsize, right=False):
     gap = 12
     font_id = 0
     blf.size(font_id, fsize, 72)
     # height of one line
     mwidth, mheight = blf.dimensions(font_id, "Tp")  # uses high/low letters
+
+    # Calculate sum groups
+    m = 0
+    while "<#" in display_text:
+        m += 1
+        if m > 10:   # limit loop
+            break
+        i = display_text.index("<#")
+        tag = display_text[i:i + 4]
+        display_text = display_text.replace(tag, get_group_sum(myobj, tag.upper()))
+
     # split lines
     mylines = display_text.split("|")
     idx = len(mylines) - 1

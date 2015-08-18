@@ -37,7 +37,7 @@ class DrawPanel(bpy.types.Panel):
         # modifier select:
         column.label("Select objects by Modifier name:")
         row = layout.row()
-        column.prop(context.scene, '[""]')
+#        column.prop(context.scene, '[""]')
         column.menu("dropdown.menu",text="Pick Modifier")
         # menu:
         if not objects: 

@@ -266,7 +266,9 @@ class GLSettings:
     def prepare_2d(self):
         """PRE_VIEW,POST_VIEWのcallbackでscreen座標系を用いて描画する場合に
         使用する。
-        参照: source/blender/editors/screen/glutils.c: glaDefine2DArea()
+        参照: ED_region_do_draw() -> ED_region_pixelspace() ->
+        wmOrtho2_region_pixelspace()
+
         """
         self._modelview_bak_2d = Buffer('double', (4, 4),
                                         bgl.GL_MODELVIEW_MATRIX)
@@ -276,8 +278,11 @@ class GLSettings:
 
         bgl.glMatrixMode(bgl.GL_PROJECTION)
         bgl.glLoadIdentity()  # 必須
-        bgl.gluOrtho2D(0, self.region_size[0], 0, self.region_size[1])
-        bgl.glTranslated(GLA_PIXEL_OFS, GLA_PIXEL_OFS, 0.0)
+        w, h = self.region_size
+        # wmOrtho2_region_pixelspace(), wmOrtho2() 参照
+        ofs = -0.01
+        bgl.glOrtho(ofs, w + ofs, ofs, h + ofs, -100, 100)
+        # bgl.glTranslated(GLA_PIXEL_OFS, GLA_PIXEL_OFS, 0.0)
 
         bgl.glMatrixMode(bgl.GL_MODELVIEW)
         bgl.glLoadIdentity()

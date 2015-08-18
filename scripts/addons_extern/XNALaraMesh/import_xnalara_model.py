@@ -221,18 +221,21 @@ def setUvTexture(mesh_ob):
 def loadImage(textureFilename):
     textureBasename = os.path.basename(textureFilename)
     fileRoot, fileExt = os.path.splitext(textureBasename)
-
-    print("Loading Texture: " + textureBasename)
-    if (os.path.exists(textureFilename)):
-        image = bpy.data.images.load(filepath=textureFilename)
-        print("Texture load complete: " + textureBasename)
-    else:
-        print("Warning. Texture not found " + textureBasename)
-        image = bpy.data.images.new(
-            name=textureBasename, width=1024, height=1024, alpha=True,
-            float_buffer=False)
-        image.source = 'FILE'
-        image.filepath = textureFilename
+    
+    image = bpy.data.images.get(textureBasename)
+    
+    if image is None:
+        print("Loading Texture: " + textureBasename)
+        if (os.path.exists(textureFilename)):
+            image = bpy.data.images.load(filepath=textureFilename)
+            print("Texture load complete: " + textureBasename)
+        else:
+            print("Warning. Texture not found " + textureBasename)
+            image = bpy.data.images.new(
+                name=textureBasename, width=1024, height=1024, alpha=True,
+                float_buffer=False)
+            image.source = 'FILE'
+            image.filepath = textureFilename
     return image
 
 
@@ -422,6 +425,23 @@ def renameBonesToBlender(armatures_obs):
                 edit_bones.name = changeBoneName(oldName, suffix, '.R')
         bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.scene.objects.active = currActive
+
+
+def boneDictRename(filepath, armatureObj):
+    boneDictData = read_ascii_xps.readBoneDict(filepath)
+    renameBonesUsingDict(armatureObj, boneDictData[0])
+    
+
+def boneDictRestore(filepath, armatureObj):
+    boneDictData = read_ascii_xps.readBoneDict(filepath)
+    renameBonesUsingDict(armatureObj, boneDictData[1])
+
+
+def renameBonesUsingDict(armatureObj, boneDict):
+    for key, value in boneDict.items():
+        bone = armatureObj.data.bones.get(key)
+        if bone:
+            bone.name = value
 
 
 def renameBonesToXps(armatures_obs):
@@ -690,8 +710,9 @@ def importMesh(armature_ob, meshInfo):
         nbVrtx = []
 
         for vertex in vertices:
+            unitnormal = Vector(vertex.norm).normalized()
             coords.append(coordTransform(vertex.co))
-            normals.append(coordTransform(vertex.norm))
+            normals.append(coordTransform(unitnormal))
             vertColors.append(vertex.vColor)
             # uvLayers.append(uvTransformLayers(vertex.uv))
 

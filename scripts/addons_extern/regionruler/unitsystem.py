@@ -20,10 +20,11 @@
 import math
 
 from mathutils import Vector
+import bgl
 
 from . import vagl
 from . import vaview3d as vav
-from . import units as localtools_units
+from . import units as localutils_units
 
 
 def _prop(attr):
@@ -45,10 +46,10 @@ def _prop(attr):
 class UnitSystem:
     GRID_MIN_PX = 6.0
 
-    metric_units = localtools_units.metric_units.copy()
-    imperial_units = localtools_units.imperial_units.copy()
-    mixed_units = localtools_units.mixed_units.copy()
-    empty_units = localtools_units.empty_units.copy()
+    metric_units = localutils_units.metric_units.copy()
+    imperial_units = localutils_units.imperial_units.copy()
+    mixed_units = localutils_units.mixed_units.copy()
+    empty_units = localutils_units.empty_units.copy()
 
     @property
     def units(self):
@@ -118,6 +119,9 @@ class UnitSystem:
         # blenderUnit per grid  (same as rv3d->gridview)
         self.grid_view = 1.0
 
+        # SpaceImageEditorで表示中の画像の大きさ
+        self.image_size = [0, 0]
+
         self.update(context)
 
     system = _prop('system')
@@ -168,6 +172,27 @@ class UnitSystem:
     def gpd(self, value):
         self.dx = 1.0 / value
 
+    def _get_image_size(self, context):
+        image_sx = image_sy = 0
+        if context.area.type == 'IMAGE_EDITOR':
+            space = context.area.spaces.active
+            image = space.image
+            if image:
+                if image.type in ('RENDER_RESULT', 'COMPOSITING'):
+                    # 'POST_VIEW'でのみ使用可能な方法
+                    if image.type == 'RENDER_RESULT' or image.pixels:
+                        region = context.region
+                        mat = vagl.Buffer('double', (4, 4),
+                                          bgl.GL_PROJECTION_MATRIX)
+                        # 画像のアスペクト比はzoom[1]に反映されている
+                        fx = mat[0][0] / space.zoom[0]
+                        fy = mat[1][1] / space.zoom[1]
+                        image_sx = round(region.width / 2 * fx)
+                        image_sy = round(region.height / 2 * fy)
+                else:
+                    image_sx, image_sy = image.size
+        return [image_sx, image_sy]
+
     def update(self, context):
         """contextの要素でself._***を更新した上でdpbu等を計算する。
         IMAGE_EDITORの場合、グリッド分割は画像のpixelの大きさ迄とする
@@ -200,31 +225,34 @@ class UnitSystem:
         system = self.system
         view_location = self.view_location
 
+        self.image_size = self._get_image_size(context)
+
         # Calculate blenderUnit -----------------------------------------------
         if context.area.type == 'IMAGE_EDITOR':
-            persmat = vagl.GLSettings.get_matrix('perspective_matrix')
             image_editor_unit = self.image_editor_unit.lower()
-            if image_editor_unit == 'x':
-                v = Vector((1, 0, 0))
-            elif image_editor_unit == 'y':
-                v = Vector((0, 1, 0))
-            else:
-                space = context.area.spaces.active
-                image = space.image
-                if image:
-                    image_sx, image_sy = image.size
+            for region in context.area.regions:
+                if region.type == 'WINDOW':
+                    break
+            v2d = region.view2d
+            v1 = v2d.region_to_view(0, 0)
+            if image_editor_unit in ('pixel_x', 'x'):
+                v2 = v2d.region_to_view(region.width, 0)
+                bupd = (v2[0] - v1[0]) / region.width
+                if image_editor_unit == 'pixel_x':
+                    image_sx = self.image_size[0]
                     if image_sx == 0:
-                        image_sx = 256
+                        image_sx = 256  # blenderの仕様。Imageが無い場合は256になる
+                    bupd *= image_sx
+            else:  # 'pixel_y', 'y':
+                v2 = v2d.region_to_view(0, region.height)
+                bupd = (v2[1] - v1[1]) / region.height
+                if image_editor_unit == 'pixel_y':
+                    image_sy = self.image_size[1]
                     if image_sy == 0:
                         image_sy = 256
-                else:
-                    image_sx = image_sy = 256
-                if image_editor_unit == 'pixel_x':
-                    v = Vector((1.0 / image_sx, 0, 0))
-                elif image_editor_unit == 'pixel_y':
-                    v = Vector((0, 1.0 / image_sy, 0))
-                else:
-                    raise ValueError()
+                    bupd *= image_sy
+            dpbu = dx = 1.0 / bupd
+
         else:
             rv3d = context.region_data
             if rv3d is None:
@@ -237,9 +265,9 @@ class UnitSystem:
                 v = pimat.col[0].normalized()  # viewのx方向で長さが1bu
             else:
                 v = pimat.col[1].normalized()  # viewのy方向で長さが1bu
-        v1 = vav.project_v3(sx, sy, persmat, view_location)
-        v2 = vav.project_v3(sx, sy, persmat, view_location + v)
-        dpbu = dx = (v1 - v2).to_2d().length
+            v1 = vav.project_v3(sx, sy, persmat, view_location)
+            v2 = vav.project_v3(sx, sy, persmat, view_location + v)
+            dpbu = dx = (v1 - v2).to_2d().length
 
         sublines = self.grid_subdivisions
         unit_pow = 0

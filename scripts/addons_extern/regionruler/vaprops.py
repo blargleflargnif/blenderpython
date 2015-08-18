@@ -1019,7 +1019,7 @@ CollectionProperty:
 
 
 PyObject *obj;
-if (BPy_StructRNA_Check(obj)) {
+if (BPy_StructRNA_Check(obj)) {  # bpy_rna.h
     BPy_StructRNA *py_srna = (BPy_StructRNA *)obj;
     PointerRNA *ptr = &py_srna->ptr;
     StructRNA *srna = ptr->data;

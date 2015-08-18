@@ -664,8 +664,5 @@ def unregister():
     del bpy.types.Scene.lightprobe
     
 
-try:
-    unregister()
-except:
-    pass
-register()
+if __name__ == "__main__":
+    register()

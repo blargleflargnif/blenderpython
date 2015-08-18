@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import io
-import os
+import ntpath
 
 from XNALaraMesh import bin_ops
 from XNALaraMesh import read_ascii_xps
@@ -155,6 +155,7 @@ def readHeader(file):
     header.machine = machineName
     header.user = userName
     header.files = filesString
+    header.pose = xpsPoseData
     return header
 
 
@@ -230,7 +231,7 @@ def readMeshes(file, xpsHeader, hasBones):
         textures = []
         textureCount = bin_ops.readUInt32(file)
         for texId in range(textureCount):
-            textureFile = os.path.basename(readFilesString(file))
+            textureFile = ntpath.basename(readFilesString(file))
             # print('Texture file', textureFile)
             uvLayerId = bin_ops.readUInt32(file)
 

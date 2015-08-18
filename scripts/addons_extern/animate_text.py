@@ -22,7 +22,7 @@ bl_info = {
     "author": "Multiple Authors",
     "version": (0, 3, 0),
     "blender": (2, 74, 5),
-    "location": "Text Properties",
+    "location": "View3D > Toolshelf",
     "description": "Animate Text",
     "warning": "",
     "wiki_url": "",

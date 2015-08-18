@@ -31,7 +31,7 @@ bl_info = {
     "name": "MeasureIt",
     "author": "Antonio Vazquez (antonioya)",
     "location": "View3D > Tools Panel /Properties panel",
-    "version": (1, 5, 0),
+    "version": (1, 5, 1),
     "blender": (2, 7, 4),
     "description": "Tools for measuring objects.",
     "category": "3D View"}
@@ -40,7 +40,7 @@ import sys
 import os
 
 # ----------------------------------------------
-# Add to Python path (once only)
+# Add to Phyton path (once only)
 # ----------------------------------------------
 path = sys.path
 flag = False
@@ -49,7 +49,7 @@ for item in path:
         flag = True
 if flag is False:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'measureit'))
-    print("measureit: added to pythonpath")
+    print("measureit: added to phytonpath")
 
 # ----------------------------------------------
 # Import modules

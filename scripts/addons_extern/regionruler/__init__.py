@@ -36,8 +36,8 @@ ModalOperatorの実行中はAutoSaveが無効になるので、wm.save_as_mainfi
 bl_info = {
     'name': 'Region Ruler',
     'author': 'chromoly',
-    'version': (2, 2, 5),
-    'blender': (2, 74, 0),
+    'version': (2, 2, 6),
+    'blender': (2, 75, 0),
     'location': 'View3D > Properties, ImageEditor > Properties',
     'description': '',
     'warning': '',
@@ -82,12 +82,15 @@ else:
 
 
 # 他のModalHandlerが開始する度にRulerを再起動する
-KEEP_MODAL_HANDLERS_HEAD = True
+KEEP_MODAL_HANDLERS_HEAD = False
 
 # 数値の縁取り
 VIEW_3D_NUMBER_OUTLINE = False
 IMAGE_EDITOR_NUMBER_OUTLINE = True
 OUTLINE_RADIUS = 5  # 0, 3, 5
+
+# プラットフォームにより2.0の場合あり
+PIXEL_SIZE = 1.0
 
 
 ###############################################################################
@@ -409,10 +412,10 @@ class RegionRulerPreferences(bpy.types.AddonPreferences):
         'Use Simple Measure',
         'Hold alt key',
         default=False)
-    use_stencil = vap.BP(
-        'Use Stencil Buffer',
-        description='Compiled with -DGHOST_OPENGL_STENCIL option',
-        default=False)
+    use_fill = vap.BP(
+        'Use Fill',
+        description='Fill text box',
+        default=True)
     write_text_object = vap.BP(
         'Save Space Properties',
         'Save as TextObject',
@@ -481,8 +484,7 @@ class RegionRulerPreferences(bpy.types.AddonPreferences):
         prop.active = self.draw_cross_cursor
         # self.draw_property('image_editor_unit', col, row=True, expand=True)
         # self.draw_property('view_depth', col)
-        if vagl.Buffer('int', 0, bgl.GL_STENCIL_BITS):
-            self.draw_property('use_stencil', col)
+        self.draw_property('use_fill', col)
         self.draw_property('write_text_object', col)
         prop = self.draw_property('text_object_name', col)
         prop.active = self.write_text_object
@@ -529,7 +531,6 @@ def get_view_location(context):
 
 
 class Data:
-    # FIXME: 複数windowに対して同時に再描画がされた場合
     def __init__(self):
         # RegionRuler_PG.enableをTrueとした際に、そのプロパティのupdate関数が
         # オペレータを呼び出すのを抑制する
@@ -670,7 +671,6 @@ class Data:
                        sign_x * (-orig[0] + halfx)]
             range_y = [sign_y * (-orig[1] - halfy),
                        sign_y * (-orig[1] + halfy)]
-
         else:
             override = {'grid_scale': 1.0,
                         'grid_subdivisions': 10,
@@ -689,17 +689,18 @@ class Data:
             axis = 'y' if image_editor_unit == 'uv' else 'pixel_y'
             unit_system_2d_y = UnitSystem(context, override,
                                           image_editor_unit=axis)
-            image = context.space_data.image
-            image_sx = image_sy = 256
-            if image:
-                image_sx, image_sy = image.size
+            image_sx, image_sy = unit_system.image_size
+            if image_sx == 0:
+                image_sx = 256
+            if image_sy == 0:
+                image_sy = 256
             if ruler_settings.image_editor_origin_type == 'view':
                 f = sx * 0.5 * unit_system_2d_x.bupd
                 range_x = [-f, f]
                 f = sy * 0.5 * unit_system_2d_y.bupd
                 range_y = [-f, f]
             else:
-                # loc: UV座標
+                # uv_co: min=(0, 0), max=(1, 1)
                 if ruler_settings.image_editor_origin_type == 'cursor':
                     uv_co = context.space_data.cursor_location.copy()
                     uv_co[0] /= image_sx
@@ -785,23 +786,33 @@ def region_drawing_rectangle(context, area, region):
     :return (xmin, ymin, xmax, ymax)
     :rtype (int, int, int, int)
     """
+    ymin = 0
+    ymax = region.height - 1
+
+    # render info
+    if context.area.type == 'IMAGE_EDITOR':
+        image = context.area.spaces.active.image
+        if image and image.type == 'RENDER_RESULT':
+            dpi = context.user_preferences.system.dpi
+            ymax -= int((PIXEL_SIZE * dpi * 20 + 36) / 72)  # # widget_unit
+
     if not context.user_preferences.system.use_region_overlap:
-        return 0, 0, region.width - 1, region.height - 1
+        return 0, ymin, region.width - 1, ymax
 
     # Regionが非表示ならidが0。
     # その際、通常はwidth若しくはheightが1になっている。
     # TOOLSが非表示なのにTOOL_PROPSのみ表示される事は無い
     window = tools = tool_props = ui = None
-    for region in area.regions:
-        if region.id != 0:
-            if region.type == 'WINDOW':
-                window = region
-            elif region.type == 'TOOLS':
-                tools = region
-            elif region.type == 'TOOL_PROPS':
-                tool_props = region
-            elif region.type == 'UI':
-                ui = region
+    for ar in area.regions:
+        if ar.id != 0:
+            if ar.type == 'WINDOW':
+                window = ar
+            elif ar.type == 'TOOLS':
+                tools = ar
+            elif ar.type == 'TOOL_PROPS':
+                tool_props = ar
+            elif ar.type == 'UI':
+                ui = ar
 
     xmin = region.x
     xmax = xmin + window.width - 1
@@ -832,8 +843,6 @@ def region_drawing_rectangle(context, area, region):
 
     xmin = max(xmin, area.x + left_width) - region.x
     xmax = min(xmax, area.x + area.width - right_width - 1) - region.x
-    ymin = 0
-    ymax = region.height - 1
     return xmin, ymin, xmax, ymax
 
 
@@ -843,7 +852,6 @@ def region_drawing_rectangle(context, area, region):
 def draw_font(font_id, text, outline_color=None):
     """outline_colorを指定したらその色で縁取りする"""
     current_color = vagl.Buffer('double', 4, bgl.GL_CURRENT_COLOR)
-    stencil_mask = vagl.Buffer('int', 1, bgl.GL_STENCIL_WRITEMASK)
     if outline_color:
         color = list(outline_color)
         if len(color) == 3:
@@ -853,12 +861,10 @@ def draw_font(font_id, text, outline_color=None):
                 color[3] /= 8 / 60  # blf_texture5_draw()より
             elif OUTLINE_RADIUS == 3:
                 color[3] /= 4 / 16  # blf_texture3_draw()より
-            bgl.glStencilMask(0)
             bgl.glColor4f(*color)
             blf.blur(font_id, OUTLINE_RADIUS)
             vagl.blf_draw(font_id, text)
             blf.blur(font_id, 0)
-            bgl.glStencilMask(stencil_mask[0])
             bgl.glColor4f(*current_color)
 
     vagl.blf_draw(font_id, text)
@@ -897,17 +903,8 @@ def get_background_color(context, y=None):
 
 
 def draw_line_loop(context, coords, line=False, fill=False,
-                   line_color=None, fill_color=None, fill_back_color=False,
-                   _first=True):
-    prefs = get_addon_preferences(context)
+                   line_color=None, fill_color=None, fill_back_color=False):
     current_color = vagl.Buffer('double', 4, bgl.GL_CURRENT_COLOR)
-    stencil_mask = vagl.Buffer('int', 1, bgl.GL_STENCIL_WRITEMASK)
-    if prefs.use_stencil:
-        # 最初に色だけ塗って、ステンシルへの書き込みはその後
-        if _first:
-            bgl.glStencilMask(0)
-        else:
-            bgl.glColorMask(0, 0, 0, 0)
 
     if fill:
         if fill_color:
@@ -934,15 +931,6 @@ def draw_line_loop(context, coords, line=False, fill=False,
         bgl.glEnd()
 
     bgl.glColor4f(*current_color)
-    if prefs.use_stencil:
-        if _first:
-            bgl.glStencilMask(stencil_mask[0])
-        else:
-            bgl.glColorMask(1, 1, 1, 1)
-        if _first:
-            draw_line_loop(context, coords, line, fill,
-                           line_color, fill_color, fill_back_color,
-                           _first=False)
 
 
 def draw_box(context, box, line=False, fill=False,
@@ -1271,7 +1259,7 @@ def draw_free_ruler(context, prefs, start, end, offset,
     lines = []
     lines_bold = []
     numbers = []
-    numbers_stencil = []
+    numbers_fill = []
     triangles = []
 
     for count, p in generate_scale_points(
@@ -1338,7 +1326,7 @@ def draw_free_ruler(context, prefs, start, end, offset,
                 v -= (vx + vy) * margin
                 w = tw + margin * 2
                 h = th + margin * 2
-                numbers_stencil.append((v[0], v[1], w, h))
+                numbers_fill.append((v[0], v[1], w, h))
 
         # Origin Triangles
         if count == 0:
@@ -1398,14 +1386,14 @@ def draw_free_ruler(context, prefs, start, end, offset,
         bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER,
                             bgl.GL_LINEAR)
     bgl.glColor3f(*prefs.color.number)
-    for number_data, stencil_data in zip(numbers, numbers_stencil):
-        xmin, ymin, w, h = stencil_data
+    for number_data, fill_data in zip(numbers, numbers_fill):
+        xmin, ymin, w, h = fill_data
         ang = angle if rotate_text else 0.0
         x, y, text = number_data
         blf.position(prefs.font.id, x, y, 0)
         draw_font_context(context, prefs.font.id, text, outline=True,
                           outline_color=prefs.color.number_outline)
-        if prefs.use_stencil:
+        if not prefs.use_fill:
             bgl.glColorMask(0, 0, 0, 0)
             draw_box(context, (xmin, ymin, w, h), fill=True, angle=ang)
             bgl.glColorMask(1, 1, 1, 1)
@@ -1419,30 +1407,123 @@ def draw_free_ruler(context, prefs, start, end, offset,
                             buf_min[0])
 
 
+def viewport_name(context):
+    v3d = context.space_data
+    rv3d = context.region_data
+
+    if rv3d.view_perspective == 'CAMERA':
+        if v3d.camera and v3d.camera.type == 'CAMERA':
+            cam = v3d.camera.data
+            if cam.type == 'ORTHO':
+                name = 'Camera Ortho'
+            elif cam.type == 'PERSP':
+                name = 'Camera Persp'
+            else:
+                name = 'Camera Pano'
+        else:
+            name = 'Object as Camera'
+    elif data.view_type == 'user':
+        if rv3d.view_perspective == 'ORTHO':
+            name = 'User Ortho'
+        else:
+            name = 'User Persp'
+    else:
+        name = data.view_type.title()
+        if rv3d.view_perspective == 'ORTHO':
+            name += ' Ortho'
+        else:
+            name += ' Persp'
+
+    if v3d.local_view:
+        name += ' (Local)'
+    if hasattr(v3d, 'use_local_grid') and v3d.use_local_grid:
+        name += ' (LocalGrid)'
+
+    return name
+
+
+def view3d_upper_left_text_rect(context):
+    """View3D左上の文字の範囲を返す。
+    blf.size()を呼んで文字サイズを変えるので注意。
+    @ view3d_main_area_draw_info() 参照
+    :return: region coords [xmin, xmax, ymin, ymax]
+    :rtype: [int, int, int, int]
+    """
+    if context.area.type != 'VIEW_3D':
+        return [0, 0, 0, 0]
+
+    region = context.region
+    user_pref = context.user_preferences
+    if (user_pref.view.show_playback_fps and
+            context.screen. is_animation_playing):
+        text = 'fps: 000.00'  # 最大長
+    elif user_pref.view.show_view_name:
+        text = viewport_name(context)
+    else:
+        return [0, 0, 0, 0]
+
+    dpi = user_pref.system.dpi
+    widget_unit = int((PIXEL_SIZE * dpi * 20 + 36) / 72)
+    # 文字描画位置: [rect.xmin + widget_unit, rect.xmax - widget_unit]
+
+    font_path = context.user_preferences.system.font_path_ui
+    font_id = 0
+    if font_path:
+        try:
+            font_id = blf.load(font_path)
+        except:
+            pass
+    blf.size(font_id, 11, dpi)
+    w, h = blf.dimensions(font_id, text)
+    return [widget_unit, int(widget_unit + w),
+            region.height - 1 - widget_unit,
+            region.height - 1 - widget_unit + h]
+
+
+def set_model_view_z(z):
+    """
+    :param z: 有効範囲は -100 〜 +100
+    :type z: int | float
+    """
+    bgl.glMatrixMode(bgl.GL_MODELVIEW)
+    bgl.glLoadIdentity()
+    bgl.glTranslated(0.0, 0.0, z)
+
+
+def draw_mask(context):
+    set_model_view_z(50)
+
+    name_rect = view3d_upper_left_text_rect(context)
+    margin = 5
+    bgl.glColorMask(0, 0, 0, 0)
+    bgl.glBegin(bgl.GL_QUADS)
+    bgl.glVertex2f(name_rect[0] - margin, name_rect[2] - margin)
+    bgl.glVertex2f(name_rect[1] + margin, name_rect[2] - margin)
+    bgl.glVertex2f(name_rect[1] + margin, name_rect[3] + margin)
+    bgl.glVertex2f(name_rect[0] - margin, name_rect[3] + margin)
+    bgl.glEnd()
+    bgl.glColorMask(1, 1, 1, 1)
+
+    set_model_view_z(0)
+
+
 def draw_region_rulers(context):
     prefs = get_addon_preferences(context)
     area = context.area
     region = context.region
-    sx, sy = region.width, region.height
     xmin, ymin, xmax, ymax = region_drawing_rectangle(context, area, region)
     scissor_is_enabled = vagl.Buffer('bool', 0, bgl.GL_SCISSOR_TEST)
     scissor_box = vagl.Buffer('int', 4, bgl.GL_SCISSOR_BOX)
     bgl.glEnable(bgl.GL_SCISSOR_TEST)
-    if context.area.type == 'IMAGE_EDITOR':
-        ofs = 0
-    elif context.space_data.local_view:
-        ofs = 130
-    else:
-        ofs = 100
 
     # X-Axis
     if context.area.type == 'IMAGE_EDITOR':
         data.unit_system, data.unit_system_2d_x = \
             data.unit_system_2d_x, data.unit_system
-    bgl.glScissor(region.x + xmin + ofs, region.y,
-                  region.x + xmax + 1, region.y + sy)
+    bgl.glScissor(region.x + xmin, region.y,
+                  max(0, (xmax - xmin + 1)), ymax - ymin + 1)
     range_x = data.range_x
-    draw_free_ruler(context, prefs, Vector((0, sy)), Vector((xmax, sy)),
+    draw_free_ruler(context, prefs, Vector((0, ymax)), Vector((xmax, ymax)),
                     range_x[0], range_x[0] > range_x[1],
                     line_feed=False, rotate_text=False,
                     number_upper_side=False, base_line=False)
@@ -1452,9 +1533,9 @@ def draw_region_rulers(context):
         data.unit_system, data.unit_system_2d_y = \
             data.unit_system_2d_y, data.unit_system
     bgl.glScissor(region.x + xmin, region.y,
-                  region.x + xmax + 1, region.y + sy)
+                  xmax - xmin + 1, ymax - ymin + 1)
     range_y = data.range_y
-    draw_free_ruler(context, prefs, Vector((xmax, 0)), Vector((xmax, sy)),
+    draw_free_ruler(context, prefs, Vector((xmax, 0)), Vector((xmax, ymax)),
                     range_y[0], range_y[0] > range_y[1],
                     line_feed=True, rotate_text=False,
                     number_upper_side=True, base_line=False)
@@ -1469,28 +1550,39 @@ def draw_region_rulers(context):
     bgl.glScissor(*scissor_box)  # [region.x, region.y, sx, sy]
 
 
-def draw_unit_box(context, use_stencil):
-    """右上"""
+def draw_unit_box(context, use_fill):
+    """右上。
+    render情報が表示されている場合でも、propertiesパネル表示用の＋マークと
+    重なる事を避ける為表示位置は変えない)
+    """
     prefs = get_addon_preferences(context)
-    unit_system = data.unit_system
-    if unit_system.system == 'NONE':
-        text = '{:g}'.format(unit_system.bupg)
-    else:
-        unit = unit_system.unit
-        if unit_system.system == 'METRIC':
-            if unit.symbol == 'hm':
-                text = '100m'
-            elif unit.symbol == 'dam':
-                text = '10m'
-            elif unit.symbol == 'dm':
-                text = '10cm'
-            else:
-                text = '1' + unit.symbol
+    if context.area.type == 'IMAGE_EDITOR':
+        fx = data.unit_system_2d_x.bupg
+        fy = data.unit_system_2d_y.bupg
+        if fx == fy:
+            text = '{:g}'.format(fx)
         else:
-            if unit.symbol in ('\'', '"'):
-                text = '1' + unit.symbol_alt  # feetとinchが見にくいため
+            text = '{:g}, {:g}'.format(fx, fy)
+    else:
+        unit_system = data.unit_system
+        if unit_system.system == 'NONE':
+            text = '{:g}'.format(unit_system.bupg)
+        else:
+            unit = unit_system.unit
+            if unit_system.system == 'METRIC':
+                if unit.symbol == 'hm':
+                    text = '100m'
+                elif unit.symbol == 'dam':
+                    text = '10m'
+                elif unit.symbol == 'dm':
+                    text = '10cm'
+                else:
+                    text = '1' + unit.symbol
             else:
-                text = '1' + unit.symbol
+                if unit.symbol in ('\'', '"'):
+                    text = '1' + unit.symbol_alt  # feetとinchが見にくいため
+                else:
+                    text = '1' + unit.symbol
 
     area = context.area
     region = context.region
@@ -1504,8 +1596,10 @@ def draw_unit_box(context, use_stencil):
     h = text_height + font.margin * 2
     box = [xmax - w, sy - h - 1, w, h]
 
+    set_model_view_z(20)
+
     # 背景と枠線
-    draw_box(context, box, line=True, fill=not use_stencil,
+    draw_box(context, box, line=True, fill=use_fill,
              line_color=prefs.color.line, fill_back_color=True)
 
     # 数値
@@ -1513,14 +1607,16 @@ def draw_unit_box(context, use_stencil):
     blf.position(
         prefs.font.id, xmax - tw - font.margin - 2,
         sy - text_height - font.margin, 0)
-    draw_font_context(context, font.id, text, outline=use_stencil,
+    draw_font_context(context, font.id, text, outline=not use_fill,
                       outline_color=prefs.color.number_outline)
 
     # ステンシル塗りつぶし
-    if use_stencil:
+    if not use_fill:
         bgl.glColorMask(0, 0, 0, 0)
         draw_box(context, box, fill=True)
         bgl.glColorMask(1, 1, 1, 1)
+
+    set_model_view_z(0)
 
 
 def draw_measure(context, event):
@@ -1537,6 +1633,10 @@ def draw_measure(context, event):
     rv3d = context.region_data
     if not rv3d:
         return
+
+    if not (data.simple_measure or running_measure):
+        return
+
     pmat = rv3d.perspective_matrix
     pimat = pmat.inverted()
     unit_system = data.unit_system
@@ -1553,54 +1653,218 @@ def draw_measure(context, event):
     else:
         depth_location = rv3d.view_location
 
-    use_stencil = prefs.use_stencil
+    use_fill = prefs.use_fill
 
     def draw_box_text(box, text):
-        draw_box(context, box, line=True, fill=not use_stencil,
+        draw_box(context, box, line=True, fill=use_fill,
                  line_color=prefs.color.line, fill_back_color=True)
         bgl.glColor3f(*prefs.color.number)
         blf.position(font.id,
                      box[0] + margin, box[1] + margin, 0)
-        draw_font_context(context, font.id, text, outline=use_stencil,
+        draw_font_context(context, font.id, text, outline=not use_fill,
                           outline_color=prefs.color.number_outline)
-        if use_stencil:
+        if not use_fill:
             bgl.glColorMask(0, 0, 0, 0)
             draw_box(context, box, line=True, fill=True,
                      line_color=prefs.color.line, fill_back_color=True)
             bgl.glColorMask(1, 1, 1, 1)
 
     def draw_angle_box_text(box, text):
-        draw_angle_box(context, box, line=True, fill=not use_stencil,
+        draw_angle_box(context, box, line=True, fill=use_fill,
                        line_color=prefs.color.line, fill_back_color=True)
         bgl.glColor3f(*prefs.color.number)
         blf.position(font.id, box[0] + margin, box[1] + margin, 0)
-        draw_font_context(context, font.id, text, outline=use_stencil,
+        draw_font_context(context, font.id, text, outline=not use_fill,
                           outline_color=prefs.color.number_outline)
-        if use_stencil:
+        if not use_fill:
             bgl.glColorMask(0, 0, 0, 0)
             draw_box(context, box, line=True, fill=True,
                      line_color=prefs.color.line, fill_back_color=True)
             bgl.glColorMask(1, 1, 1, 1)
 
-    if data.simple_measure or running_measure:
-        bgl.glEnable(bgl.GL_BLEND)
-        # Calc coords ---------------------------------------------------------
-        if data.measure_points:
-            coordsW = data.measure_points[:]
-            coordsR = [vav.project_v3(sx, sy, pmat, v).to_2d()
-                       for v in data.measure_points]
-            coordsW.append(vav.unproject_v3(sx, sy, pimat, mco,
-                                            coordsW[-1], True))
-            coordsR.append(mco)
-        else:
-            coordsW = [vav.unproject_v3(sx, sy, pimat, mco,
-                                        depth_location, True)]
-            coordsR = [mco]
+    # Calc coords ---------------------------------------------------------
+    if data.measure_points:
+        coordsW = data.measure_points[:]
+        coordsR = [vav.project_v3(sx, sy, pmat, v).to_2d()
+                   for v in data.measure_points]
+        coordsW.append(vav.unproject_v3(sx, sy, pimat, mco,
+                                        coordsW[-1], True))
+        coordsR.append(mco)
+    else:
+        coordsW = [vav.unproject_v3(sx, sy, pimat, mco,
+                                    depth_location, True)]
+        coordsR = [mco]
 
-        # Backgrouund Circle --------------------------------------------------
+    def draw_numbers():
+        if len(coordsR) > 1:
+            v1W = coordsW[-2]
+            v2W = coordsW[-1]
+            v1R = coordsR[-2]
+            v2R = coordsR[-1]  # == mco
+
+            # Width Box -------------------------------------------------------
+            value = (v2R[0] - v1R[0]) * unit_system.bupd
+            text = make_mouse_coordinate_label(context, unit_system, value)
+            tw, _ = blf.dimensions(font.id, text)
+            if v2R[0] >= v1R[0]:
+                x = mco[0] - tw - margin * 2 - 20
+            else:
+                x = mco[0] + 20
+            y = data.mcbox_x[1]
+            wbox = (x, y - th - margin * 2,
+                       tw + margin * 2, th + margin * 2)
+            draw_box_text(wbox, text)
+
+            # Height Box ------------------------------------------------------
+            value = (v2R[1] - v1R[1]) * unit_system.bupd
+            text = make_mouse_coordinate_label(context, unit_system, value)
+            tw, _ = blf.dimensions(font.id, text)
+            if v2R[1] >= v1R[1]:
+                y = mco[1] - th - margin * 2 - 20
+            else:
+                y = mco[1] + 20
+            hbox = (data.mcbox_y[0] - tw - margin * 2, y,
+                    tw + font.margin * 2, th + margin * 2)
+            draw_box_text(hbox, text)
+
+    def draw_mouse_numbers():
+        # Around Mouse ----------------------------------------------------
+        if len(coordsR) > 1:
+            v1W = coordsW[-2]
+            v2W = coordsW[-1]
+            v1R = coordsR[-2]
+            v2R = coordsR[-1]  # == mco
+
+            ofs = 20
+
+            # length
+            text = make_mouse_coordinate_label(
+                context, unit_system, (v1W - v2W).length)
+            tw, _ = blf.dimensions(font.id, text)
+            box = [mco[0] + 1.6 * ofs, mco[1] - th - ofs,
+                   tw + margin * 2, th + margin * 2]
+            draw_box_text(box, text)
+
+            # angle
+            v = v2R - v1R
+            angle = math.atan2(v[1], v[0])
+            if context.scene.unit_settings.system_rotation == 'RADIANS':
+                text = "{0:.2f}".format(angle)
+            else:
+                text = "{0:.2f}".format(math.degrees(angle))
+            tw, _ = blf.dimensions(font.id, text)
+            box[1] -= th + 10
+            box[2] = tw + margin * 2
+            draw_angle_box_text(box, text)
+
+        # Basic Cross Scale ---------------------------------------------------
+        else:
+            vecs = [((sx, mco[1]), False, False),
+                    ((0, mco[1]), True, True),
+                    ((mco[0], sy), False, True),
+                    ((mco[0], 0), True, False)]
+            for v, negative, number_upper_side in vecs:
+                draw_free_ruler(context, prefs, mco, Vector(v), 0.0,
+                                negative=negative, line_feed=True,
+                                number_upper_side=number_upper_side,
+                                double_side_scale=True,
+                                base_line=True,
+                                draw_zero=set())
+
+    def draw_scale_numbers():
+        bgl.glDepthFunc(bgl.GL_LESS)
+        # 後の方が前面に描画される
+        for i in reversed(range(len(coordsR) - 1)):
+            v1R = coordsR[i]
+            v2R = coordsR[i + 1]
+            v1W = coordsW[i]
+            v2W = coordsW[i + 1]
+
+            # Length ----------------------------------------------------------
+            text = make_mouse_coordinate_label(
+                context, unit_system, (v1W - v2W).length)
+            tw, _ = blf.dimensions(font.id, text)
+            _width, height = rotated_bbox(tw + margin * 2, th + margin * 2,
+                                         - math.atan2(*(v2R - v1R).yx))
+            hvec = (v2R - v1R).normalized()
+            vvec = Matrix.Rotation(-math.pi / 2, 2) * hvec
+            v = (v2R + v1R) / 2 + (ssmain + height / 2) * vvec
+            box = (v[0] - tw / 2 - margin,
+                   v[1] - th / 2 - margin,
+                   tw + margin * 2, th + margin * 2)
+            draw_box_text(box, text)
+
+            # Angle -----------------------------------------------------------
+            if i != 0:
+                v0W = coordsW[i - 1]
+                v0R = coordsR[i - 1]
+                angle = (v0W - v1W).angle(v2W - v1W, 0.0)
+                v = ((v0R - v1R).normalized() +
+                     (v2R - v1R).normalized()).normalized()
+                if v.length == 0.0:
+                    v = Vector((0, 1))
+                v = v1R + v * 30
+                if context.scene.unit_settings.system_rotation == 'RADIANS':
+                    text = "{0:.2f}".format(angle)
+                else:
+                    text = "{0:.2f}".format(math.degrees(angle))
+                tw, _ = blf.dimensions(font.id, text)
+                box = (v[0] - tw / 2 - margin,
+                       v[1] - th / 2 - margin,
+                       tw + margin * 2, th + margin * 2)
+                draw_angle_box_text(box, text)
+        bgl.glDepthFunc(bgl.GL_LEQUAL)
+
+    def draw_scales():
+        for i in reversed(range(len(coordsR) - 1)):
+            v1R = coordsR[i]
+            v2R = coordsR[i + 1]
+            v1W = coordsW[i]
+            v2W = coordsW[i + 1]
+
+            if i == len(coordsR) - 2:
+                # Cross Scale
+                vR = v2R - v1R
+                if vR.length >= 1.0:
+                    angle = math.atan2(vR[1], vR[0])
+                else:
+                    angle = 0.0
+                mat = Matrix.Rotation(angle, 2)
+                l = vR.length + 3000
+                vecs = [((l, 0), False, False),
+                        ((-l, 0), True, True),
+                        ((0, l), False, True),
+                        ((0, -l), True, False)]
+                if 'view_location' in unit_system.override:
+                    view_loc = unit_system.override['view_location']
+                else:
+                    view_loc = None
+                unit_system.view_location = v1W
+                unit_system.update(context)
+                for v, negative, number_upper_side in vecs:
+                    vec = mat * Vector(v) + v1R
+                    draw_free_ruler(context, prefs, v1R, vec, 0.0,
+                                    negative=negative, line_feed=True,
+                                    number_upper_side=number_upper_side,
+                                    double_side_scale=True, draw_zero=set())
+                if view_loc is not None:
+                    unit_system.view_location = view_loc
+                unit_system.update(context)
+            else:
+                # Single Scale
+                draw_free_ruler(context, prefs, v1W, v2W, 0.0,
+                                negative=False, line_feed=True,
+                                number_upper_side=False,
+                                double_side_scale=True,
+                                base_line=True,
+                                draw_zero={'scale'})
+
+    def draw_backgrount_circle():
+        bgl.glColor4f(*(list(prefs.color.line) + [0.5]))
+        bgl.glLineWidth(1)
+
+        # Background circle ---------------------------------------------------
         if data.measure_points:
-            bgl.glColor4f(*(list(prefs.color.line) + [0.5]))
-            bgl.glLineWidth(1)
             centerR = coordsR[-2]
 
             if 0 <= centerR[0] <= sx and 0 <= centerR[1] <= sy:
@@ -1646,153 +1910,29 @@ def draw_measure(context, event):
             bgl.glVertex2f(data.mcbox_y[0], mco[1])
             bgl.glEnd()
 
-        for i in range(len(coordsR) - 1):
-            v1R = coordsR[i]
-            v2R = coordsR[i + 1]
-            v1W = coordsW[i]
-            v2W = coordsW[i + 1]
 
-            # Scale -----------------------------------------------------------
-            if i == len(coordsR) - 2:
-                # Cross Scale
-                vR = v2R - v1R
-                if vR.length >= 1.0:
-                    angle = math.atan2(vR[1], vR[0])
-                else:
-                    angle = 0.0
-                mat = Matrix.Rotation(angle, 2)
-                l = vR.length + 3000
-                vecs = [((l, 0), False, False),
-                        ((-l, 0), True, True),
-                        ((0, l), False, True),
-                        ((0, -l), True, False)]
-                if 'view_location' in unit_system.override:
-                    view_loc = unit_system.override['view_location']
-                else:
-                    view_loc = None
-                unit_system.view_location = v1W
-                unit_system.update(context)
-                for v, negative, number_upper_side in vecs:
-                    vec = mat * Vector(v) + v1R
-                    draw_free_ruler(context, prefs, v1R, vec, 0.0,
-                                    negative=negative, line_feed=True,
-                                    number_upper_side=number_upper_side,
-                                    double_side_scale=True, draw_zero=set())
-                if view_loc is not None:
-                    unit_system.view_location = view_loc
-                unit_system.update(context)
-            else:
-                # Single Scale
-                draw_free_ruler(context, prefs, v1W, v2W, 0.0,
-                                negative=False, line_feed=True,
-                                number_upper_side=False,
-                                double_side_scale=True,
-                                base_line=True,
-                                draw_zero={'scale'})
+    bgl.glEnable(bgl.GL_BLEND)
+    if use_fill:
+        draw_backgrount_circle()
+        draw_scales()
+        draw_scale_numbers()
+        draw_numbers()
+        draw_mouse_numbers()
 
-            # Length ----------------------------------------------------------
-            text = make_mouse_coordinate_label(
-                context, unit_system, (v1W - v2W).length)
-            tw, _ = blf.dimensions(font.id, text)
-            _width, height = rotated_bbox(tw + margin * 2, th + margin * 2,
-                                         - math.atan2(*(v2R - v1R).yx))
-            hvec = (v2R - v1R).normalized()
-            vvec = Matrix.Rotation(-math.pi / 2, 2) * hvec
-            v = (v2R + v1R) / 2 + (ssmain + height / 2) * vvec
-            box = (v[0] - tw / 2 - margin,
-                   v[1] - th / 2 - margin,
-                   tw + margin * 2, th + margin * 2)
-            draw_box_text(box, text)
+    else:
+        set_model_view_z(10)
+        draw_mouse_numbers()
+        set_model_view_z(8)
+        draw_numbers()
+        set_model_view_z(5)
+        draw_scale_numbers()
+        set_model_view_z(4)
+        draw_scales()
+        set_model_view_z(3)
+        draw_backgrount_circle()
+    bgl.glDisable(bgl.GL_BLEND)
 
-            # Angle -----------------------------------------------------------
-            if i != 0:
-                v0W = coordsW[i - 1]
-                v0R = coordsR[i - 1]
-                angle = (v0W - v1W).angle(v2W - v1W, 0.0)
-                v = ((v0R - v1R).normalized() +
-                     (v2R - v1R).normalized()).normalized()
-                if v.length == 0.0:
-                    v = Vector((0, 1))
-                v = v1R + v * 30
-                if context.scene.unit_settings.system_rotation == 'RADIANS':
-                    text = "{0:.2f}".format(angle)
-                else:
-                    text = "{0:.2f}".format(math.degrees(angle))
-                tw, _ = blf.dimensions(font.id, text)
-                box = (v[0] - tw / 2 - margin,
-                       v[1] - th / 2 - margin,
-                       tw + margin * 2, th + margin * 2)
-                draw_angle_box_text(box, text)
-
-        if len(coordsR) > 1:
-            v1W = coordsW[-2]
-            v2W = coordsW[-1]
-            v1R = coordsR[-2]
-            v2R = coordsR[-1]  # == mco
-
-            # Width Box -------------------------------------------------------
-            value = (v2R[0] - v1R[0]) * unit_system.bupd
-            text = make_mouse_coordinate_label(context, unit_system, value)
-            tw, _ = blf.dimensions(font.id, text)
-            if v2R[0] >= v1R[0]:
-                x = mco[0] - tw - margin * 2 - 20
-            else:
-                x = mco[0] + 20
-            y = data.mcbox_x[1]
-            wbox = (x, y - th - margin * 2,
-                       tw + margin * 2, th + margin * 2)
-            draw_box_text(wbox, text)
-
-            # Height Box ------------------------------------------------------
-            value = (v2R[1] - v1R[1]) * unit_system.bupd
-            text = make_mouse_coordinate_label(context, unit_system, value)
-            tw, _ = blf.dimensions(font.id, text)
-            if v2R[1] >= v1R[1]:
-                y = mco[1] - th - margin * 2 - 20
-            else:
-                y = mco[1] + 20
-            hbox = (data.mcbox_y[0] - tw - margin * 2, y,
-                    tw + font.margin * 2, th + margin * 2)
-            draw_box_text(hbox, text)
-
-            # Around Mouse ----------------------------------------------------
-            ofs = 20
-
-            # length
-            text = make_mouse_coordinate_label(
-                context, unit_system, (v1W - v2W).length)
-            tw, _ = blf.dimensions(font.id, text)
-            box = [mco[0] + 1.6 * ofs, mco[1] - th - ofs,
-                   tw + margin * 2, th + margin * 2]
-            draw_box_text(box, text)
-
-            # angle
-            v = v2R - v1R
-            angle = math.atan2(v[1], v[0])
-            if context.scene.unit_settings.system_rotation == 'RADIANS':
-                text = "{0:.2f}".format(angle)
-            else:
-                text = "{0:.2f}".format(math.degrees(angle))
-            tw, _ = blf.dimensions(font.id, text)
-            box[1] -= th + 10
-            box[2] = tw + margin * 2
-            draw_angle_box_text(box, text)
-
-        # Basic Cross Scale ---------------------------------------------------
-        else:
-            vecs = [((sx, mco[1]), False, False),
-                    ((0, mco[1]), True, True),
-                    ((mco[0], sy), False, True),
-                    ((mco[0], 0), True, False)]
-            for v, negative, number_upper_side in vecs:
-                draw_free_ruler(context, prefs, mco, Vector(v), 0.0,
-                                negative=negative, line_feed=True,
-                                number_upper_side=number_upper_side,
-                                double_side_scale=True,
-                                base_line=True,
-                                draw_zero=set())
-
-        bgl.glDisable(bgl.GL_BLEND)
+    set_model_view_z(0)
 
 
 def draw_cross_cursor(context, event):
@@ -1885,7 +2025,7 @@ def make_mouse_coordinate_label(context, unit_system, value):
     return text
 
 
-def draw_mouse_coordinates_lower_right(context, event, use_stencil):
+def draw_mouse_coordinates_lower_right(context, event, use_fill):
     """マウス座標をカーソルに追従せずに右下に描画"""
     prefs = get_addon_preferences(context)
 
@@ -1913,19 +2053,19 @@ def draw_mouse_coordinates_lower_right(context, event, use_stencil):
             if box[1] - f < mco[1] < box[1] + box[3] + f:
                 return
 
-    draw_box(context, box, line=True, fill=not use_stencil,
+    draw_box(context, box, line=True, fill=use_fill,
              line_color=prefs.color.line, fill_back_color=True)
 
     blf.position(font.id, box[0] + font.margin, box[1] + font.margin, 0)
     vagl.blf_draw(font.id, label)
 
-    if use_stencil:
+    if not use_fill:
         bgl.glColorMask(0, 0, 0, 0)
         draw_box(context, box, fill=True)
         bgl.glColorMask(1, 1, 1, 1)
 
 
-def draw_mouse_coordinates(context, event, use_stencil):
+def draw_mouse_coordinates(context, event, use_fill):
     wm = context.window_manager
     ruler_settings = wm.region_ruler
     running_measure = ruler_settings.measure
@@ -1937,13 +2077,14 @@ def draw_mouse_coordinates(context, event, use_stencil):
             return
 
     if prefs.mouse_coordinates_position == 'lower_right':
-        draw_mouse_coordinates_lower_right(context, event, use_stencil)
+        set_model_view_z(100)
+        draw_mouse_coordinates_lower_right(context, event, use_fill)
+        set_model_view_z(0)
         if not running_measure and not data.simple_measure:
             return
 
     area = context.area
     region = context.region
-    sx, sy = region.width, region.height
     xmin, ymin, xmax, ymax = region_drawing_rectangle(context, area, region)
     mco = event.mco_region_mod
     ssmain = prefs.scale_size[0]
@@ -1952,6 +2093,8 @@ def draw_mouse_coordinates(context, event, use_stencil):
     font = prefs.font
     blf.size(font.id, font.mcsize, context.user_preferences.system.dpi)
     _, th = blf.dimensions(font.id, string.digits)
+
+    set_model_view_z(90)
 
     # X-Axis (Top)
     if area.type == 'VIEW_3D':
@@ -1963,29 +2106,35 @@ def draw_mouse_coordinates(context, event, use_stencil):
     boxw = tw + font.margin * 2
     boxh = th + font.margin * 2
     boxx = mco[0] - boxw / 2
-    boxy = sy - ssmain - boxh
+    boxy = ymax - ssmain - boxh
     box = [boxx, boxy, boxw, boxh]
+
+    # 3DView左上の文字と重なる場合は塗りつぶす
+    rect = view3d_upper_left_text_rect(context)
+    use_fill_x = (boxx < rect[1] and boxy < rect[3] and
+                  rect[0] < boxx + boxw and rect[2] < boxy + boxh) or use_fill
+    blf.size(font.id, font.mcsize, context.user_preferences.system.dpi)
 
     bgl.glEnable(bgl.GL_BLEND)
     if data.is_inside and (not prefs.autohide_mouse_coordinate or
                            mco[1] < boxy - prefs.autohide_MC_threshold or
                            running_measure):
-        draw_box(context, box, line=True, fill=not use_stencil,
+        draw_box(context, box, line=True, fill=use_fill_x,
                  line_color=prefs.color.line, fill_back_color=True)
 
         # 上向きの三角形
         x2 = mco[0] - triangle_size / 2
         x3 = x2 + triangle_size
-        y2 = sy - ssmain
-        vagl.draw_triangle((x2, y2), (x3, y2), (mco[0], sy), poly=True)
-        vagl.draw_triangle((x2, y2), (x3, y2), (mco[0], sy))
+        y2 = ymax - ssmain
+        vagl.draw_triangle((x2, y2), (x3, y2), (mco[0], ymax), poly=True)
+        vagl.draw_triangle((x2, y2), (x3, y2), (mco[0], ymax))
 
         bgl.glColor3f(*prefs.color.number)
         blf.position(font.id, boxx + font.margin, boxy + font.margin, 0)
-        draw_font_context(context, font.id, text, outline=use_stencil,
+        draw_font_context(context, font.id, text, outline=not use_fill_x,
                           outline_color=prefs.color.number_outline)
 
-        if use_stencil:
+        if not use_fill_x:
             bgl.glColorMask(0, 0, 0, 0)
             draw_box(context, box, fill=True)
             bgl.glColorMask(1, 1, 1, 1)
@@ -1993,7 +2142,9 @@ def draw_mouse_coordinates(context, event, use_stencil):
         data.mcbox_x = box
 
     else:
-        data.mcbox_x = [mco[0], sy - ssmain, 0, 0]
+        data.mcbox_x = [mco[0], ymax - ssmain, 0, 0]
+
+    set_model_view_z(80)
 
     # Y-Axis (Right)
     if area.type == 'VIEW_3D':
@@ -2012,7 +2163,7 @@ def draw_mouse_coordinates(context, event, use_stencil):
     if data.is_inside and (not prefs.autohide_mouse_coordinate or
                            mco[0] < boxx - prefs.autohide_MC_threshold or
                            running_measure):
-        draw_box(context, box, line=True, fill=not use_stencil,
+        draw_box(context, box, line=True, fill=use_fill,
                  line_color=prefs.color.line, fill_back_color=True)
 
         # 右向きの三角形
@@ -2028,11 +2179,12 @@ def draw_mouse_coordinates(context, event, use_stencil):
             tw, _ = blf.dimensions(font.id, text_line)
             px = xmax - ssmain - tw - font.margin
             blf.position(font.id, px, py, 0)
-            draw_font_context(context, font.id, text_line, outline=use_stencil,
+            draw_font_context(context, font.id, text_line,
+                              outline=not use_fill,
                               outline_color=prefs.color.number_outline)
             py -= th + font.margin
 
-        if use_stencil:
+        if not use_fill:
             bgl.glColorMask(0, 0, 0, 0)
             draw_box(context, box, fill=True)
             bgl.glColorMask(1, 1, 1, 1)
@@ -2042,6 +2194,8 @@ def draw_mouse_coordinates(context, event, use_stencil):
     else:
         data.mcbox_y = [xmax - ssmain, mco[1], 0, 0]
 
+    set_model_view_z(0)
+
 
 def draw_callback(context):
     # print('draw_callback(), {}, area: {}, region: {}'.format(
@@ -2050,11 +2204,15 @@ def draw_callback(context):
     window = context.window
     prop = wm.region_ruler
     prefs = get_addon_preferences(context)
+    ptr = window.as_pointer()
 
     if data.handle:
-        if context.window.as_pointer() not in data.operators:
+        if ptr not in data.operators:
             if is_modal_needed(context):
                 bpy.ops.view3d.region_ruler('INVOKE_DEFAULT')
+            elif ptr not in data.events:
+                bpy.ops.view3d.region_ruler('INVOKE_DEFAULT',
+                                            get_event_only=True)
 
     # wm.region_ruler.enableはspace_data毎に値が切り替わる
     if not prop.enable:
@@ -2063,7 +2221,7 @@ def draw_callback(context):
     glsettings = vagl.GLSettings(context)
     glsettings.push()
 
-    event = data.events[window.as_pointer()]
+    event = data.events[ptr]
 
     # simpleMeasure表示を消す。ここでのEvent.typeは当てにならない
     if data.alt and not event.alt:
@@ -2081,56 +2239,41 @@ def draw_callback(context):
 
     bgl.glColorMask(1, 1, 1, 1)
     bgl.glEnable(bgl.GL_BLEND)
-    bgl.glDisable(bgl.GL_DEPTH_TEST)
     bgl.glEnable(bgl.GL_LINE_SMOOTH)
+    bgl.glDisable(bgl.GL_STENCIL_TEST)
     # bgl.glEnable(bgl.GL_POLYGON_SMOOTH)
 
-    # Draw with stencil
-    if prefs.use_stencil and vagl.Buffer('int', 0, bgl.GL_STENCIL_BITS):
-        # enable and clear stencil
-        bgl.glClearStencil(0)
-        bgl.glClear(bgl.GL_STENCIL_BUFFER_BIT)
-        bgl.glStencilMask(0xff)  # NOTE: 8bit: 0xff, 32bit: 0xffffffff
-        bgl.glEnable(bgl.GL_STENCIL_TEST)
-
-        # draw mouse coordinates
-        # 2つのbox同士が重なって描画されないようにする。
-        # 描画した箇所のstencil値を0b1に
-        bgl.glStencilFunc(bgl.GL_GREATER, 0b1, 0xff)
-        bgl.glStencilOp(bgl.GL_KEEP, bgl.GL_REPLACE, bgl.GL_REPLACE)
+    if prefs.use_fill:
+        bgl.glDisable(bgl.GL_DEPTH_TEST)
+        draw_region_rulers(context)
+        draw_cross_cursor(context, event)
+        draw_unit_box(context, True)
+        draw_measure(context, event)
         draw_mouse_coordinates(context, event, True)
 
-        # draw unit box
-        # mouse coordinates が描かれていない箇所に描画。stencil値を0b10とする
-        bgl.glStencilFunc(bgl.GL_EQUAL, 0b10, 0b1)
-        bgl.glStencilOp(bgl.GL_KEEP, bgl.GL_REPLACE, bgl.GL_REPLACE)
-        draw_unit_box(context, True)
-
-        # draw ruler
-        # stencil値が0の箇所にのみ描画
-        bgl.glStencilFunc(bgl.GL_EQUAL, 0, 0xff)
-        bgl.glStencilOp(bgl.GL_KEEP, bgl.GL_INCR, bgl.GL_INCR)
-        draw_region_rulers(context)
-
-        # other
-        bgl.glStencilFunc(bgl.GL_EQUAL, 0, 0xff)
-        # GL_KEEPで良かったっけ？
-        bgl.glStencilOp(bgl.GL_KEEP, bgl.GL_KEEP, bgl.GL_KEEP)
-        draw_cross_cursor(context, event)
-
-        draw_measure(context, event)
-
-        # disable stencil
-        bgl.glDisable(bgl.GL_STENCIL_TEST)
-
-    # Draw basic
     else:
-        bgl.glDisable(bgl.GL_STENCIL_TEST)
-        draw_region_rulers(context)
-        draw_cross_cursor(context, event)
-        draw_unit_box(context, False)
-        draw_measure(context, event)
+        bgl.glEnable(bgl.GL_DEPTH_TEST)
+        bgl.glDepthMask(bgl.GL_TRUE)
+        # Z=0.0で描画したものは0.5で格納, 描画時の値が大きいほど格納値は小さくなる
+        bgl.glClearDepth(1.0)
+        bgl.glClear(bgl.GL_DEPTH_BUFFER_BIT)
+        bgl.glDepthFunc(bgl.GL_LEQUAL)
+
+        # z: 50
+        draw_mask(context)
+
+        # Z: 90(X-Axis), 80(Y-Axis)
         draw_mouse_coordinates(context, event, False)
+
+        # Z: 20
+        draw_unit_box(context, False)
+
+        draw_cross_cursor(context, event)
+
+        # Z: 10-3
+        draw_measure(context, event)
+
+        draw_region_rulers(context)
 
     if context.area.type == 'IMAGE_EDITOR':
         glsettings.restore_2d()
@@ -2172,6 +2315,9 @@ class VIEW3D_OT_region_ruler(bpy.types.Operator):
     bl_label = 'Region Ruler'
 
     bl_options = {'REGISTER'}
+
+    get_event_only = vap.BP('get_event_only',
+                            default=False, options={'HIDDEN', 'SKIP_SAVE'})
 
     def __init__(self):
         self.terminate = False
@@ -2417,8 +2563,11 @@ class VIEW3D_OT_region_ruler(bpy.types.Operator):
         if address in data.operators:
             return {'FINISHED'}
 
-        data.operators[address] = self
         data.events[address] = event
+        if self.get_event_only:
+            return {'FINISHED'}
+
+        data.operators[address] = self
         data.mouse_coords[address] = event.mco
         context.window_manager.modal_handler_add(self)
         if KEEP_MODAL_HANDLERS_HEAD:
@@ -2710,7 +2859,6 @@ def scene_update_post_handler(dummy):
     """他のModalOperatorが開始され、マウスが動いたのに再描画がされない状況に
     対応する為、Rulerを再起動しハンドラの先頭に登録し直す。
     """
-    # TODO: 再起動は止め、再描画に留める
     window = bpy.context.window
     if not window:
         return

@@ -21,7 +21,7 @@
 bl_info = {
     "name": "1D_Scripts",                     
     "author": "Alexander Nedovizin, Paul Kotelevets aka 1D_Inc (concept design), Nikitron",
-    "version": (0, 7, 15),
+    "version": (0, 7, 21),
     "blender": (2, 7, 3),
     "location": "View3D > Toolbar",
     "category": "Mesh"
@@ -1073,6 +1073,7 @@ def main_align():
 
 def main_spread(context, mode, influe):
     conf = bpy.context.window_manager.paul_manager
+    if not conf.shape_spline: mode = (mode[0], mode[1], mode[2], not mode[3])
     
     if conf.shape_spline and influe<51:
         return main_spline(context, mode, influe/50)
@@ -3427,6 +3428,122 @@ def matchProp():
         for p in wpps:
             if hasattr(o,p):
                  setattr(o,p,wpps[p])
+
+    
+def Select_chunks(maloe, setting):
+    obj = bpy.context.active_object
+    if obj.type!='MESH': return
+    if obj.mode != 'EDIT': return 
+    
+    bpy.ops.object.mode_set(mode='OBJECT') 
+    bpy.ops.object.mode_set(mode='EDIT') 
+    mesh = obj.data
+    
+    
+    if setting=='V':
+        mem_v_start = [v.index for v in mesh.vertices if v.select==True]
+        if not mem_v_start: return
+        
+        count_v = len(mem_v_start)
+        lv_select = []
+        bpy.ops.mesh.select_linked()
+        black_list = [v.index for v in mesh.vertices if v.select==True]
+        
+        bpy.ops.mesh.select_all(action='DESELECT')
+        vl = len(mesh.vertices)
+        for v_ in range(vl):
+            v = mesh.vertices[v_]
+            if v.index in black_list: continue
+            bpy.ops.object.mode_set(mode='OBJECT') 
+            mesh.vertices[v_].select = True
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_linked()
+            bpy.ops.object.mode_set(mode='OBJECT') 
+            bpy.ops.object.mode_set(mode='EDIT')
+            bl = [v1.index for v1 in mesh.vertices if v1.select==True]
+            black_list.extend(bl)
+            if len(bl)==count_v:
+                lv_select.extend(bl)
+                
+            bpy.ops.mesh.select_all(action='DESELECT')
+            
+        bpy.ops.object.mode_set(mode='OBJECT') 
+        lv_select.extend(mem_v_start)
+        for i in lv_select:
+            mesh.vertices[i].select=True
+        
+        bpy.ops.object.mode_set(mode='EDIT') 
+        bpy.ops.mesh.select_mode(type='VERT') 
+        
+    if setting=='F':
+        mem_f_start = [f.index for f in mesh.polygons if f.select==True]
+        if not mem_f_start: return
+        
+        count_f = len(mem_f_start)
+        lf_select = []
+        bpy.ops.mesh.select_linked()
+        black_list = [f.index for f in mesh.polygons if f.select==True]
+        bpy.ops.mesh.select_all(action='DESELECT')
+        fl = len(mesh.polygons)
+        for f_ in range(fl):
+            f = mesh.polygons[f_]
+            if f.index in black_list: continue
+            bpy.ops.object.mode_set(mode='OBJECT') 
+            mesh.polygons[f_].select = True
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_linked()
+            bpy.ops.object.mode_set(mode='OBJECT') 
+            bpy.ops.object.mode_set(mode='EDIT')
+            bl = [f1.index for f1 in mesh.polygons if f1.select==True]
+            black_list.extend(bl)
+            if len(bl)==count_f:
+                lf_select.extend(bl)
+                
+            bpy.ops.mesh.select_all(action='DESELECT')
+            
+        bpy.ops.object.mode_set(mode='OBJECT') 
+        lf_select.extend(mem_f_start)
+        for i in lf_select:
+            mesh.polygons[i].select=True
+        
+        bpy.ops.object.mode_set(mode='EDIT') 
+        bpy.ops.mesh.select_mode(type='FACE') 
+        
+    if setting=='SF':
+        bm = bmesh.new()
+        bm.from_mesh(mesh)     
+        check_lukap(bm)
+        
+        lifaces = [f.index for f in bm.faces if f.select==True]
+        lifs = []
+        
+        for finst in lifaces:
+            face_inst = bm.faces[finst]
+            area = face_inst.calc_area()
+            perim = face_inst.calc_perimeter()
+            k = area/perim
+            
+            for face in bm.faces:
+                if face.index in lifaces: continue
+                area2 = face.calc_area()
+                perim2 = face.calc_perimeter()
+                sigma = sqrt(area2/area)
+                k2 = area2/perim2
+                k_ = k2/sigma
+                
+                if abs(k_-k)<maloe:
+                    lifs.append(face.index)
+                
+                
+        bpy.ops.object.mode_set(mode='OBJECT') 
+        for i in lifs:
+            mesh.polygons[i].select=True
+        
+        bm.free()
+        bpy.ops.object.mode_set(mode='EDIT') 
+        bpy.ops.mesh.select_mode(type='FACE') 
+    
+    
     
 
 ############## PlyCams Render #################
@@ -3615,7 +3732,7 @@ class LayoutSSPanel(bpy.types.Panel):
             row = col_top.row(align=True)
             row.prop(lt, 'spread_z', text = 'Spread Z')
             row = col_top.row(align=True)
-            row.prop(lt, 'relation', text = 'Relation')
+            row.prop(lt, 'relation', text = 'Uniform')
             box = box.box().column()
             row = box.row(align=True)
             row.prop(lt, 'shape_spline', text = 'Shape spline')
@@ -3792,9 +3909,9 @@ class LayoutSSPanel(bpy.types.Panel):
         
         split = col.split()
         if lt.disp_matExtrude:
-            split.prop(lt, "disp_matExtrude", text="AutoExtrude", icon='DOWNARROW_HLT')
+            split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='DOWNARROW_HLT')
         else:
-            split.prop(lt, "disp_matExtrude", text="AutoExtrude", icon='RIGHTARROW')
+            split.prop(lt, "disp_matExtrude", text="WallExtrude", icon='RIGHTARROW')
         
         if lt.disp_matExtrude:
             box = col.column(align=True).box().column()
@@ -3853,44 +3970,6 @@ class LayoutSSPanel(bpy.types.Panel):
             split = row.split(0.4, True)
             split.prop(lt, 'fedge_zerop', text = 'area')
             split.prop(lt, 'fedge_WRONG_AREA', text = '')
-            
-        split = col.split()
-        if lt.disp_misc:
-            split.prop(lt, "disp_misc", text="Misc", icon='DOWNARROW_HLT')
-        else:
-            split.prop(lt, "disp_misc", text="Misc", icon='RIGHTARROW')
-        
-        if lt.disp_misc:
-            box = col.column(align=True).box().column()
-            col_top = box.column(align=True)
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='MatchProp').type_op=13
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats all to active').type_op=8
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats supress RGB').type_op=4
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats Unclone').type_op=11
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Mats Purgeout').type_op=12
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS set').type_op=9
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matname HVS del').type_op=10
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Matnodes switch').type_op=7
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Obj select modified').type_op=6
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Obj ignore instances').type_op=0
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Obj filter dupes').type_op=2
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Curve select 2D').type_op=1
-            row = col_top.row(align=True)
-            row.operator("object.misc", text='Curve swap 2D/3D').type_op=3
-            row = col_top.row(align=True)
-            row.operator("mesh.modal_cheredator", text='Ed reduce x2')
         
         if context.mode == 'EDIT_MESH':
             split = col.split()
@@ -3947,10 +4026,62 @@ class LayoutSSPanel(bpy.types.Panel):
             layout.prop(lt, "axis_forward_setting")
             layout.prop(lt, "axis_up_setting")
             layout.prop(lt, "image_search_setting")
-            
+         
+        
+        split = col.split(percentage=0.15)
+        if lt.disp_chunks:
+            split.prop(lt, "disp_chunks", text="", icon='DOWNARROW_HLT')
+        else:
+            split.prop(lt, "disp_chunks", text="", icon='RIGHTARROW')
+        
+        split.operator("mesh.sel_chunks", text='Select Chunks')
+        if lt.disp_chunks:
+            box = col.column(align=True).box().column()
+            layout = box.column(align=True)
+
+            layout.prop(lt, "chunks_clamp", text='clamp')
+            layout.prop(lt, "chunks_setting", text='Variant')
             
         split = col.split()
-        split.operator("scene.render_me", text='Render')
+        split.operator("scene.render_me", text='Batch Render')
+        
+        split = col.split()
+        if lt.disp_misc:
+            split.prop(lt, "disp_misc", text="Misc", icon='DOWNARROW_HLT')
+        else:
+            split.prop(lt, "disp_misc", text="Misc", icon='RIGHTARROW')
+        
+        if lt.disp_misc:
+            box = col.column(align=True).box().column()
+            col_top = box.column(align=True)
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='MatchProp').type_op=13
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats all to active').type_op=8
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats suppress RGB').type_op=4
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats Unclone').type_op=11
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Mats Purgeout').type_op=12
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS set').type_op=9
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matname HVS del').type_op=10
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Matnodes switch').type_op=7
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Obj select modified').type_op=6
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Obj ignore instances').type_op=0
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Obj filter dupes').type_op=2
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Curve select 2D').type_op=1
+            row = col_top.row(align=True)
+            row.operator("object.misc", text='Curve swap 2D/3D').type_op=3
+            row = col_top.row(align=True)
+            row.operator("mesh.modal_cheredator", text='Ed reduce x2')
         
         split = col.split()
         split.operator("script.paul_update_addon", text = 'Auto update')
@@ -4405,6 +4536,23 @@ class AlignOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ChunksOperator(bpy.types.Operator):
+    bl_idname = "mesh.sel_chunks"
+    bl_label = "Select Chunks"
+    bl_options = {'REGISTER', 'UNDO'} 
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        config = bpy.context.window_manager.paul_manager
+        m = config.chunks_clamp
+        s = config.chunks_setting
+        Select_chunks(maloe=m, setting = s)        
+        return {'FINISHED'}
+    
+
 class OffsetOperator(bpy.types.Operator):
     bl_idname = "mesh.offset_operator"
     bl_label = "Offset operator"
@@ -4692,6 +4840,7 @@ class paul_managerProps(bpy.types.PropertyGroup):
     disp_coll = bpy.props.BoolProperty(name = 'disp_coll', default = False)
     disp_3drotor = bpy.props.BoolProperty(name = 'disp_3drotor', default = False)
     disp_obj = bpy.props.BoolProperty(name = 'disp_obj', default = False)
+    disp_chunks = bpy.props.BoolProperty(name = 'disp_chunks', default = False)
     
     fedge_verts = BoolProperty(name='verts', default=True)
     fedge_edges = BoolProperty(name='edges', default=True)
@@ -4700,6 +4849,15 @@ class paul_managerProps(bpy.types.PropertyGroup):
     fedge_three = BoolProperty(name='three', default=True)
     fedge_WRONG_AREA = bpy.props.FloatProperty(name="WRONG_AREA", default=0.02, precision=4)
     
+    chunks_clamp = bpy.props.FloatProperty(name="chunks_clamp", default=0.00001, precision=6)
+    chunks_setting = EnumProperty(
+            name="Chunks settings",
+            items=(('V', "vertices", ""),
+                   ('F', "faces", ""),
+                   ('SF', "semantic faces", ""),
+                   ),
+            default='SF',
+            )
     
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
@@ -4915,7 +5073,6 @@ class ThisScriptUpdateAddon(bpy.types.Operator):
     
     def execute(self, context):
         script_paths = os.path.normpath(os.path.dirname(__file__))
-        
         os.curdir = os.path.dirname(os.path.join(script_paths,'addons'))
         os.chdir(os.curdir)
 
@@ -4935,7 +5092,7 @@ class ThisScriptUpdateAddon(bpy.types.Operator):
 
 
 
-classes = [eap_op0, eap_op1, eap_op2, \
+classes = [eap_op0, eap_op1, eap_op2, ChunksOperator, \
     RenderMe, ExportSomeData, RotorOperator, DisableDubleSideOperator, ImportMultipleObjs, \
     MatExrudeOperator, GetMatsOperator, CrossPolsOperator, SSOperator, SpreadOperator, \
     AlignOperator, Project3DLoopOperator, BarcOperator, LayoutSSPanel, MessageOperator, \

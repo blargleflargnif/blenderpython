@@ -1,4 +1,4 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
+﻿# ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -1144,10 +1144,9 @@ class VIEW3D_MT_object_relations(Menu):
         layout.operator("object.data_transfer")
         layout.operator("object.datalayout_transfer")
 
-
-class VIEW3D_MT_object(Menu):
-    bl_context = "objectmode"
-    bl_label = "Object"
+class VIEW3D_MT_undo(Menu):
+    bl_idname = "VIEW3D_MT_undo"
+    bl_label = "Undo"
 
     def draw(self, context):
         layout = self.layout
@@ -1156,6 +1155,15 @@ class VIEW3D_MT_object(Menu):
         layout.operator("ed.redo")
         layout.operator("ed.undo_history")
         layout.separator()
+
+class VIEW3D_MT_object(Menu):
+    bl_context = "objectmode"
+    bl_label = "Object"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.menu("VIEW3D_MT_undo")
 
         layout.operator("object.delete", text="Delete...").use_global = False
         layout.separator()
@@ -1669,9 +1677,7 @@ class VIEW3D_MT_paint_weight(Menu):
     def draw(self, context):
         layout = self.layout
 
-        layout.operator("ed.undo")
-        layout.operator("ed.redo")
-        layout.operator("ed.undo_history")
+        layout.menu("VIEW3D_MT_undo")
 
         layout.separator()
 
@@ -1781,9 +1787,7 @@ class VIEW3D_MT_particle(Menu):
 
         particle_edit = context.tool_settings.particle_edit
 
-        layout.operator("ed.undo")
-        layout.operator("ed.redo")
-        layout.operator("ed.undo_history")
+        layout.menu("VIEW3D_MT_undo")
 
         layout.separator()
 
@@ -1858,9 +1862,7 @@ class VIEW3D_MT_pose(Menu):
     def draw(self, context):
         layout = self.layout
 
-        layout.operator("ed.undo")
-        layout.operator("ed.redo")
-        layout.operator("ed.undo_history")
+        layout.menu("VIEW3D_MT_undo")
 
         layout.separator()
 
@@ -2133,9 +2135,7 @@ class VIEW3D_MT_edit_mesh(Menu):
 
         toolsettings = context.tool_settings
 
-        layout.operator("ed.undo")
-        layout.operator("ed.redo")
-        layout.operator("ed.undo_history")
+        layout.menu("VIEW3D_MT_undo")
 
         layout.separator()
 
@@ -2662,9 +2662,7 @@ class VIEW3D_MT_edit_meta(Menu):
 
         toolsettings = context.tool_settings
 
-        layout.operator("ed.undo")
-        layout.operator("ed.redo")
-        layout.operator("ed.undo_history")
+        layout.menu("VIEW3D_MT_undo")
 
         layout.separator()
 
@@ -2729,7 +2727,7 @@ class VIEW3D_MT_edit_armature(Menu):
 
         edit_object = context.edit_object
         arm = edit_object.data
-
+        layout.menu("VIEW3D_MT_undo")
         layout.menu("VIEW3D_MT_transform_armature")
         layout.menu("VIEW3D_MT_mirror")
         layout.menu("VIEW3D_MT_snap")

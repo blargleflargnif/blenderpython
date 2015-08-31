@@ -897,7 +897,6 @@ class VIEW3D_MT_delete_material(bpy.types.Menu):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
         layout.separator()
-        layout.label(text = "Selected Object Only")
         layout.operator("view3d.clean_material_slots",
                         text="Clean Material Slots",
                         icon='CANCEL')

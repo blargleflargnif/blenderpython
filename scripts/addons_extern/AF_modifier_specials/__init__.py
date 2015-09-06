@@ -36,8 +36,10 @@ if "bpy" in locals():
     importlib.reload(DATA_PT_modifiers)
 
 
+
 else:
     from . import DATA_PT_modifiers
+
 
 
 

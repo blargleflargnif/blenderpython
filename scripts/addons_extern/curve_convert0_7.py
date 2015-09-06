@@ -5,7 +5,7 @@ bl_info = {
     "blender" : (2, 73, 0),
     "location" : "View 3D > Tools > Tools > Curve Conversion",
     "version" : (0, 7),
-    "category" : "Object"
+    "category" : "Add Curve"
     }
 
 import bpy

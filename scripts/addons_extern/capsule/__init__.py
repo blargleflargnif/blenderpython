@@ -39,7 +39,7 @@ bl_info = {
     "description": "Provides workflow tools for non-destructive, streamlined game and CG asset development",
     "warning": "Beta",
     "wiki_url": "",
-    "category": "Object"}
+    "category": "Game Engine"}
     
     
     

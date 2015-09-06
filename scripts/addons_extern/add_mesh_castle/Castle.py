@@ -11,7 +11,7 @@
 #
 # ***** END GPL LICENSE BLOCK *****
 '''
-Generate an object: (OBJ_N) "Castle", mesh complex collection.
+Generate an object: (OBJ_N) "Castle", complex mesh collection.
  Derived from many sources, inspired by many in the "community",
  - see documentation for details on use and credits.
 '''
@@ -23,8 +23,6 @@ Generate an object: (OBJ_N) "Castle", mesh complex collection.
 # @todo: check width minimum as is done for height, maybe depth too.
 # @todo: fix grout for bottom of first row (adjust wall base).
 #
-# @todo: get some very interesting positioning results when 3D Cursor is not (0,0,0)
-#
 # @todo: eleminate result of "None" if possible from  circ() and other subroutines.
 # @todo: review defaults and limits for all UI entries.
 #
@@ -32,12 +30,14 @@ Generate an object: (OBJ_N) "Castle", mesh complex collection.
 # Abstract/experimental use only:
 # @todo: Curve (wallSlope) inverts walls: reverse slope and adjust sizing to fit floor.
 # @todo: Tunnel, paired sloped walls, need to create separate objects and adjust sizing.
-# @todo: Turret/tower - uses rotated wall, need to change curvature/slope orientation/sizing.
+# @todo: Turret/tower - uses rotated wall, need to change curvature/slope orientation/sizing
+#  allow openings and placement (corners, center wall, etc.).
 #
 #
 # wish list:
 # @todo: do not allow opening overlap.
-# @todo: implement "Oculus" for dome (top center opening).
+# @todo: implement "Oculus" for dome (top center opening). See "Radial" floor with door.
+# @todo: make "true" roof: top of castle walls or turret, multiple levels, style options - peaked, flat.
 # @todo: integrate portal with doorway.
 # @todo: add stair_builder; keep (wall) steps.
 # @todo: integrate balcony with shelf.
@@ -61,11 +61,13 @@ from math import fmod, sqrt, sin, cos, atan
 # constants
 #####
 
-OBJ_N="Castle" # Primary object name
-OBJ_F="CWallF"
-OBJ_L="CWallL"
-OBJ_B="CWallB"
-OBJ_R="CWallR"
+OBJ_N="Castle" # Primary object name (base/floor/foundation)
+OBJ_CF="CFloor" # Multi-level "floor"
+OBJ_CR="CRoof" # roofing
+OBJ_WF="CWallF" # front, left, back, right wall objects
+OBJ_WL="CWallL"
+OBJ_WB="CWallB"
+OBJ_WR="CWallR"
 
 # not sure if this is more efficient or not, just seems no need to import value.
 cPie=3.14159265359
@@ -74,10 +76,10 @@ cPieHlf=cPie/2 # used to rotate walls 90 degrees (1.570796...)
 BLOCK_MIN=0.1 # Min block sizing; also used for openings.
 
 WALL_MAX=100
+HALF_WALL=WALL_MAX/2 # edging, openings, etc., limited to half wall limit.
 
 WALL_MIN=BLOCK_MIN*3 # min wall block size*3 for each dimension.
 WALL_DEF=20 # Default wall/dome size
-WALL_DEF_HALF=WALL_DEF/2
 
 LVL_MAX=10 # castle levels (vertical wall repeat).
 
@@ -85,10 +87,7 @@ LVL_MAX=10 # castle levels (vertical wall repeat).
 BLOCK_XDEF=0.75 # stanadard block width, including steps and shelf.
 BLOCK_DDEF=1.0 # standard block depth.
 BLOCK_MAX=WALL_MAX # Max block sizing.
-# block variations
-BLOCK_VMIN=0 # no negative values.
-BLOCK_VMAX=BLOCK_MAX/2
-BLOCK_VDEF=BLOCK_MIN
+BLOCK_VMAX=BLOCK_MAX/2 # block variations, no negative values.
 
 # gap 0 makes solid wall but affects other options, like openings, not in a good way.
 # Negative gap creates "phantom blocks" (extraneous verts) inside the faces.
@@ -111,14 +110,14 @@ DEF_DOORX=2.5
 #####
 
 # wall/block Settings
-settings = {'w': 1.2, 'wv': 0.3, 'h': .6, 'd': 0.3, 'dv': 0.1,
+settings = {'w': 1.2, 'wv': 0.3, 'h': .6, 'hv': 0.1, 'd': 0.3, 'dv': 0.1,
             'g': 0.1, 'sdv': 0.1,
             'eoff':0.3,
             'Steps':False, 'StepsL':False, 'StepsB':False, 'StepsO':False,
             'Shelf':False, 'ShelfO':False,
-            'Slope':False,'Dome':False}
+            'Radial':False,'Slope':False}
 # 'w':width 'wv':width Variation
-# 'h':height
+# 'h':height 'hv':height Variation
 # 'd':depth 'dv':depth Variation
 # 'g':grout
 # 'sdv':subdivision(distance or angle)
@@ -126,8 +125,8 @@ settings = {'w': 1.2, 'wv': 0.3, 'h': .6, 'd': 0.3, 'dv': 0.1,
 # passed as params since modified per object; no sense to change UI values.
 # 'Steps' create steps, 'StepsL'step left, 'StepsB' fill with blocks, 'StepsO' outside of wall.
 # 'Shelf' add shelf/balcony, 'ShelfO'outside of wall.
-# 'Slope': curve wall - forced for Dome
-# 'Dome" - dome, globe when height/2
+# 'Radial' create "disc"; makes dome when combined with "Slope" (globe when height/2).
+# 'Slope' curve wall - forced for Dome
 
 # dims = area of wall (centered/splitX from 3D cursor); modified for radial/dome.
 dims = {'s':-10, 'e':10, 't':15}
@@ -151,9 +150,6 @@ openingSpecs = [{'a':False, 'w':0.5, 'h':0.5, 'x':0.8, 'z':0, 'n':0, 'bvl':0.0,
 # 'bvl': bevel the inside of the opening,
 # 'v': height of the top arch, 'vl':height of the bottom arch,
 # 't': thickness of the top arch, 'tl': thickness of the bottom arch
-
-# need to create an array of arrays for each level...
-levelSettings=[settings, dims, openingSpecs]
 
 
 ################################################################################
@@ -236,85 +232,158 @@ class add_castle(bpy.types.Operator):
 
 
     CBaseB=BoolProperty(name="BloX",default=False,description="Block flooring")
-    CBaseR=BoolProperty(name="O",default=False,description="Round flooring")
+    CBaseR=BoolProperty(default=False,description="Round flooring")
 
     CLvls=IntProperty(name="Levels",min=1,max=LVL_MAX,default=1)
 
     # current wall level parameter value display.
     CLvl=IntProperty(name="Level",min=1,max=LVL_MAX,default=1)
 
-    curLvl=CLvl
+#    curLvl=CLvl
+
+    # block sizing
+    blockX=FloatProperty(name="Width",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_XDEF)
+    blockZ=FloatProperty(name="Height",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_XDEF)
+    blockD=FloatProperty(name="Depth",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_DDEF)
+# allow 0 for test cases...
+#    blockD=FloatProperty(name="Depth",min=0,max=BLOCK_MAX,default=BLOCK_DDEF)
+
+    blockVar=BoolProperty(name="Vary",default=True,description="Randomize block sizing")
+
+    blockWVar=FloatProperty(name="Width",min=0,max=BLOCK_VMAX,default=BLOCK_MIN,description="Random Width")
+    blockHVar=FloatProperty(name="Height",min=0,max=BLOCK_VMAX,default=BLOCK_MIN,description="Random Height")
+    blockDVar=FloatProperty(name="Depth",min=0,max=BLOCK_VMAX,default=BLOCK_MIN,description="Random Depth")
+
+    blockMerge=BoolProperty(name="Merge",default=True,description="Merge closely adjoining blocks")
+
+# @todo: fix edgeing for mis-matched row sizing (or just call it a feature).
+    EdgeOffset=FloatProperty(name="Edging",min=0,max=HALF_WALL,default=0.25,description="stagger wall ends")
+
+    # block spacing
+    Grout=FloatProperty(name="Gap",min=GAP_MIN,max=GAP_MAX,default=0.05,description="Block separation")
 
     wallRGB=FloatVectorProperty(min=0,max=1,default=(0.5,0.5,0.5),subtype='COLOR',size=3)
 
 
-# track height with number of floors...?
+# track height with each level...?
     wallH=FloatProperty(name="Height",min=WALL_MIN,max=WALL_MAX,default=WALL_DEF)
 
+    # floor per level - LVL_MAX
+# Base, always true (primary object/parent)
+#    CFloor1=BoolProperty(default=True)
+    CFloor2=BoolProperty(default=False)
+    CFloor3=BoolProperty(default=False)
+    CFloor4=BoolProperty(default=False)
+    CFloor5=BoolProperty(default=False)
+    CFloor6=BoolProperty(default=False)
+    CFloor7=BoolProperty(default=False)
+    CFloor8=BoolProperty(default=False)
+    CFloor9=BoolProperty(default=False)
+    CFloor10=BoolProperty(default=False)
+
     # Which walls to generate, per level - LVL_MAX
-    wallF1=BoolProperty(name="F",default=False,description="Front")
-    wallF2=BoolProperty(name="F",default=False,description="Front")
-    wallF3=BoolProperty(name="F",default=False,description="Front")
-    wallF4=BoolProperty(name="F",default=False,description="Front")
-    wallF5=BoolProperty(name="F",default=False,description="Front")
-    wallF6=BoolProperty(name="F",default=False,description="Front")
-    wallF7=BoolProperty(name="F",default=False,description="Front")
-    wallF8=BoolProperty(name="F",default=False,description="Front")
-    wallF9=BoolProperty(name="F",default=False,description="Front")
-    wallF10=BoolProperty(name="F",default=False,description="Front")
+    wallF1=BoolProperty(default=False,description="Front")
+    wallF2=BoolProperty(default=False)
+    wallF3=BoolProperty(default=False)
+    wallF4=BoolProperty(default=False)
+    wallF5=BoolProperty(default=False)
+    wallF6=BoolProperty(default=False)
+    wallF7=BoolProperty(default=False)
+    wallF8=BoolProperty(default=False)
+    wallF9=BoolProperty(default=False)
+    wallF10=BoolProperty(default=False)
 
-    wallL1=BoolProperty(name="L",default=False,description="Left")
-    wallL2=BoolProperty(name="L",default=False,description="Left")
-    wallL3=BoolProperty(name="L",default=False,description="Left")
-    wallL4=BoolProperty(name="L",default=False,description="Left")
-    wallL5=BoolProperty(name="L",default=False,description="Left")
-    wallL6=BoolProperty(name="L",default=False,description="Left")
-    wallL7=BoolProperty(name="L",default=False,description="Left")
-    wallL8=BoolProperty(name="L",default=False,description="Left")
-    wallL9=BoolProperty(name="L",default=False,description="Left")
-    wallL10=BoolProperty(name="L",default=False,description="Left")
+    wallL1=BoolProperty(default=False,description="Left")
+    wallL2=BoolProperty(default=False)
+    wallL3=BoolProperty(default=False)
+    wallL4=BoolProperty(default=False)
+    wallL5=BoolProperty(default=False)
+    wallL6=BoolProperty(default=False)
+    wallL7=BoolProperty(default=False)
+    wallL8=BoolProperty(default=False)
+    wallL9=BoolProperty(default=False)
+    wallL10=BoolProperty(default=False)
 
-    wallB1=BoolProperty(name="B",default=False,description="Back")
-    wallB2=BoolProperty(name="B",default=False,description="Back")
-    wallB3=BoolProperty(name="B",default=False,description="Back")
-    wallB4=BoolProperty(name="B",default=False,description="Back")
-    wallB5=BoolProperty(name="B",default=False,description="Back")
-    wallB6=BoolProperty(name="B",default=False,description="Back")
-    wallB7=BoolProperty(name="B",default=False,description="Back")
-    wallB8=BoolProperty(name="B",default=False,description="Back")
-    wallB9=BoolProperty(name="B",default=False,description="Back")
-    wallB10=BoolProperty(name="B",default=False,description="Back")
+    wallB1=BoolProperty(default=False,description="Back")
+    wallB2=BoolProperty(default=False)
+    wallB3=BoolProperty(default=False)
+    wallB4=BoolProperty(default=False)
+    wallB5=BoolProperty(default=False)
+    wallB6=BoolProperty(default=False)
+    wallB7=BoolProperty(default=False)
+    wallB8=BoolProperty(default=False)
+    wallB9=BoolProperty(default=False)
+    wallB10=BoolProperty(default=False)
 
-    wallR1=BoolProperty(name="R",default=False,description="Right")
-    wallR2=BoolProperty(name="R",default=False,description="Right")
-    wallR3=BoolProperty(name="R",default=False,description="Right")
-    wallR4=BoolProperty(name="R",default=False,description="Right")
-    wallR5=BoolProperty(name="R",default=False,description="Right")
-    wallR6=BoolProperty(name="R",default=False,description="Right")
-    wallR7=BoolProperty(name="R",default=False,description="Right")
-    wallR8=BoolProperty(name="R",default=False,description="Right")
-    wallR9=BoolProperty(name="R",default=False,description="Right")
-    wallR10=BoolProperty(name="R",default=False,description="Right")
+    wallR1=BoolProperty(default=False,description="Right")
+    wallR2=BoolProperty(default=False)
+    wallR3=BoolProperty(default=False)
+    wallR4=BoolProperty(default=False)
+    wallR5=BoolProperty(default=False)
+    wallR6=BoolProperty(default=False)
+    wallR7=BoolProperty(default=False)
+    wallR8=BoolProperty(default=False)
+    wallR9=BoolProperty(default=False)
+    wallR10=BoolProperty(default=False)
 
-    CRoof=BoolProperty(name="Roof",default=False)
+    # round walls per level - LVL_MAX
+    wallFO1=BoolProperty(default=False,description="Front")
+    wallFO2=BoolProperty(default=False)
+    wallFO3=BoolProperty(default=False)
+    wallFO4=BoolProperty(default=False)
+    wallFO5=BoolProperty(default=False)
+    wallFO6=BoolProperty(default=False)
+    wallFO7=BoolProperty(default=False)
+    wallFO8=BoolProperty(default=False)
+    wallFO9=BoolProperty(default=False)
+    wallFO10=BoolProperty(default=False)
 
-    # block sizing
-    blockX=FloatProperty(name="Width",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_XDEF)
-    blockWVar=FloatProperty(name="Variance",min=BLOCK_VMIN,max=BLOCK_VMAX,default=BLOCK_VDEF,description="Randomize")
-    blockZ=FloatProperty(name="Height",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_XDEF)
-    blockHVar=FloatProperty(name="Variance",min=BLOCK_VMIN,max=BLOCK_VMAX,default=BLOCK_VDEF,description="Randomize")
-    blockD=FloatProperty(name="Depth",min=BLOCK_MIN,max=BLOCK_MAX,default=BLOCK_DDEF)
-# allow 0 for test cases...
-#    blockD=FloatProperty(name="Depth",min=0,max=BLOCK_MAX,default=BLOCK_DDEF)
-    blockDVar=FloatProperty(name="Variance",min=BLOCK_VMIN,max=BLOCK_VMAX,default=0,description="Randomize")
+    wallLO1=BoolProperty(default=False,description="Left")
+    wallLO2=BoolProperty(default=False)
+    wallLO3=BoolProperty(default=False)
+    wallLO4=BoolProperty(default=False)
+    wallLO5=BoolProperty(default=False)
+    wallLO6=BoolProperty(default=False)
+    wallLO7=BoolProperty(default=False)
+    wallLO8=BoolProperty(default=False)
+    wallLO9=BoolProperty(default=False)
+    wallLO10=BoolProperty(default=False)
 
-    MergeBlock = BoolProperty(name="Merge",default=True,description="merge closely adjoining blocks")
+    wallBO1=BoolProperty(default=False,description="Back")
+    wallBO2=BoolProperty(default=False)
+    wallBO3=BoolProperty(default=False)
+    wallBO4=BoolProperty(default=False)
+    wallBO5=BoolProperty(default=False)
+    wallBO6=BoolProperty(default=False)
+    wallBO7=BoolProperty(default=False)
+    wallBO8=BoolProperty(default=False)
+    wallBO9=BoolProperty(default=False)
+    wallBO10=BoolProperty(default=False)
 
-# @todo: fix edgeing for mis-matched row sizing (or just call it a feature).
-    EdgeOffset=FloatProperty(name="Edging",min=0,max=WALL_MAX,default=0.25,description="stagger wall ends")
+    wallRO1=BoolProperty(default=False,description="Right")
+    wallRO2=BoolProperty(default=False)
+    wallRO3=BoolProperty(default=False)
+    wallRO4=BoolProperty(default=False)
+    wallRO5=BoolProperty(default=False)
+    wallRO6=BoolProperty(default=False)
+    wallRO7=BoolProperty(default=False)
+    wallRO8=BoolProperty(default=False)
+    wallRO9=BoolProperty(default=False)
+    wallRO10=BoolProperty(default=False)
 
-    # block spacing
-    Grout=FloatProperty(name="Gap",min=GAP_MIN,max=GAP_MAX,default=0.05,description="Block separation")
+#    CRoof=BoolProperty(name="Roof",default=False)
+
+    # Select wall modifier option to view/edit
+    wallOpView=EnumProperty(items=(
+        ("1","Door",""),
+        ("2","Window",""),
+        ("3","Slot",""), # "classical arrow/rifle ports
+        ("4","Crenel",""), # gaps along top of wall
+        ("5","Steps",""),
+        ("6","Shelf",""),
+        ),
+        name="",description="View/Edit wall modifiers",default="1")
+# could add material selection for step and shelf...
 
     # Radiating from one point - round (disc), with slope makes dome.
     cDome=BoolProperty(name='Dome',default=False)
@@ -322,44 +391,120 @@ class add_castle(bpy.types.Operator):
 
     cDomeH=FloatProperty(name='Height',min=WALL_MIN,max=WALL_MAX,default=WALL_DEF/2)
     cDomeZ=FloatProperty(name='Base',min=BASE_TMIN,max=WALL_MAX,default=WALL_DEF,description="offset from floor")
-    cDomeO=FloatProperty(name='Oculus',min=0,max=WALL_MAX/2,default=0,description="Dome opening.")
+    cDomeO=FloatProperty(name='Oculus',min=0,max=HALF_WALL,default=0,description="Dome opening.")
 
     # holes/openings in wall - doors, windows or slots; affects block row size.
-    wallDoor=BoolProperty(name="Door",default=False,description="Door opening")
-    wallDoorW=FloatProperty(name="Width",min=BLOCK_MIN,max=WALL_MAX,default=DEF_DOORW)
-    wallDoorH=FloatProperty(name="Height",min=BLOCK_MIN,max=WALL_MAX,default=DEF_DOORH)
+    wallDoorW=FloatProperty(name="Width",min=BLOCK_MIN,max=HALF_WALL,default=DEF_DOORW)
+    wallDoorH=FloatProperty(name="Height",min=BLOCK_MIN,max=HALF_WALL,default=DEF_DOORH)
     wallDoorX=FloatProperty(name="Indent",min=0,max=WALL_MAX,default=DEF_DOORX,description="horizontal offset from cursor")
     doorBvl=FloatProperty(name="Bevel",min=-10,max=10,default=0.25,description="Angle block face")
     doorRpt=BoolProperty(default=False,description="make multiple openings")
     doorArch=BoolProperty(name="Arch",default=True)
-    doorArchC=FloatProperty(name="Curve",min=0.01,max=WALL_MAX,default=2.5,description="Arch curve height")
-    doorArchT=FloatProperty(name="Thickness",min=0.001,max=WALL_MAX,default=0.75)
+    doorArchC=FloatProperty(name="Curve",min=0.01,max=HALF_WALL,default=2.5,description="Arch curve height")
+    doorArchT=FloatProperty(name="Thickness",min=0.001,max=HALF_WALL,default=0.75)
 
-    wallDF=BoolProperty(name="F",default=True,description="Front wall")
-    wallDL=BoolProperty(name="L",default=True,description="Left wall")
-    wallDB=BoolProperty(name="B",default=True,description="Back wall")
-    wallDR=BoolProperty(name="R",default=True,description="Right wall")
+    wallDF1=BoolProperty(default=False,description="Front")
+    wallDF2=BoolProperty(default=False)
+    wallDF3=BoolProperty(default=False)
+    wallDF4=BoolProperty(default=False)
+    wallDF5=BoolProperty(default=False)
+    wallDF6=BoolProperty(default=False)
+    wallDF7=BoolProperty(default=False)
+    wallDF8=BoolProperty(default=False)
+    wallDF9=BoolProperty(default=False)
+    wallDF10=BoolProperty(default=False)
 
-    # embrasure - classical slit for arrow/rifle ports.
+    wallDL1=BoolProperty(default=False,description="Left")
+    wallDL2=BoolProperty(default=False)
+    wallDL3=BoolProperty(default=False)
+    wallDL4=BoolProperty(default=False)
+    wallDL5=BoolProperty(default=False)
+    wallDL6=BoolProperty(default=False)
+    wallDL7=BoolProperty(default=False)
+    wallDL8=BoolProperty(default=False)
+    wallDL9=BoolProperty(default=False)
+    wallDL10=BoolProperty(default=False)
+
+    wallDB1=BoolProperty(default=False,description="Back")
+    wallDB2=BoolProperty(default=False)
+    wallDB3=BoolProperty(default=False)
+    wallDB4=BoolProperty(default=False)
+    wallDB5=BoolProperty(default=False)
+    wallDB6=BoolProperty(default=False)
+    wallDB7=BoolProperty(default=False)
+    wallDB8=BoolProperty(default=False)
+    wallDB9=BoolProperty(default=False)
+    wallDB10=BoolProperty(default=False)
+
+    wallDR1=BoolProperty(default=False,description="Right")
+    wallDR2=BoolProperty(default=False)
+    wallDR3=BoolProperty(default=False)
+    wallDR4=BoolProperty(default=False)
+    wallDR5=BoolProperty(default=False)
+    wallDR6=BoolProperty(default=False)
+    wallDR7=BoolProperty(default=False)
+    wallDR8=BoolProperty(default=False)
+    wallDR9=BoolProperty(default=False)
+    wallDR10=BoolProperty(default=False)
+
+    # Slots, embrasure - classical slit for arrow/rifle ports.
 #need to prevent overlap with arch openings - though inversion is an interesting effect.
-    SlotV=BoolProperty(default=False,description="classical arrow/rifle ports")
-    SlotVW=FloatProperty(name="Width",min=BLOCK_MIN,max=WALL_MAX,default=0.5)
-    SlotVH=FloatProperty(name="Height",min=BLOCK_MIN,max=WALL_MAX,default=3.5)
+    SlotVW=FloatProperty(name="Width",min=BLOCK_MIN,max=HALF_WALL,default=0.5)
+    SlotVH=FloatProperty(name="Height",min=BLOCK_MIN,max=HALF_WALL,default=3.5)
     SlotVL=FloatProperty(name="Indent",min=-WALL_MAX,max=WALL_MAX,default=0,description="The x position or spacing")
     SlotVZ=FloatProperty(name="Bottom",min=-WALL_MAX,max=WALL_MAX,default=4.00)
     slotVArchT=BoolProperty(name="Top",default=True)
     slotVArchB=BoolProperty(name="Bottom",default=True)
     SlotVRpt = BoolProperty(name="Repeat",default=False)
 
-    wallEF=BoolProperty(name="F",default=True,description="Front wall")
-    wallEL=BoolProperty(name="L",default=True,description="Left wall")
-    wallEB=BoolProperty(name="B",default=True,description="Back wall")
-    wallER=BoolProperty(name="R",default=True,description="Right wall")
+    wallEF1=BoolProperty(default=False,description="Front")
+    wallEF2=BoolProperty(default=False)
+    wallEF3=BoolProperty(default=False)
+    wallEF4=BoolProperty(default=False)
+    wallEF5=BoolProperty(default=False)
+    wallEF6=BoolProperty(default=False)
+    wallEF7=BoolProperty(default=False)
+    wallEF8=BoolProperty(default=False)
+    wallEF9=BoolProperty(default=False)
+    wallEF10=BoolProperty(default=False)
+
+    wallEL1=BoolProperty(default=False,description="Left")
+    wallEL2=BoolProperty(default=False)
+    wallEL3=BoolProperty(default=False)
+    wallEL4=BoolProperty(default=False)
+    wallEL5=BoolProperty(default=False)
+    wallEL6=BoolProperty(default=False)
+    wallEL7=BoolProperty(default=False)
+    wallEL8=BoolProperty(default=False)
+    wallEL9=BoolProperty(default=False)
+    wallEL10=BoolProperty(default=False)
+
+    wallEB1=BoolProperty(default=False,description="Back")
+    wallEB2=BoolProperty(default=False)
+    wallEB3=BoolProperty(default=False)
+    wallEB4=BoolProperty(default=False)
+    wallEB5=BoolProperty(default=False)
+    wallEB6=BoolProperty(default=False)
+    wallEB7=BoolProperty(default=False)
+    wallEB8=BoolProperty(default=False)
+    wallEB9=BoolProperty(default=False)
+    wallEB10=BoolProperty(default=False)
+
+    wallER1=BoolProperty(default=False,description="Right")
+    wallER2=BoolProperty(default=False)
+    wallER3=BoolProperty(default=False)
+    wallER4=BoolProperty(default=False)
+    wallER5=BoolProperty(default=False)
+    wallER6=BoolProperty(default=False)
+    wallER7=BoolProperty(default=False)
+    wallER8=BoolProperty(default=False)
+    wallER9=BoolProperty(default=False)
+    wallER10=BoolProperty(default=False)
 
     # window opening in wall.
     wallPort=BoolProperty(default=False,description="Window opening")
-    wallPortW=FloatProperty(name="Width",min=BLOCK_MIN,max=WALL_MAX,default=2,description="Window (hole) width")
-    wallPortH=FloatProperty(name="Height",min=BLOCK_MIN,max=WALL_MAX,default=3,description="Window (hole) height")
+    wallPortW=FloatProperty(name="Width",min=BLOCK_MIN,max=HALF_WALL,default=2,description="Window (hole) width")
+    wallPortH=FloatProperty(name="Height",min=BLOCK_MIN,max=HALF_WALL,default=3,description="Window (hole) height")
     wallPortX=FloatProperty(name="Indent",min=-WALL_MAX,max=WALL_MAX,default=-2.5,description="The x position or spacing")
     wallPortZ=FloatProperty(name="Bottom",min=-WALL_MAX,max=WALL_MAX,default=5)
     wallPortBvl=FloatProperty(name="Bevel",min=-10,max=10,default=0.25,description="Angle block face")
@@ -367,58 +512,212 @@ class add_castle(bpy.types.Operator):
     wallPortArchB=BoolProperty(name="Bottom",default=False)
     wallPortRpt = BoolProperty(name="Repeat",default=False)
 
-    wallPF=BoolProperty(name="F",default=True,description="Front wall")
-    wallPL=BoolProperty(name="L",default=True,description="Left wall")
-    wallPB=BoolProperty(name="B",default=True,description="Back wall")
-    wallPR=BoolProperty(name="R",default=True,description="Right wall")
+    wallPF1=BoolProperty(default=False,description="Front")
+    wallPF2=BoolProperty(default=False)
+    wallPF3=BoolProperty(default=False)
+    wallPF4=BoolProperty(default=False)
+    wallPF5=BoolProperty(default=False)
+    wallPF6=BoolProperty(default=False)
+    wallPF7=BoolProperty(default=False)
+    wallPF8=BoolProperty(default=False)
+    wallPF9=BoolProperty(default=False)
+    wallPF10=BoolProperty(default=False)
+
+    wallPL1=BoolProperty(default=False,description="Left")
+    wallPL2=BoolProperty(default=False)
+    wallPL3=BoolProperty(default=False)
+    wallPL4=BoolProperty(default=False)
+    wallPL5=BoolProperty(default=False)
+    wallPL6=BoolProperty(default=False)
+    wallPL7=BoolProperty(default=False)
+    wallPL8=BoolProperty(default=False)
+    wallPL9=BoolProperty(default=False)
+    wallPL10=BoolProperty(default=False)
+
+    wallPB1=BoolProperty(default=False,description="Back")
+    wallPB2=BoolProperty(default=False)
+    wallPB3=BoolProperty(default=False)
+    wallPB4=BoolProperty(default=False)
+    wallPB5=BoolProperty(default=False)
+    wallPB6=BoolProperty(default=False)
+    wallPB7=BoolProperty(default=False)
+    wallPB8=BoolProperty(default=False)
+    wallPB9=BoolProperty(default=False)
+    wallPB10=BoolProperty(default=False)
+
+    wallPR1=BoolProperty(default=False,description="Right")
+    wallPR2=BoolProperty(default=False)
+    wallPR3=BoolProperty(default=False)
+    wallPR4=BoolProperty(default=False)
+    wallPR5=BoolProperty(default=False)
+    wallPR6=BoolProperty(default=False)
+    wallPR7=BoolProperty(default=False)
+    wallPR8=BoolProperty(default=False)
+    wallPR9=BoolProperty(default=False)
+    wallPR10=BoolProperty(default=False)
 
     # Crenel = "gaps" on top of wall.
-    Crenel=BoolProperty(name="Crenels",default=False,description="Make openings along top of wall")
 # review and determine min for % - should allow less...
     CrenelXP=FloatProperty(name="Width %",min=0.10,max=1.0,default=0.15)
     CrenelZP=FloatProperty(name="Height %",min=0.10,max=1.0,default=0.10)
 
-    wallCF=BoolProperty(name="F",default=True,description="Front wall")
-    wallCL=BoolProperty(name="L",default=True,description="Left wall")
-    wallCB=BoolProperty(name="B",default=True,description="Back wall")
-    wallCR=BoolProperty(name="R",default=True,description="Right wall")
+    wallCF1=BoolProperty(default=False,description="Front")
+    wallCF2=BoolProperty(default=False)
+    wallCF3=BoolProperty(default=False)
+    wallCF4=BoolProperty(default=False)
+    wallCF5=BoolProperty(default=False)
+    wallCF6=BoolProperty(default=False)
+    wallCF7=BoolProperty(default=False)
+    wallCF8=BoolProperty(default=False)
+    wallCF9=BoolProperty(default=False)
+    wallCF10=BoolProperty(default=False)
+
+    wallCL1=BoolProperty(default=False,description="Left")
+    wallCL2=BoolProperty(default=False)
+    wallCL3=BoolProperty(default=False)
+    wallCL4=BoolProperty(default=False)
+    wallCL5=BoolProperty(default=False)
+    wallCL6=BoolProperty(default=False)
+    wallCL7=BoolProperty(default=False)
+    wallCL8=BoolProperty(default=False)
+    wallCL9=BoolProperty(default=False)
+    wallCL10=BoolProperty(default=False)
+
+    wallCB1=BoolProperty(default=False,description="Back")
+    wallCB2=BoolProperty(default=False)
+    wallCB3=BoolProperty(default=False)
+    wallCB4=BoolProperty(default=False)
+    wallCB5=BoolProperty(default=False)
+    wallCB6=BoolProperty(default=False)
+    wallCB7=BoolProperty(default=False)
+    wallCB8=BoolProperty(default=False)
+    wallCB9=BoolProperty(default=False)
+    wallCB10=BoolProperty(default=False)
+
+    wallCR1=BoolProperty(default=False,description="Right")
+    wallCR2=BoolProperty(default=False)
+    wallCR3=BoolProperty(default=False)
+    wallCR4=BoolProperty(default=False)
+    wallCR5=BoolProperty(default=False)
+    wallCR6=BoolProperty(default=False)
+    wallCR7=BoolProperty(default=False)
+    wallCR8=BoolProperty(default=False)
+    wallCR9=BoolProperty(default=False)
+    wallCR10=BoolProperty(default=False)
 
     # shelf location and size.
 # see "balcony" options for improved capabilities.
-    Shelf1=BoolProperty(name="Shelf",default=False,description="Shelf for walls.")
 # should limit x and z to wall boundaries
-    ShelfX=FloatProperty(name="XOff",min=-WALL_MAX,max=WALL_MAX,default=-WALL_DEF_HALF,description="x origin")
+    ShelfX=FloatProperty(name="XOff",min=-WALL_MAX,max=WALL_MAX,default=-(WALL_DEF/2),description="x origin")
     ShelfZ=FloatProperty(name="Base",min=-WALL_MAX,max=WALL_MAX,default=WALL_DEF,description="z origin")
     ShelfW=FloatProperty(name="Width",min=BLOCK_MIN,max=WALL_MAX,default=WALL_DEF,description="The Width of shelf area")
 # height seems to be double, check usage
-    ShelfH=FloatProperty(name="Height",min=BLOCK_MIN,max=WALL_MAX,default=0.5,description="The Height of Shelf area")
+    ShelfH=FloatProperty(name="Height",min=BLOCK_MIN,max=HALF_WALL,default=0.5,description="The Height of Shelf area")
     ShelfD = FloatProperty(name="Depth",min=BLOCK_MIN,max=WALL_MAX,default=BLOCK_DDEF,description="Depth of shelf")
     ShelfOut=BoolProperty(name="Out",default=True,description="Position outside of wall")
 
-    wallBF=BoolProperty(name="F",default=True,description="Front wall")
-    wallBL=BoolProperty(name="L",default=True,description="Left wall")
-    wallBB=BoolProperty(name="B",default=True,description="Back wall")
-    wallBR=BoolProperty(name="R",default=True,description="Right wall")
+    wallBF1=BoolProperty(default=False,description="Front")
+    wallBF2=BoolProperty(default=False)
+    wallBF3=BoolProperty(default=False)
+    wallBF4=BoolProperty(default=False)
+    wallBF5=BoolProperty(default=False)
+    wallBF6=BoolProperty(default=False)
+    wallBF7=BoolProperty(default=False)
+    wallBF8=BoolProperty(default=False)
+    wallBF9=BoolProperty(default=False)
+    wallBF10=BoolProperty(default=False)
+
+    wallBL1=BoolProperty(default=False,description="Left")
+    wallBL2=BoolProperty(default=False)
+    wallBL3=BoolProperty(default=False)
+    wallBL4=BoolProperty(default=False)
+    wallBL5=BoolProperty(default=False)
+    wallBL6=BoolProperty(default=False)
+    wallBL7=BoolProperty(default=False)
+    wallBL8=BoolProperty(default=False)
+    wallBL9=BoolProperty(default=False)
+    wallBL10=BoolProperty(default=False)
+
+    wallBB1=BoolProperty(default=False,description="Back")
+    wallBB2=BoolProperty(default=False)
+    wallBB3=BoolProperty(default=False)
+    wallBB4=BoolProperty(default=False)
+    wallBB5=BoolProperty(default=False)
+    wallBB6=BoolProperty(default=False)
+    wallBB7=BoolProperty(default=False)
+    wallBB8=BoolProperty(default=False)
+    wallBB9=BoolProperty(default=False)
+    wallBB10=BoolProperty(default=False)
+
+    wallBR1=BoolProperty(default=False,description="Right")
+    wallBR2=BoolProperty(default=False)
+    wallBR3=BoolProperty(default=False)
+    wallBR4=BoolProperty(default=False)
+    wallBR5=BoolProperty(default=False)
+    wallBR6=BoolProperty(default=False)
+    wallBR7=BoolProperty(default=False)
+    wallBR8=BoolProperty(default=False)
+    wallBR9=BoolProperty(default=False)
+    wallBR10=BoolProperty(default=False)
 
     # steps
-    Step1=BoolProperty(name="Steps",default=False,description="Steps for walls.")
-    StepX=FloatProperty(name="XOff",min=-WALL_MAX,max=WALL_MAX,default=-WALL_DEF_HALF,description="x origin")
+    StepX=FloatProperty(name="XOff",min=-WALL_MAX,max=WALL_MAX,default=-(WALL_DEF/2),description="x origin")
     StepZ=FloatProperty(name="Base",min=-WALL_MAX,max=WALL_MAX,default=0,description="z origin")
     StepW=FloatProperty(name="Width",min=BLOCK_MIN,max=WALL_MAX,default=WALL_DEF,description="Width of step area")
     StepH=FloatProperty(name="Height",min=BLOCK_MIN,max=WALL_MAX,default=WALL_DEF,description="Height of step area")
-    StepD=FloatProperty(name="Depth",min=BLOCK_MIN,max=WALL_MAX,default=BLOCK_XDEF,description="Step offset (distance) from wall")
-    StepV=FloatProperty(name="Riser",min=BLOCK_MIN,max=WALL_MAX,default=BLOCK_XDEF,description="Step height")
-    StepT=FloatProperty(name="Tread",min=BLOCK_MIN,max=WALL_MAX,default=BLOCK_DDEF,description="Step footing/tread")
+    StepD=FloatProperty(name="Depth",min=BLOCK_MIN,max=HALF_WALL,default=BLOCK_XDEF,description="Step offset (distance) from wall")
+    StepV=FloatProperty(name="Riser",min=BLOCK_MIN,max=HALF_WALL,default=BLOCK_XDEF,description="Step height")
+    StepT=FloatProperty(name="Tread",min=BLOCK_MIN,max=HALF_WALL,default=BLOCK_DDEF,description="Step footing/tread")
     StepL=BoolProperty(name="Slant",default=False,description="Step direction.")
     StepF=BoolProperty(name="Fill",default=False,description="Fill with supporting blocks")
     StepOut=BoolProperty(name="Out",default=False,description="Position outside of wall")
 
-    wallSF=BoolProperty(name="F",default=True,description="Front wall")
-    wallSL=BoolProperty(name="L",default=True,description="Left wall")
-    wallSB=BoolProperty(name="B",default=True,description="Back wall")
-    wallSR=BoolProperty(name="R",default=True,description="Right wall")
+    wallSF1=BoolProperty(default=False,description="Front")
+    wallSF2=BoolProperty(default=False)
+    wallSF3=BoolProperty(default=False)
+    wallSF4=BoolProperty(default=False)
+    wallSF5=BoolProperty(default=False)
+    wallSF6=BoolProperty(default=False)
+    wallSF7=BoolProperty(default=False)
+    wallSF8=BoolProperty(default=False)
+    wallSF9=BoolProperty(default=False)
+    wallSF10=BoolProperty(default=False)
+
+    wallSL1=BoolProperty(default=False,description="Left")
+    wallSL2=BoolProperty(default=False)
+    wallSL3=BoolProperty(default=False)
+    wallSL4=BoolProperty(default=False)
+    wallSL5=BoolProperty(default=False)
+    wallSL6=BoolProperty(default=False)
+    wallSL7=BoolProperty(default=False)
+    wallSL8=BoolProperty(default=False)
+    wallSL9=BoolProperty(default=False)
+    wallSL10=BoolProperty(default=False)
+
+    wallSB1=BoolProperty(default=False,description="Back")
+    wallSB2=BoolProperty(default=False)
+    wallSB3=BoolProperty(default=False)
+    wallSB4=BoolProperty(default=False)
+    wallSB5=BoolProperty(default=False)
+    wallSB6=BoolProperty(default=False)
+    wallSB7=BoolProperty(default=False)
+    wallSB8=BoolProperty(default=False)
+    wallSB9=BoolProperty(default=False)
+    wallSB10=BoolProperty(default=False)
+
+    wallSR1=BoolProperty(default=False,description="Right")
+    wallSR2=BoolProperty(default=False)
+    wallSR3=BoolProperty(default=False)
+    wallSR4=BoolProperty(default=False)
+    wallSR5=BoolProperty(default=False)
+    wallSR6=BoolProperty(default=False)
+    wallSR7=BoolProperty(default=False)
+    wallSR8=BoolProperty(default=False)
+    wallSR9=BoolProperty(default=False)
+    wallSR10=BoolProperty(default=False)
 
     # Experimental options
+# allow per wall and level?
     cXTest=BoolProperty(default=False)
     # wall shape modifiers
     # make the wall circular - if not curved it's a flat disc
@@ -443,8 +742,7 @@ class add_castle(bpy.types.Operator):
         layout = self.layout
 
         box = layout.box()
-        box.prop(self,'ConstructTog')
-
+        box.prop(self,'ConstructTog')
         # Castle area.
         box=layout.box()
         row=box.row()
@@ -459,38 +757,146 @@ class add_castle(bpy.types.Operator):
         row=box.row()
         row.prop(self,'CBaseB') # Blocks or slab
         if self.properties.CBaseB:
-            row.prop(self,'CBaseR') # Round
+            row.prop(self,'CBaseR',text='',icon="MESH_CIRCLE") # Round
         box.prop(self,'CLvls',text="Levels") # number of floors.
 
         # block sizing
         box=layout.box()
         row=box.row()
         row.label(text='Blocks:')
-        row.prop(self,'MergeBlock')
-        box.prop(self,'EdgeOffset')
-        box.prop(self,'Grout')
         box.prop(self,'blockX')
-#add checkbox for "fixed" sizing (ignore variance) a.k.a. bricks.
-        box.prop(self, 'blockWVar')
         box.prop(self,'blockZ')
-        box.prop(self, 'blockHVar')
         box.prop(self,'blockD')
-        box.prop(self,'blockDVar')
+        box.prop(self,'Grout')
+        box.prop(self,'EdgeOffset')
+
+        # "fixed" sizing unless variance enabled.
+        row=box.row()
+        row.prop(self,'blockVar') # randomize block sizing
+        if self.properties.blockVar:
+            row.prop(self,'blockMerge')
+            box.prop(self,'blockHVar')
+            box.prop(self,'blockWVar')
+            box.prop(self,'blockDVar')
 
         box=layout.box()
         box.prop(self,'CLvl',text="Level") # current "Level" (UI parameter values).
 
         # Walls
-#        box=layout.box()
         row=box.row()
         row.prop(self,'wallRGB',text='Walls')
         row=box.row() # which walls to generate - show current level value.
-        row.prop(self,'wallF'+str(self.properties.CLvl))
-        row.prop(self,'wallL'+str(self.properties.CLvl))
-        row.prop(self,'wallB'+str(self.properties.CLvl))
-        row.prop(self,'wallR'+str(self.properties.CLvl))
+        row.prop(self,'wallF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+        row.prop(self,'wallL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+        row.prop(self,'wallB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+        row.prop(self,'wallR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+        row=box.row() # round wall option
+        row.prop(self,'wallFO'+str(self.properties.CLvl),text='',icon="MESH_CIRCLE")
+        row.prop(self,'wallLO'+str(self.properties.CLvl),text='',icon="MESH_CIRCLE")
+        row.prop(self,'wallBO'+str(self.properties.CLvl),text='',icon="MESH_CIRCLE")
+        row.prop(self,'wallRO'+str(self.properties.CLvl),text='',icon="MESH_CIRCLE")
         box.prop(self,'wallH')
-        box.prop(self,'CRoof',text="Roof") # ceiling for wall.
+        if self.properties.CLvl > 1: # Base is first level (always true)
+            box.prop(self,'CFloor'+str(self.properties.CLvl),text="Floor") # floor for level.
+
+        box.prop(self,'wallOpView') # View/edit wall modifiers
+
+        # Door
+        if self.properties.wallOpView=="1":
+#            box.prop(self,'doorRpt',text='Dupe')
+            row=box.row() # which walls have a Door
+            row.prop(self,'wallDF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallDL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallDB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallDR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            box.prop(self, 'wallDoorW')
+            box.prop(self, 'wallDoorH')
+            box.prop(self, 'wallDoorX')
+            box.prop(self, 'doorBvl')
+
+            box.prop(self,'doorArch')
+            if self.doorArch:
+                box.prop(self, 'doorArchC')
+                box.prop(self, 'doorArchT')
+
+        # Window
+        if self.properties.wallOpView=="2":
+#            box.prop(self,'wallPortRpt',text='Dupe')
+            row=box.row() # which walls have portal/window
+            row.prop(self,'wallPF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallPL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallPB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallPR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            row=box.row()
+            row.prop(self,'wallPortW')
+            row.prop(self,'wallPortH')
+            box.prop(self,'wallPortX')
+            box.prop(self,'wallPortZ')
+            box.prop(self,'wallPortBvl')
+            box.label(text='Arch')
+            row=box.row()
+            row.prop(self,'wallPortArchT')
+            row.prop(self,'wallPortArchB')
+
+        # Slots
+        if self.properties.wallOpView=="3":
+            box.prop(self,'SlotVRpt',text='Dupe')
+            row=box.row() # which walls have embrasures/slits
+            row.prop(self,'wallEF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallEL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallEB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallER'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            box.prop(self,'SlotVW')
+            box.prop(self,'SlotVH')
+            box.prop(self,'SlotVL')
+            box.prop(self,'SlotVZ')
+            box.label(text='Arch')
+            row=box.row()
+            row.prop(self,'slotVArchT')
+            row.prop(self,'slotVArchB')
+
+        # Crenellation: gaps in top of wall, base of dome.
+        if self.properties.wallOpView=="4":
+            row=box.row() # which walls have Crenellation
+            row.prop(self,'wallCF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallCL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallCB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallCR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            box.prop(self, 'CrenelXP')
+            box.prop(self, 'CrenelZP')
+
+        # Steps
+        if self.properties.wallOpView=="5":
+            row=box.row()
+            row.prop(self,'StepL')
+            row.prop(self,'StepF')
+            row.prop(self,'StepOut')
+            row=box.row() # which walls have steps
+            row.prop(self,'wallSF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallSL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallSB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallSR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            box.prop(self, 'StepX')
+            box.prop(self, 'StepZ')
+            box.prop(self, 'StepW')
+            box.prop(self, 'StepH')
+            box.prop(self, 'StepD')
+            box.prop(self, 'StepV')
+            box.prop(self, 'StepT')
+
+        # Shelf/Balcony
+        if self.properties.wallOpView=="6":
+            box.prop(self,'ShelfOut')
+            row=box.row() # which walls have a shelf
+            row.prop(self,'wallBF'+str(self.properties.CLvl),text='',icon="TRIA_DOWN_BAR")
+            row.prop(self,'wallBL'+str(self.properties.CLvl),text='',icon="TRIA_LEFT_BAR")
+            row.prop(self,'wallBB'+str(self.properties.CLvl),text='',icon="TRIA_UP_BAR")
+            row.prop(self,'wallBR'+str(self.properties.CLvl),text='',icon="TRIA_RIGHT_BAR")
+            box.prop(self,'ShelfX')
+            box.prop(self,'ShelfZ')
+            box.prop(self,'ShelfW')
+            box.prop(self,'ShelfH')
+            box.prop(self,'ShelfD')
 
         # Dome
         box = layout.box()
@@ -503,126 +909,15 @@ class add_castle(bpy.types.Operator):
 # Oculus - opening in top of dome
 #            box.prop(self,'cDomeO')
 
-        # Openings (doors, windows; arched)
-        box = layout.box()
-        row=box.row()
-        row.prop(self,'wallDoor')
-        if self.properties.wallDoor:
-            row.prop(self,'doorRpt',text='Dupe')
-            row=box.row() # which walls have a Door
-            row.prop(self,'wallDF')
-            row.prop(self,'wallDL')
-            row.prop(self,'wallDB')
-            row.prop(self,'wallDR')
-            box.prop(self, 'wallDoorW')
-            box.prop(self, 'wallDoorH')
-            box.prop(self, 'wallDoorX')
-            box.prop(self, 'doorBvl')
-
-            box.prop(self,'doorArch')
-            if self.doorArch:
-                box.prop(self, 'doorArchC')
-                box.prop(self, 'doorArchT')
-
-        box = layout.box()
-        row=box.row()
-        row.prop(self,'SlotV',text='Slot')
-        if self.properties.SlotV:
-            row.prop(self,'SlotVRpt',text='Dupe')
-            row=box.row() # which walls embrasures/slits
-            row.prop(self,'wallEF')
-            row.prop(self,'wallEL')
-            row.prop(self,'wallEB')
-            row.prop(self,'wallER')
-            box.prop(self,'SlotVL')
-            box.prop(self,'SlotVW')
-            box.prop(self,'SlotVH')
-            box.prop(self,'SlotVZ')
-            box.label(text='Arch')
-            row=box.row()
-            row.prop(self,'slotVArchT')
-            row.prop(self,'slotVArchB')
-
-        box = layout.box()
-        row=box.row()
-        row.prop(self,'wallPort',text='Window')
-        if self.properties.wallPort:
-            row.prop(self,'wallPortRpt',text='Dupe')
-            row=box.row() # which walls have portals
-            row.prop(self,'wallPF')
-            row.prop(self,'wallPL')
-            row.prop(self,'wallPB')
-            row.prop(self,'wallPR')
-            row=box.row()
-            row.prop(self,'wallPortW')
-            row.prop(self,'wallPortH')
-            box.prop(self,'wallPortX')
-            box.prop(self,'wallPortZ')
-            box.prop(self,'wallPortBvl')
-            box.label(text='Arch')
-            row=box.row()
-            row.prop(self,'wallPortArchT')
-            row.prop(self,'wallPortArchB')
-
-        # Crenels: gaps in top of wall, base of dome.
-        box = layout.box()
-        box.prop(self,'Crenel')
-        if self.properties.Crenel:
-            row=box.row() # which walls have Crenellation
-            row.prop(self,'wallCF')
-            row.prop(self,'wallCL')
-            row.prop(self,'wallCB')
-            row.prop(self,'wallCR')
-            box.prop(self, 'CrenelXP')
-            box.prop(self, 'CrenelZP')
-
-        # Steps
-        box = layout.box()
-        row=box.row()
-        row.prop(self,'Step1')
-        if self.properties.Step1:
-            row.prop(self,'StepL')
-            row=box.row()
-            row.prop(self,'StepF')
-            row.prop(self,'StepOut')
-            row=box.row() # which walls have steps
-            row.prop(self,'wallSF')
-            row.prop(self,'wallSL')
-            row.prop(self,'wallSB')
-            row.prop(self,'wallSR')
-            box.prop(self, 'StepX')
-            box.prop(self, 'StepZ')
-            box.prop(self, 'StepW')
-            box.prop(self, 'StepH')
-            box.prop(self, 'StepD')
-            box.prop(self, 'StepV')
-            box.prop(self, 'StepT')
-
-        # Shelf/Balcony
-        box = layout.box()
-        row=box.row()
-        row.prop(self,'Shelf1')
-        if self.properties.Shelf1:
-            row.prop(self,'ShelfOut')
-            row=box.row() # which walls have a shelf
-            row.prop(self,'wallBF')
-            row.prop(self,'wallBL')
-            row.prop(self,'wallBB')
-            row.prop(self,'wallBR')
-            box.prop(self,'ShelfX')
-            box.prop(self,'ShelfZ')
-            box.prop(self,'ShelfW')
-            box.prop(self,'ShelfH')
-            box.prop(self,'ShelfD')
-
-        # Experimental
+        # abstract/experimental
+# Use "icon="MESH_CONE" for roof
         box = layout.box()
         row=box.row()
         row.prop(self,'cXTest',text='Experimental')
         if self.properties.cXTest:
-            box.prop(self,'wallSlope',text='Curve') # abstract/experimental
-            box.prop(self,'CTunnel',text='Tunnel') # abstract/experimental
-            box.prop(self,'CTower',text='Tower') # abstract/experimental
+            box.prop(self,'wallSlope',text='Curve')
+            box.prop(self,'CTunnel',text='Tunnel',icon="CURVE_DATA")
+            box.prop(self,'CTower',text='Tower',icon="CURVE_DATA")
 ##
 ####
 ################################################################################
@@ -635,9 +930,6 @@ class add_castle(bpy.types.Operator):
 
         global openingSpecs
         global dims
-
-        levelSettings=[]
-
         # Limit UI settings relative to other parameters,
         #  set globals and effeciency variables.
 
@@ -689,7 +981,7 @@ class add_castle(bpy.types.Operator):
 #
         if self.properties.cDome:
             # base can't be lower than floor
-# consider limiting to roof?
+# consider limiting base to roof or wall height by levels?
             domeLimit=self.properties.cBaseO+self.properties.cBaseT
             if self.properties.cDomeZ < domeLimit:
                 self.properties.cDomeZ = domeLimit
@@ -712,20 +1004,22 @@ class add_castle(bpy.types.Operator):
             # Dome Oculus (opening) can't be more than half dome height
             if self.properties.cDomeO > domeMaxO:
                 self.properties.cDomeO = domeMaxO
+#
 ############
 #####
 #
 # After validating all the properties see if need to create...
-# @todo: fix so last object preserved...
-        # No build if construct off or just changing levels
+# @todo: fix so last object preserved... (i.e. changing levels).
+        # No build if construct off
         if not self.properties.ConstructTog:
+        # No build if construct off or just changing levels
 #        if not self.properties.ConstructTog or self.properties.curLvl!=self.properties.CLvl:
-            self.properties.curLvl=self.properties.CLvl
+#            self.properties.curLvl=self.properties.CLvl
             return {'FINISHED'}
 #
 #####
 ############
-
+#
         # rowprocessing() front/back wall, modified by sides and Dome.
 # this centers the wall, maybe add flag to center or offset from cursor...
 # if centerwall:
@@ -738,14 +1032,21 @@ class add_castle(bpy.types.Operator):
         dims['t'] = planeHL
 
         # block sizing
-        settings['w'] = blockWidth
-        settings['wv'] = self.properties.blockWVar
+        settings['h']=blockHeight
+        settings['w']=blockWidth
+        settings['d']=blockDepth
+
+        if self.properties.blockVar:
+            settings['hv']=self.properties.blockHVar
+            settings['wv']=self.properties.blockWVar
+            settings['dv']=self.properties.blockDVar
+        else:
+            settings['hv']=0
+            settings['wv']=0
+            settings['dv']=0
+
         settings['sdv'] = blockWidth # divisions in area.
 
-        settings['h']=blockHeight
-
-        settings['d'] = blockDepth
-        settings['dv'] = self.properties.blockDVar
 
         settings['g'] = self.properties.Grout
 
@@ -759,9 +1060,13 @@ class add_castle(bpy.types.Operator):
 #
 ############
 #
-# make Door opening... always set info, flag for enable.
+# Openings always set info; flag per wall, per level to enable.
 #
-    # set locals
+############
+#
+############
+# Door
+        # set locals
 # @todo: fix this....
         openZ=self.properties.cBaseT+1 # track with floor - else 0
 
@@ -769,8 +1074,8 @@ class add_castle(bpy.types.Operator):
             archTop[0]=self.properties.doorArchC
             archTop[1]=self.properties.doorArchT
 
-        # create opening...
-        openingSpecs += [{'a':self.properties.wallDoor,
+        # set opening values
+        openingSpecs += [{'a':False,
             'w':self.properties.wallDoorW,'h':self.properties.wallDoorH,
             'x':self.properties.wallDoorX,'z':openZ,
             'n':self.properties.doorRpt,'bvl':self.properties.doorBvl,
@@ -778,7 +1083,6 @@ class add_castle(bpy.types.Operator):
 
 ############
 # Window
-#
         archTop[0]=0
         archTop[1]=0
         archBot[0]=0
@@ -792,8 +1096,8 @@ class add_castle(bpy.types.Operator):
             archBot[0]=self.properties.wallPortW/2
             archBot[1]=self.properties.wallPortW/4
 
-        # create opening...
-        openingSpecs += [{'a':self.properties.wallPort,
+        # set opening values
+        openingSpecs += [{'a':False,
             'w':self.properties.wallPortW,'h':self.properties.wallPortH,
             'x':self.properties.wallPortX,'z':self.properties.wallPortZ,
             'n':self.properties.wallPortRpt,'bvl':self.properties.wallPortBvl,
@@ -802,7 +1106,6 @@ class add_castle(bpy.types.Operator):
 ############
 # crenellation, top wall gaps...
 # if crenel opening overlaps with arch opening it fills with blocks...
-#
         archTop[0]=0
         archTop[1]=0
 # add bottom arch option?
@@ -819,8 +1122,8 @@ class add_castle(bpy.types.Operator):
             crenelSpace=0
             crenelRpt=False
 
-        # create opening...
-        openingSpecs += [{'a':self.properties.Crenel,
+        # set opening values
+        openingSpecs += [{'a':False,
             'w':crenelW,'h':crenelH,
             'x':crenelSpace,'z':crenelz,
             'n':crenelRpt,'bvl':0,
@@ -828,7 +1131,6 @@ class add_castle(bpy.types.Operator):
 
 ############
 # Slots
-#
         archTop[0]=0
         archTop[1]=0
         archBot[0]=0
@@ -841,8 +1143,8 @@ class add_castle(bpy.types.Operator):
             archBot[0]=self.properties.SlotVW
             archBot[1]=self.properties.SlotVW/2
 
-        # create opening...
-        openingSpecs += [{'a':self.properties.SlotV,
+        # set opening values
+        openingSpecs += [{'a':False,
             'w':self.properties.SlotVW,'h':self.properties.SlotVH,
             'x':self.properties.SlotVL,'z':self.properties.SlotVZ,
             'n':self.properties.SlotVRpt,'bvl':0,
@@ -858,45 +1160,39 @@ class add_castle(bpy.types.Operator):
         # Deselect all objects.
         bpy.ops.object.select_all(action='DESELECT')
 
-        wallLoc=[castleScene.cursor_location.x,castleScene.cursor_location.y,castleScene.cursor_location.z]
-
-        # set wall flags for first level.
-        wallFLvl=self.properties.wallF1
-        wallLLvl=self.properties.wallL1
-        wallBLvl=self.properties.wallB1
-        wallRLvl=self.properties.wallR1
-
-        # Base/floor object (parent) - there is always a floor.
+############
+# Base/floor/foundation, main object for Castle, parent to all other elements.
         wallExtOpts=[False,False] # no steps or shelf
-# @todo: offset door by floor height
+# @todo: offset door by floor height/thickness
 # @todo: replicate for "multi-floor" option-shared with roof.
 #  - will need openings (in plane) for stairs and such...
         settings['Slope']=False # no curve
         settings['eoff']=0 # no edgeing
 # need separate flag for floor/roof...
-        settings['Dome']=False
+        settings['Radial']=False
 
-        floorMtl=uMatRGBSet('cBase_mat',self.cBaseRGB,matMod=True)
+        baseMtl=uMatRGBSet('cBase_mat',self.cBaseRGB,matMod=True)
 
-        floorDisc=False # only when blocks and round...
+        baseDisc=False # only when blocks and round...
         if self.properties.CBaseB: # floor blocks
-            floorDisc=self.properties.CBaseR # rounded
+            baseDisc=self.properties.CBaseR # rounded
 
         # set block "area": height, width, depth, and spacing for floor
         # - when rotated or disc shape, height is depth, depth is thickness.
-        blockArea=[self.properties.cBaseD,self.properties.cBaseW,self.properties.cBaseT,self.properties.blockZ,self.properties.blockHVar,self.properties.Grout]
+        blockArea=[self.properties.cBaseD,self.properties.cBaseW,self.properties.cBaseT,self.properties.blockZ,settings['hv'],self.properties.Grout]
 
-        floorRotate=False # rotate for blocks...
+        # Block floor uses wall to generate... initialize location values.
+        wallLoc=[castleScene.cursor_location.x,castleScene.cursor_location.y,castleScene.cursor_location.z]
+
+        baseRotate=False # rotate for blocks...
         if self.properties.CBaseB: # make floor with blocks.
-
             saveBD=settings['d'] # put back when done with floor...
             saveBDV=settings['dv']
             settings['d'] = self.properties.cBaseT
             settings['dv'] = 0
 
-            if floorDisc: # make a disc shaped floor
-# need separate flag for floor...
-                settings['Dome']=True
+            if baseDisc: # make base disc shaped
+                settings['Radial']=True
                 if self.properties.cBaseD < self.properties.cBaseW: # narrowest extent
                     blockArea[0]=self.properties.cBaseD/2
                 else:
@@ -905,11 +1201,11 @@ class add_castle(bpy.types.Operator):
                 wallLoc[1]+=self.properties.cBaseW/2 # adjust location for radius
 
             else: # rotate if not disc.
-                floorRotate=True
+                baseRotate=True
 
-            castleObj=makeWallObj(self,castleScene,wallLoc,OBJ_N,blockArea,[],wallExtOpts,floorMtl)
+            castleObj=makeWallObj(self,castleScene,wallLoc,OBJ_N,blockArea,[],wallExtOpts,baseMtl)
 
-            if floorRotate:
+            if baseRotate:
                 castleObj.select=True # must select to rotate 
                 # rotate 90 backward
                 bpy.ops.transform.rotate(value=-cPieHlf,constraint_axis=[True,False,False])
@@ -920,157 +1216,423 @@ class add_castle(bpy.types.Operator):
             settings['dv']=saveBDV
 
         else: # make solid plane
-# trying to merge/share function with block floor, and roof.
-#            wallLoc[1]+=self.properties.cBaseT/2
-#            wallLoc[2]+=(self.properties.cBaseO+(self.properties.cBaseT/2))
-
-            # no gaps or splits...
-#            blockArea[5]=0
-#            settings['sdv']=self.properties.cBaseW
-
-            castleMesh=bpy.data.meshes.new(OBJ_N)
-
             # set plane dimensions and location
-            floorBase=self.properties.cBaseO
-            floorTop=floorBase+self.properties.cBaseT
-            floorPW=self.properties.cBaseW
-            floorD=self.properties.cBaseD
-            floorXO=-floorPW/2 # center
-            floorXE=floorPW/2
+            baseZ=self.properties.cBaseO
+            baseT=baseZ+self.properties.cBaseT
+            baseW=self.properties.cBaseW
+            baseXO=-baseW/2 # center
+            baseXE=baseW/2
 
-            floorBounds=[floorXO,floorXE,floorBase,floorTop,0,floorD]
-            castleObj=makePlaneObj(OBJ_N,floorBounds,floorMtl,floorPW)
+            baseBounds=[baseXO,baseXE,baseZ,baseT,0,self.properties.cBaseD]
+            castleObj=makePlaneObj(OBJ_N,baseBounds,baseMtl,baseW)
             castleScene.objects.link(castleObj) # must do for generation/rotation
 
-############
-# cieling/roof
-# only when walls are enabled...
-        if self.properties.CRoof:
-# need separate flag for floor/roof...
-            settings['Dome']=False # may have been set by floor...
-            stepCut=self.properties.StepD
-            stepCut2=stepCut+blockDepth/2
-
-            roofMesh=bpy.data.meshes.new("CRoof")
-
-            roofVs=[]
-            roofFs=[]
-
-            # set roof/plane size and location
-
-            roofBase=planeHL
-            # roof below wall height.
-            if self.properties.Crenel: # Crenellations (top row openings)
-                roofBase-=crenelH
-#            roofBase-=RoofDrop:
-                roofBase-=minWallH/2 # roof below wall height.
-
-            roofTop=roofBase+self.properties.cBaseT
-            roofPW=self.properties.cBaseW
-            roofD=self.properties.cBaseD
-
-            roofXMod=0 # offset roof for side wall options
-            roofYMod=0 # offset roof for front or back wall options
-
-            # adjust size and location for front or back walls.
-#            if self.properties.'wallF'+str(self.properties.CLvl):
-#                roofD-=blockDepth/2
-#                roofYMod+=blockDepth/2
-#            if self.properties.wallB:
-#                roofD-=blockDepth/2
-
-            # adjust size and location per wall that has steps enabled.
-# more like a 2nd floor than roof.
-            if self.properties.Step1:
-                if wallFLvl and self.properties.wallSF:
-                    roofD-=stepCut
-                    roofYMod+=stepCut
-                if self.properties.wallLLvl and self.properties.wallSL:
-                    roofPW-=stepCut
-                    roofXMod+=stepCut-blockDepth/2
-                if self.properties.wallBLvl and self.properties.wallSB:
-                    roofD-=stepCut
-                if self.properties.wallRLvl and self.properties.wallSR:
-                    roofPW-=stepCut
-
-# @todo: change offest/sizing for wall and steps (not centered).
-            roofXO=-roofPW/2 # center
-            roofXE=roofPW/2
-
-            roofBounds=[roofXO,roofXE,roofBase,roofTop,0,roofD]
-
-            roofObj=makePlaneObj("CRoof",roofBounds,floorMtl,roofPW)
-            castleScene.objects.link(roofObj) # must do for generation/rotation
-
-            # shift "location" as needed...
-            xMod=roofXMod # side wall offset roof.
-            yMod=roofYMod # front wall offset roof.
-
-            if floorDisc: # make a disc shaped floor
-                yMod-=roofD/2
-
-            roofObj.location.x+=xMod
-            roofObj.location.y+=yMod
-
-            roofObj.parent=castleObj # Connect to parent
 
 ####################
-# Make "Walls"
+# Make Floor and Walls
         wallMtl=uMatRGBSet('cWall_mat',self.wallRGB,matMod=True)
 
-        wallLvl=0 # make walls per levels as selected...
-        wallLoc=[castleScene.cursor_location.x,castleScene.cursor_location.y,castleScene.cursor_location.z]
+        # Block floor uses wall to generate... reset location values.
+        wallLoc[1]=castleScene.cursor_location.y
 
-        while wallLvl < self.properties.CLvls: # make castle wall levels
-            if wallLvl == 1: # wallLvl is 0 based, first level flag already set.
+        wallLvl=0 # make per level as selected...
+        while wallLvl < self.properties.CLvls: # make castle levels
+            if wallLvl == 0:
+                floorLvl=False # First floor is Castle base (parent).
+                wallFLvl=self.properties.wallF1
+                wallLLvl=self.properties.wallL1
+                wallBLvl=self.properties.wallB1
+                wallRLvl=self.properties.wallR1
+                wallFOLvl=self.properties.wallFO1
+                wallLOLvl=self.properties.wallLO1
+                wallBOLvl=self.properties.wallBO1
+                wallROLvl=self.properties.wallRO1
+                wallDLvlF=self.properties.wallDF1
+                wallDLvlL=self.properties.wallDL1
+                wallDLvlB=self.properties.wallDB1
+                wallDLvlR=self.properties.wallDR1
+                wallPLvlF=self.properties.wallPF1
+                wallPLvlL=self.properties.wallPL1
+                wallPLvlB=self.properties.wallPB1
+                wallPLvlR=self.properties.wallPR1
+                wallELvlF=self.properties.wallEF1
+                wallELvlL=self.properties.wallEL1
+                wallELvlB=self.properties.wallEB1
+                wallELvlR=self.properties.wallER1
+                wallCLvlF=self.properties.wallCF1
+                wallCLvlL=self.properties.wallCL1
+                wallCLvlB=self.properties.wallCB1
+                wallCLvlR=self.properties.wallCR1
+                wallSLvlF=self.properties.wallSF1
+                wallSLvlL=self.properties.wallSL1
+                wallSLvlB=self.properties.wallSB1
+                wallSLvlR=self.properties.wallSR1
+                wallBLvlF=self.properties.wallBF1
+                wallBLvlL=self.properties.wallBL1
+                wallBLvlB=self.properties.wallBB1
+                wallBLvlR=self.properties.wallBR1
+
+            if wallLvl == 1:
+                floorLvl=self.properties.CFloor2
                 wallFLvl=self.properties.wallF2
                 wallLLvl=self.properties.wallL2
                 wallBLvl=self.properties.wallB2
                 wallRLvl=self.properties.wallR2
+                wallFOLvl=self.properties.wallFO2
+                wallLOLvl=self.properties.wallLO2
+                wallBOLvl=self.properties.wallBO2
+                wallROLvl=self.properties.wallRO2
+                wallDLvlF=self.properties.wallDF2
+                wallDLvlL=self.properties.wallDL2
+                wallDLvlB=self.properties.wallDB2
+                wallDLvlR=self.properties.wallDR2
+                wallPLvlF=self.properties.wallPF2
+                wallPLvlL=self.properties.wallPL2
+                wallPLvlB=self.properties.wallPB2
+                wallPLvlR=self.properties.wallPR2
+                wallELvlF=self.properties.wallEF2
+                wallELvlL=self.properties.wallEL2
+                wallELvlB=self.properties.wallEB2
+                wallELvlR=self.properties.wallER2
+                wallCLvlF=self.properties.wallCF2
+                wallCLvlL=self.properties.wallCL2
+                wallCLvlB=self.properties.wallCB2
+                wallCLvlR=self.properties.wallCR2
+                wallSLvlF=self.properties.wallSF2
+                wallSLvlL=self.properties.wallSL2
+                wallSLvlB=self.properties.wallSB2
+                wallSLvlR=self.properties.wallSR2
+                wallBLvlF=self.properties.wallBF2
+                wallBLvlL=self.properties.wallBL2
+                wallBLvlB=self.properties.wallBB2
+                wallBLvlR=self.properties.wallBR2
+
             if wallLvl == 2:
+                floorLvl=self.properties.CFloor3
                 wallFLvl=self.properties.wallF3
                 wallLLvl=self.properties.wallL3
                 wallBLvl=self.properties.wallB3
                 wallRLvl=self.properties.wallR3
+                wallFOLvl=self.properties.wallFO3
+                wallLOLvl=self.properties.wallLO3
+                wallBOLvl=self.properties.wallBO3
+                wallROLvl=self.properties.wallRO3
+                wallDLvlF=self.properties.wallDF3
+                wallDLvlL=self.properties.wallDL3
+                wallDLvlB=self.properties.wallDB3
+                wallDLvlR=self.properties.wallDR3
+                wallPLvlF=self.properties.wallPF3
+                wallPLvlL=self.properties.wallPL3
+                wallPLvlB=self.properties.wallPB3
+                wallPLvlR=self.properties.wallPR3
+                wallELvlF=self.properties.wallEF3
+                wallELvlL=self.properties.wallEL3
+                wallELvlB=self.properties.wallEB3
+                wallELvlR=self.properties.wallER3
+                wallCLvlF=self.properties.wallCF3
+                wallCLvlL=self.properties.wallCL3
+                wallCLvlB=self.properties.wallCB3
+                wallCLvlR=self.properties.wallCR3
+                wallSLvlF=self.properties.wallSF3
+                wallSLvlL=self.properties.wallSL3
+                wallSLvlB=self.properties.wallSB3
+                wallSLvlR=self.properties.wallSR3
+                wallBLvlF=self.properties.wallBF3
+                wallBLvlL=self.properties.wallBL3
+                wallBLvlB=self.properties.wallBB3
+                wallBLvlR=self.properties.wallBR3
+
             if wallLvl == 3:
+                floorLvl=self.properties.CFloor4
                 wallFLvl=self.properties.wallF4
                 wallLLvl=self.properties.wallL4
                 wallBLvl=self.properties.wallB4
                 wallRLvl=self.properties.wallR4
+                wallFOLvl=self.properties.wallFO4
+                wallLOLvl=self.properties.wallLO4
+                wallBOLvl=self.properties.wallBO4
+                wallROLvl=self.properties.wallRO4
+                wallDLvlF=self.properties.wallDF4
+                wallDLvlL=self.properties.wallDL4
+                wallDLvlB=self.properties.wallDB4
+                wallDLvlR=self.properties.wallDR4
+                wallPLvlF=self.properties.wallPF4
+                wallPLvlL=self.properties.wallPL4
+                wallPLvlB=self.properties.wallPB4
+                wallPLvlR=self.properties.wallPR4
+                wallELvlF=self.properties.wallEF4
+                wallELvlL=self.properties.wallEL4
+                wallELvlB=self.properties.wallEB4
+                wallELvlR=self.properties.wallER4
+                wallCLvlF=self.properties.wallCF4
+                wallCLvlL=self.properties.wallCL4
+                wallCLvlB=self.properties.wallCB4
+                wallCLvlR=self.properties.wallCR4
+                wallSLvlF=self.properties.wallSF4
+                wallSLvlL=self.properties.wallSL4
+                wallSLvlB=self.properties.wallSB4
+                wallSLvlR=self.properties.wallSR4
+                wallBLvlF=self.properties.wallBF4
+                wallBLvlL=self.properties.wallBL4
+                wallBLvlB=self.properties.wallBB4
+                wallBLvlR=self.properties.wallBR4
+
             if wallLvl == 4:
+                floorLvl=self.properties.CFloor5
                 wallFLvl=self.properties.wallF5
                 wallLLvl=self.properties.wallL5
                 wallBLvl=self.properties.wallB5
                 wallRLvl=self.properties.wallR5
+                wallFOLvl=self.properties.wallFO5
+                wallLOLvl=self.properties.wallLO5
+                wallBOLvl=self.properties.wallBO5
+                wallROLvl=self.properties.wallRO5
+                wallDLvlF=self.properties.wallDF5
+                wallDLvlL=self.properties.wallDL5
+                wallDLvlB=self.properties.wallDB5
+                wallDLvlR=self.properties.wallDR5
+                wallPLvlF=self.properties.wallPF5
+                wallPLvlL=self.properties.wallPL5
+                wallPLvlB=self.properties.wallPB5
+                wallPLvlR=self.properties.wallPR5
+                wallELvlF=self.properties.wallEF5
+                wallELvlL=self.properties.wallEL5
+                wallELvlB=self.properties.wallEB5
+                wallELvlR=self.properties.wallER5
+                wallCLvlF=self.properties.wallCF5
+                wallCLvlL=self.properties.wallCL5
+                wallCLvlB=self.properties.wallCB5
+                wallCLvlR=self.properties.wallCR5
+                wallSLvlF=self.properties.wallSF5
+                wallSLvlL=self.properties.wallSL5
+                wallSLvlB=self.properties.wallSB5
+                wallSLvlR=self.properties.wallSR5
+                wallBLvlF=self.properties.wallBF5
+                wallBLvlL=self.properties.wallBL5
+                wallBLvlB=self.properties.wallBB5
+                wallBLvlR=self.properties.wallBR5
+
             if wallLvl == 5:
+                floorLvl=self.properties.CFloor6
                 wallFLvl=self.properties.wallF6
                 wallLLvl=self.properties.wallL6
                 wallBLvl=self.properties.wallB6
                 wallRLvl=self.properties.wallR6
+                wallFOLvl=self.properties.wallFO6
+                wallLOLvl=self.properties.wallLO6
+                wallBOLvl=self.properties.wallBO6
+                wallROLvl=self.properties.wallRO6
+                wallDLvlF=self.properties.wallDF6
+                wallDLvlL=self.properties.wallDL6
+                wallDLvlB=self.properties.wallDB6
+                wallDLvlR=self.properties.wallDR6
+                wallPLvlF=self.properties.wallPF6
+                wallPLvlL=self.properties.wallPL6
+                wallPLvlB=self.properties.wallPB6
+                wallPLvlR=self.properties.wallPR6
+                wallELvlF=self.properties.wallEF6
+                wallELvlL=self.properties.wallEL6
+                wallELvlB=self.properties.wallEB6
+                wallELvlR=self.properties.wallER6
+                wallCLvlF=self.properties.wallCF6
+                wallCLvlL=self.properties.wallCL6
+                wallCLvlB=self.properties.wallCB6
+                wallCLvlR=self.properties.wallCR6
+                wallSLvlF=self.properties.wallSF6
+                wallSLvlL=self.properties.wallSL6
+                wallSLvlB=self.properties.wallSB6
+                wallSLvlR=self.properties.wallSR6
+                wallBLvlF=self.properties.wallBF6
+                wallBLvlL=self.properties.wallBL6
+                wallBLvlB=self.properties.wallBB6
+                wallBLvlR=self.properties.wallBR6
+
             if wallLvl == 6:
+                floorLvl=self.properties.CFloor7
                 wallFLvl=self.properties.wallF7
                 wallLLvl=self.properties.wallL7
                 wallBLvl=self.properties.wallB7
                 wallRLvl=self.properties.wallR7
+                wallFOLvl=self.properties.wallFO7
+                wallLOLvl=self.properties.wallLO7
+                wallBOLvl=self.properties.wallBO7
+                wallROLvl=self.properties.wallRO7
+                wallDLvlF=self.properties.wallDF7
+                wallDLvlL=self.properties.wallDL7
+                wallDLvlB=self.properties.wallDB7
+                wallDLvlR=self.properties.wallDR7
+                wallPLvlF=self.properties.wallPF7
+                wallPLvlL=self.properties.wallPL7
+                wallPLvlB=self.properties.wallPB7
+                wallPLvlR=self.properties.wallPR7
+                wallELvlF=self.properties.wallEF7
+                wallELvlL=self.properties.wallEL7
+                wallELvlB=self.properties.wallEB7
+                wallELvlR=self.properties.wallER7
+                wallCLvlF=self.properties.wallCF7
+                wallCLvlL=self.properties.wallCL7
+                wallCLvlB=self.properties.wallCB7
+                wallCLvlR=self.properties.wallCR7
+                wallSLvlF=self.properties.wallSF7
+                wallSLvlL=self.properties.wallSL7
+                wallSLvlB=self.properties.wallSB7
+                wallSLvlR=self.properties.wallSR7
+                wallBLvlF=self.properties.wallBF7
+                wallBLvlL=self.properties.wallBL7
+                wallBLvlB=self.properties.wallBB7
+                wallBLvlR=self.properties.wallBR7
+
             if wallLvl == 7:
+                floorLvl=self.properties.CFloor38
                 wallFLvl=self.properties.wallF8
                 wallLLvl=self.properties.wallL8
                 wallBLvl=self.properties.wallB8
                 wallRLvl=self.properties.wallR8
+                wallFOLvl=self.properties.wallFO8
+                wallLOLvl=self.properties.wallLO8
+                wallBOLvl=self.properties.wallBO8
+                wallROLvl=self.properties.wallRO8
+                wallDLvlF=self.properties.wallDF8
+                wallDLvlL=self.properties.wallDL8
+                wallDLvlB=self.properties.wallDB8
+                wallDLvlR=self.properties.wallDR8
+                wallPLvlF=self.properties.wallPF8
+                wallPLvlL=self.properties.wallPL8
+                wallPLvlB=self.properties.wallPB8
+                wallPLvlR=self.properties.wallPR8
+                wallELvlF=self.properties.wallEF8
+                wallELvlL=self.properties.wallEL8
+                wallELvlB=self.properties.wallEB8
+                wallELvlR=self.properties.wallER8
+                wallCLvlF=self.properties.wallCF8
+                wallCLvlL=self.properties.wallCL8
+                wallCLvlB=self.properties.wallCB8
+                wallCLvlR=self.properties.wallCR8
+                wallSLvlF=self.properties.wallSF8
+                wallSLvlL=self.properties.wallSL8
+                wallSLvlB=self.properties.wallSB8
+                wallSLvlR=self.properties.wallSR8
+                wallBLvlF=self.properties.wallBF8
+                wallBLvlL=self.properties.wallBL8
+                wallBLvlB=self.properties.wallBB8
+                wallBLvlR=self.properties.wallBR8
+
             if wallLvl == 8:
+                floorLvl=self.properties.CFloor9
                 wallFLvl=self.properties.wallF9
                 wallLLvl=self.properties.wallL9
                 wallBLvl=self.properties.wallB9
                 wallRLvl=self.properties.wallR9
+                wallFOLvl=self.properties.wallFO9
+                wallLOLvl=self.properties.wallLO9
+                wallBOLvl=self.properties.wallBO9
+                wallROLvl=self.properties.wallRO9
+                wallDLvlF=self.properties.wallDF9
+                wallDLvlL=self.properties.wallDL9
+                wallDLvlB=self.properties.wallDB9
+                wallDLvlR=self.properties.wallDR9
+                wallPLvlF=self.properties.wallPF9
+                wallPLvlL=self.properties.wallPL9
+                wallPLvlB=self.properties.wallPB9
+                wallPLvlR=self.properties.wallPR9
+                wallELvlF=self.properties.wallEF9
+                wallELvlL=self.properties.wallEL9
+                wallELvlB=self.properties.wallEB9
+                wallELvlR=self.properties.wallER9
+                wallCLvlF=self.properties.wallCF9
+                wallCLvlL=self.properties.wallCL9
+                wallCLvlB=self.properties.wallCB9
+                wallCLvlR=self.properties.wallCR9
+                wallSLvlF=self.properties.wallSF9
+                wallSLvlL=self.properties.wallSL9
+                wallSLvlB=self.properties.wallSB9
+                wallSLvlR=self.properties.wallSR9
+                wallBLvlF=self.properties.wallBF9
+                wallBLvlL=self.properties.wallBL9
+                wallBLvlB=self.properties.wallBB9
+                wallBLvlR=self.properties.wallBR9
+
             if wallLvl == 9:
+                floorLvl=self.properties.CFloor10
                 wallFLvl=self.properties.wallF10
                 wallLLvl=self.properties.wallL10
                 wallBLvl=self.properties.wallB10
                 wallRLvl=self.properties.wallR10
+                wallFOLvl=self.properties.wallFO10
+                wallLOLvl=self.properties.wallLO10
+                wallBOLvl=self.properties.wallBO10
+                wallROLvl=self.properties.wallRO10
+                wallDLvlF=self.properties.wallDF10
+                wallDLvlL=self.properties.wallDL10
+                wallDLvlB=self.properties.wallDB10
+                wallDLvlR=self.properties.wallDR10
+                wallPLvlF=self.properties.wallPF10
+                wallPLvlL=self.properties.wallPL10
+                wallPLvlB=self.properties.wallPB10
+                wallPLvlR=self.properties.wallPR10
+                wallELvlF=self.properties.wallEF10
+                wallELvlL=self.properties.wallEL10
+                wallELvlB=self.properties.wallEB10
+                wallELvlR=self.properties.wallER10
+                wallCLvlF=self.properties.wallCF10
+                wallCLvlL=self.properties.wallCL10
+                wallCLvlB=self.properties.wallCB10
+                wallCLvlR=self.properties.wallCR10
+                wallSLvlF=self.properties.wallSF10
+                wallSLvlL=self.properties.wallSL10
+                wallSLvlB=self.properties.wallSB10
+                wallSLvlR=self.properties.wallSR10
+                wallBLvlF=self.properties.wallBF10
+                wallBLvlL=self.properties.wallBL10
+                wallBLvlB=self.properties.wallBB10
+                wallBLvlR=self.properties.wallBR10
 
+            levelBase=planeHL*wallLvl
+
+            floorDisc=False # affects floor and wall positioning.
+            if self.properties.CBaseB: # if blocks for floor can make disc.
+                floorDisc=self.properties.CBaseR
+
+############
+# make floor for each level
+            if floorLvl:
+                objName=OBJ_CF+str(wallLvl)
+
+                # set plane dimensions and location
+                floorBase=levelBase
+                floorTop=floorBase+self.properties.cBaseT
+                floorPW=self.properties.cBaseW
+                floorD=self.properties.cBaseD
+                floorXO=-floorPW/2 # center
+                floorXE=floorPW/2
+                floorBounds=[floorXO,floorXE,floorBase,floorTop,0,floorD]
+
+                floorObj=makePlaneObj(objName,floorBounds,baseMtl,floorPW)
+
+                # adjust floor location for 3D cursor since parented to Base...
+                yMod=castleScene.cursor_location.y
+                if floorDisc: # make a disc shaped floor
+                    yMod+=self.properties.cBaseD/2
+                floorObj.location.x-=castleScene.cursor_location.x
+                floorObj.location.y-=yMod
+                floorObj.location.z-=castleScene.cursor_location.z
+
+                castleScene.objects.link(floorObj) # must do for generation/rotation
+
+                floorObj.parent=castleObj # Connect to parent
+
+############
+# make walls for each level
             wallSides=[wallFLvl,wallLLvl,wallBLvl,wallRLvl]
-            wallLoc[2]=wallLvl*planeHL # each segment base...
-            makeWalls(self,castleScene,castleObj,wallSides,wallLoc,wallMtl,wallLvl)
+            # Wall modifiers, per level, per wall (FBLR not FLBR order to match wall build sequence).
+            wallMods=[[wallDLvlF,wallPLvlF,wallELvlF,wallCLvlF,wallSLvlF,wallBLvlF,wallFOLvl],
+                [wallDLvlB,wallPLvlB,wallELvlB,wallCLvlB,wallSLvlB,wallBLvlB,wallBOLvl],
+                [wallDLvlL,wallPLvlL,wallELvlL,wallCLvlL,wallSLvlL,wallBLvlL,wallLOLvl],
+                [wallDLvlR,wallPLvlR,wallELvlR,wallCLvlR,wallSLvlR,wallBLvlR,wallROLvl]
+                ]
+
+            wallLoc[2]=levelBase # each segment base...
+            makeWalls(self,castleScene,castleObj,wallSides,wallMods,wallLoc,wallMtl,wallLvl,floorDisc)
             wallLvl+=1
 
 ####################
@@ -1086,7 +1648,7 @@ class add_castle(bpy.types.Operator):
             dims['e']=CastleX/2 # effective tower height; affects radius.
 
             # set block "area": height, width, depth, and spacing.
-            blockArea=[dims['e'],CastleX,blockDepth,self.properties.blockZ,self.properties.blockHVar,self.properties.Grout]
+            blockArea=[dims['e'],CastleX,blockDepth,self.properties.blockZ,settings['hv'],self.properties.Grout]
 
             # Make "tower" wall.
             wallLoc[0]=0
@@ -1108,7 +1670,7 @@ class add_castle(bpy.types.Operator):
 
 ####################
 # Make "Dome"
-        settings['Dome']=self.properties.cDome
+        settings['Radial']=self.properties.cDome
         if self.properties.cDome:
             # no steps or shelf for dome...
             wallExtOpts[0]=False
@@ -1124,7 +1686,7 @@ class add_castle(bpy.types.Operator):
             domeMtl=uMatRGBSet('cDome_mat',self.cDomeRGB,matMod=True)
 
             # set block "area": height, width, depth, and spacing.
-            blockArea=[self.properties.cDomeH,CastleX,blockDepth,self.properties.blockZ,self.properties.blockHVar,self.properties.Grout]
+            blockArea=[self.properties.cDomeH,CastleX,blockDepth,self.properties.blockZ,settings['hv'],self.properties.Grout]
 
 # eliminate to allow user control for start/completion by width setting.
             dims['s'] = 0.0 # complete radial
@@ -1156,18 +1718,13 @@ class add_castle(bpy.types.Operator):
 #
     # Walls
 #
-# different blocks are generated for each wall when variations or merge settings selected;
-# edges/ends don't match.
+# when variations or openings are selected different block rows are
+# generated for each wall; edges/ends don't match.
 #
 ####################
-def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
+def makeWalls(sRef,objScene,objParent,objSides,objMods,objLoc,objMat,objLvl,floorDisc):
 
-    settings['Dome']=False # disable disc/dome
     wallExtOpts=[False,False] # no steps or shelf
-
-    floorDisc=False # only when blocks and round...
-    if sRef.properties.CBaseB:
-        floorDisc=sRef.properties.CBaseR # round, flat, floor
 
     WobjH=sRef.properties.wallH
     WobjW=sRef.properties.cBaseW
@@ -1196,7 +1753,7 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
     settings['StepsO']=sRef.properties.StepOut # outside of wall
 
     # set block "area": height, width, depth, and spacing for front and back walls.
-    blockArea=[WobjH,WobjW,WobjD,sRef.properties.blockZ,sRef.properties.blockHVar,sRef.properties.Grout]
+    blockArea=[WobjH,WobjW,WobjD,sRef.properties.blockZ,settings['hv'],sRef.properties.Grout]
     dims['s'] = -midWallW
     dims['e'] = midWallW
 
@@ -1205,51 +1762,37 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
         yMod=WobjY
 
 ####################
-    if objSides[0]: # Make "front" wall.
-        objName=OBJ_F+str(objLvl)
+    if objSides[0]: # Make "front" wall
+        objName=OBJ_WF+str(objLvl)
+
+        wallRound=objMods[0][6] # round (disc) wall...
+
+        # adjust sizing for round wall else ensure full height.
+        if wallRound:
+            settings['Radial']=True
+            blockArea[0]=WobjH/2 # half height for radius
+        else:
+            settings['Radial']=False # disable disc
+            blockArea[0]=WobjH # ensure full height
 
         wallSteps=False
         wallShelf=False
         wallHoles=[]
 
-#        if not objLvl: # wall options first floor only
-        if sRef.properties.wallDoor:
-            openingSpecs[OP_DOOR]['a']=sRef.properties.wallDF
-        else:
-            openingSpecs[OP_DOOR]['a']=False
-
-        if sRef.properties.wallPort:
-            openingSpecs[OP_PORT]['a']=sRef.properties.wallPF
-        else:
-            openingSpecs[OP_PORT]['a']=False
-
-        if sRef.properties.SlotV:
-            openingSpecs[OP_SLOT]['a']=sRef.properties.wallEF
-        else:
-            openingSpecs[OP_SLOT]['a']=False
-
-        if sRef.properties.Crenel:
-            openingSpecs[OP_CREN]['a']=sRef.properties.wallCF
-        else:
-            openingSpecs[OP_CREN]['a']=False
+        openingSpecs[OP_DOOR]['a']=objMods[0][0] # door
+        openingSpecs[OP_PORT]['a']=objMods[0][1] # window
+        openingSpecs[OP_SLOT]['a']=objMods[0][2] # slot
+        openingSpecs[OP_CREN]['a']=objMods[0][3] # crenel
+        wallExtOpts[0]=objMods[0][4] # steps
+        wallExtOpts[1]=objMods[0][5] # shelf
 
         wallHoles=openList(sRef)
 
-        # set steps/shelf extrusion options for this wall...
-        if sRef.properties.Step1 and sRef.properties.wallSF:
-            wallSteps=True
-        if sRef.properties.Shelf1 and sRef.properties.wallBF:
-            wallShelf=True
-# end first floor only ;)
-
-        wallExtOpts[0]=wallSteps
-        wallExtOpts[1]=wallShelf
-
-        objLoc[0]=objScene.cursor_location.x
+        objLoc[0]=0
         if sRef.properties.cXTest and sRef.properties.CTunnel:
             objLoc[1]=WobjY/2
         else:
-            objLoc[1]=objScene.cursor_location.y
+            objLoc[1]=0
 
         objLoc[1]-=yMod/2 # offset for disc
 
@@ -1257,110 +1800,101 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
         cFrontObj=makeWallObj(sRef,objScene,objLoc,objName,blockArea,wallHoles,wallExtOpts,objMat)
         cFrontObj.parent=objParent # Connect to parent
 
+        if wallRound: # rotate 90 forward if round/disc
+            cFrontObj.select=True # must select to rotate
+            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
+            bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+            cFrontObj.location.z+=WobjH/2 # adjust vertical after rotate for radius
+            cFrontObj.select=False # deselect after rotate else joined with others...
+
 ####################
-    if objSides[2]: # Make "back" wall.
-        objName=OBJ_B+str(objLvl)
+    if objSides[2]: # Make "back" wall
+        objName=OBJ_WB+str(objLvl)
+
+        wallRound=objMods[1][6] # round (disc) wall...
+
+        # adjust sizing for round wall else ensure full height.
+        if wallRound:
+            settings['Radial']=True
+            blockArea[0]=WobjH/2 # half height for radius
+        else:
+            settings['Radial']=False # disable disc
+            blockArea[0]=WobjH # ensure full height
 
         wallSteps=False
         wallShelf=False
         wallHoles=[]
 
-#        if not objLvl: # only for first lvl...
-        if sRef.properties.wallDoor:
-            openingSpecs[OP_DOOR]['a']=sRef.properties.wallDB
-        else:
-            openingSpecs[OP_DOOR]['a']=False
-
-        if sRef.properties.wallPort:
-            openingSpecs[OP_PORT]['a']=sRef.properties.wallPB
-        else:
-            openingSpecs[OP_PORT]['a']=False
-
-        if sRef.properties.SlotV:
-            openingSpecs[OP_SLOT]['a']=sRef.properties.wallEB
-        else:
-            openingSpecs[OP_SLOT]['a']=False
-
-        if sRef.properties.Crenel:
-            openingSpecs[OP_CREN]['a']=sRef.properties.wallCB
-        else:
-            openingSpecs[OP_CREN]['a']=False
+        openingSpecs[OP_DOOR]['a']=objMods[1][0] # door
+        openingSpecs[OP_PORT]['a']=objMods[1][1] # window
+        openingSpecs[OP_SLOT]['a']=objMods[1][2] # slot
+        openingSpecs[OP_CREN]['a']=objMods[1][3] # crenel
+        wallExtOpts[0]=objMods[1][4] # steps
+        wallExtOpts[1]=objMods[1][5] # shelf
 
         wallHoles=openList(sRef)
-        # set steps/shelf extrusion options for this wall... 
-        if sRef.properties.Step1 and sRef.properties.wallSB:
-            wallSteps=True
-        if sRef.properties.Shelf1 and sRef.properties.wallBB:
-            wallShelf=True
-# end first floor only ;)
 
-        wallExtOpts[0]=wallSteps
-        wallExtOpts[1]=wallShelf
-
-        objLoc[0]=objScene.cursor_location.x
+        objLoc[0]=0
         if sRef.properties.cXTest and sRef.properties.CTunnel:
             objLoc[1]=WobjY/2
         else:
             objLoc[1]=WobjY
-        objLoc[1]-=yMod/2 # offset for disc
+
+        objLoc[1]-=yMod/2 # offset for floor disc
 
         # generate wall...
         cBackObj=makeWallObj(sRef,objScene,objLoc,objName,blockArea,wallHoles,wallExtOpts,objMat)
         cBackObj.parent=objParent # Connect to parent
 
         cBackObj.select=True # must select to rotate 
+
+        # rotate to "reverse" face of wall, else just a mirror of front.
         bpy.ops.transform.rotate(value=cPie,constraint_axis=[False,False,True])
         bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+
+        if wallRound: # rotate 90 forward
+            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
+            cBackObj.location.z+=WobjH/2 # adjust vertical after rotate for radius
+
         cBackObj.select=False # de-select after rotate else joined with others...
 
 ####################
     # set block "area": height, width, depth, and spacing for side walls...
-    blockArea=[WobjH,WobjY-segWidth*2,WobjD,sRef.properties.blockZ,sRef.properties.blockHVar,sRef.properties.Grout]
-#    blockArea=[WobjH,WobjY-segWidth,WobjD,sRef.properties.blockZ,sRef.properties.blockHVar,sRef.properties.Grout]
-#    blockArea=[WobjH,WobjY,WobjD,sRef.properties.blockZ,sRef.properties.blockHVar,sRef.properties.Grout]
+    blockArea=[WobjH,WobjY-segWidth*2,WobjD,sRef.properties.blockZ,settings['hv'],sRef.properties.Grout]
+#    blockArea=[WobjH,WobjY-segWidth,WobjD,sRef.properties.blockZ,settings['hv'],sRef.properties.Grout]
+#    blockArea=[WobjH,WobjY,WobjD,sRef.properties.blockZ,settings['hv'],sRef.properties.Grout]
     # rowprocessing() side walls
     dims['s'] = -midWallD
     dims['e'] = midWallD
 ####################
 
-    if objSides[1]: # Make "Left" wall.
-        objName=OBJ_L+str(objLvl)
+####################
+    if objSides[1]: # Make "Left" wall
+        objName=OBJ_WL+str(objLvl)
+
+        wallRound=objMods[2][6] # round (disc) wall...
+
+        # adjust sizing for round wall else ensure full height.
+        if wallRound:
+            settings['Radial']=True
+            blockArea[0]=WobjH/2 # half height for radius
+        else:
+            settings['Radial']=False # disable disc
+            blockArea[0]=WobjH # ensure full height
 
         wallSteps=False
         wallShelf=False
         wallHoles=[]
 
-#        if not objLvl: # only for first lvl...
-        if sRef.properties.wallDoor:
-            openingSpecs[OP_DOOR]['a']=sRef.properties.wallDL
-        else:
-            openingSpecs[OP_DOOR]['a']=False
-
-        if sRef.properties.wallPort:
-            openingSpecs[OP_PORT]['a']=sRef.properties.wallPL
-        else:
-            openingSpecs[OP_PORT]['a']=False
-
-        if sRef.properties.SlotV:
-            openingSpecs[OP_SLOT]['a']=sRef.properties.wallEL
-        else:
-            openingSpecs[OP_SLOT]['a']=False
-
-        if sRef.properties.Crenel:
-            openingSpecs[OP_CREN]['a']=sRef.properties.wallCL
-        else:
-            openingSpecs[OP_CREN]['a']=False
+        openingSpecs[OP_DOOR]['a']=objMods[2][0] # door
+        openingSpecs[OP_PORT]['a']=objMods[2][1] # window
+        openingSpecs[OP_SLOT]['a']=objMods[2][2] # slot
+# radius/round sizing wrong when crenel selected...
+        openingSpecs[OP_CREN]['a']=objMods[2][3] # crenel
+        wallExtOpts[0]=objMods[2][4] # steps
+        wallExtOpts[1]=objMods[2][5] # shelf
 
         wallHoles=openList(sRef)
-        # set steps/shelf extrusion options for this wall...
-        if sRef.properties.Step1 and sRef.properties.wallSL:
-           wallSteps=True
-        if sRef.properties.Shelf1 and sRef.properties.wallBL:
-           wallShelf=True
-# end first floor only ;)
-
-        wallExtOpts[0]=wallSteps
-        wallExtOpts[1]=wallShelf
 
         if sRef.properties.cXTest and sRef.properties.CTunnel:
             objLoc[0]=0
@@ -1375,8 +1909,15 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
 
         # generate wall...
         cSideLObj=makeWallObj(sRef,objScene,objLoc,objName,blockArea,wallHoles,wallExtOpts,objMat)
+        cSideLObj.parent=objParent # Connect to parent
 
-        cSideLObj.select=True # must select to rotate 
+        cSideLObj.select=True # must select to rotate
+        bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+
+        if wallRound: # rotate 90 forward
+            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
+            cSideLObj.location.z+=WobjH/2 # adjust vertical after rotate for radius
+
         if sRef.properties.cXTest and sRef.properties.CTunnel:
 # rotate 90 horizontal, ccw...
             bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[False,False,True])
@@ -1387,50 +1928,36 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
 #            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
 # rotate 90 cw along side
 #            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[False,True,False])
-        bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+
         cSideLObj.select=False # deselect after rotate else joined with others...
 
-        cSideLObj.parent=objParent # Connect to parent
 
 ####################
-    if objSides[3]: # Make "Right" wall.
-        objName=OBJ_R+str(objLvl)
+    if objSides[3]: # Make "Right" wall
+        objName=OBJ_WR+str(objLvl)
+
+        wallRound=objMods[3][6] # round (disc) wall...
+
+        # adjust sizing for round wall else ensure full height.
+        if wallRound:
+            settings['Radial']=True
+            blockArea[0]=WobjH/2 # half height for radius
+        else:
+            settings['Radial']=False # disable disc
+            blockArea[0]=WobjH # ensure full height
 
         wallSteps=False
         wallShelf=False
         wallHoles=[]
 
-#        if not objLvl: # only for first lvl...
-        if sRef.properties.wallDoor:
-            openingSpecs[OP_DOOR]['a']=sRef.properties.wallDR
-        else:
-            openingSpecs[OP_DOOR]['a']=False
-
-        if sRef.properties.wallPort:
-            openingSpecs[OP_PORT]['a']=sRef.properties.wallPR
-        else:
-            openingSpecs[OP_PORT]['a']=False
-
-        if sRef.properties.SlotV:
-            openingSpecs[OP_SLOT]['a']=sRef.properties.wallER
-        else:
-            openingSpecs[OP_SLOT]['a']=False
-
-        if sRef.properties.Crenel:
-            openingSpecs[OP_CREN]['a']=sRef.properties.wallCR
-        else:
-            openingSpecs[OP_CREN]['a']=False
+        openingSpecs[OP_DOOR]['a']=objMods[3][0] # door
+        openingSpecs[OP_PORT]['a']=objMods[3][1] # window
+        openingSpecs[OP_SLOT]['a']=objMods[3][2] # slot
+        openingSpecs[OP_CREN]['a']=objMods[3][3] # crenel
+        wallExtOpts[0]=objMods[3][4] # steps
+        wallExtOpts[1]=objMods[3][5] # shelf
 
         wallHoles=openList(sRef)
-        # set steps/shelf extrusion options for this wall...
-        if sRef.properties.Step1 and sRef.properties.wallSR:
-           wallSteps=True
-        if sRef.properties.Shelf1 and sRef.properties.wallBR:
-           wallShelf=True
-# end first floor only ;)
-
-        wallExtOpts[0]=wallSteps
-        wallExtOpts[1]=wallShelf
 
         if sRef.properties.cXTest and sRef.properties.CTunnel:
             objLoc[0]=0
@@ -1443,9 +1970,16 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
             objLoc[1]=midWallD-(WobjD/2)
 
         cSideRObj=makeWallObj(sRef,objScene,objLoc,objName,blockArea,wallHoles,wallExtOpts,objMat)
+        cSideRObj.parent=objParent # Connect to parent
 #        objScene.objects.active=cSideRObj
 
         cSideRObj.select=True # must select to rotate 
+        bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+
+        if wallRound: # rotate 90 forward
+            bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
+            cSideRObj.location.z+=WobjH/2 # adjust vertical after rotate for radius
+
         if sRef.properties.cXTest and sRef.properties.CTunnel:
 # rotate 90 horizontal, cw...
             bpy.ops.transform.rotate(value=-cPieHlf,constraint_axis=[False,False,True])
@@ -1456,10 +1990,10 @@ def makeWalls(sRef,objScene,objParent,objSides,objLoc,objMat,objLvl):
 #        bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[True,False,False])
 # rotate 90 cw along side
 #        bpy.ops.transform.rotate(value=cPieHlf,constraint_axis=[False,True,False])
-        bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+
         cSideRObj.select=False # deselect after rotate...
 
-        cSideRObj.parent=objParent # Connect to parent
+        return # all done, is automatic, just a matter of detail/protocol.
 
 
 ################################################################################
@@ -1473,7 +2007,8 @@ def makeWallObj(sRef,objScene,objLoc,objName,blockArea,openList,wallExtOpts,objM
 
     newMesh=bpy.data.meshes.new(objName)
     newMesh.from_pydata(meshVs,[],meshFs)
-#    newMesh.update(calc_edges=True) # doesn't seem to matter...
+# doesn't seem to matter...
+#    newMesh.update(calc_edges=True)
     newMesh.materials.append(objMat)
 
     newObj=bpy.data.objects.new(objName,newMesh)
@@ -1487,7 +2022,8 @@ def makeWallObj(sRef,objScene,objLoc,objName,blockArea,openList,wallExtOpts,objM
 
 
 ########################
-##
+# Generate simple "plane" for floor objects.
+#
 # objArea[leftX,rightX,zBase,zTop,0,yDepth]
 # objDiv will subdivide plane based on sizing;
 #  - see MakeABlock(objArea,objDiv) for details.
@@ -1554,7 +2090,7 @@ def wallPlan(sRef,blockArea,holeList):
     blockAreaX=blockArea[1]
     blockAreaY=blockArea[2]
     blockHMax=blockArea[3]
-    blockHVarW=blockArea[4]
+    blockHVar=blockArea[4]
     blockGap=blockArea[5]
 # this is wrong! should be...?
     blockHMin=BLOCK_MIN+blockGap
@@ -1562,10 +2098,10 @@ def wallPlan(sRef,blockArea,holeList):
     # no variation for slopes so walls match curvature
     if sRef.properties.cXTest:
         if sRef.properties.wallSlope or sRef.properties.CTunnel:
-            blockHVarW=0
+            blockHVar=0
 
     rowHMin=blockHMin
-# alternate rowHMin=blockHMax-blockHVarW+blockGap
+# alternate rowHMin=blockHMax-blockHVar+blockGap
 
     # splits are a row division, for openings
     splits=[0] # split bottom row
@@ -1577,7 +2113,7 @@ def wallPlan(sRef,blockArea,holeList):
 
     #divs are the normal old row divisions, add them between the top and bottom split
 # what's with "[1:-1]" at end????
-    divs = fill(splits[0],splits[-1],blockHMax,blockHMin,blockHVarW)[1:-1]
+    divs = fill(splits[0],splits[-1],blockHMax,blockHMin,blockHVar)[1:-1]
 
     #remove the divisions that are too close to the splits, so we don't get tiny thin rows
     for i in range(len(divs)-1,-1,-1):
@@ -1608,7 +2144,6 @@ def wallPlan(sRef,blockArea,holeList):
             divCount -= 1 # Adjust count for removed div entry.
             continue
 
-#        rows.append(rowOb(RowZ, RowHeight, rowEdge))
         rows.append(rowOb(RowZ, RowHeight, rowEdge))
 
         divCheck += 1 # on to next div entry
@@ -1644,7 +2179,7 @@ def wallBuild(sRef,rows,holeList):
 #    wallTop=sRef.properties.wallH
     wallTop2=wallTop*2
 
-    wallDome=settings['Dome']
+    wallDome=settings['Radial']
     wallSlope=settings['Slope']
 
     blockWidth=sRef.properties.blockX
@@ -1658,7 +2193,7 @@ def wallBuild(sRef,rows,holeList):
     for rowidx in range(rowCount): # add blocks for each row.
         rows[rowidx].FillBlocks()
 
-    if sRef.properties.MergeBlock: # merge (vertical) blocks in close proximity...
+    if sRef.properties.blockVar and sRef.properties.blockMerge: # merge (vertical) blocks in close proximity...
         blockSpace=blockGap
         for rowidx in range(rowCount-1):
             if wallDome:
@@ -1692,9 +2227,10 @@ def wallBuild(sRef,rows,holeList):
                 elif cx > ox: idxThis -= 1
                 else: idxThat -= 1
 
-
-    if settings['Shelf']: # Add blocks to create a "shelf/platform".
+####
+# Add blocks to create a "shelf/platform".
 # Does not account for openings (crosses gaps - which is a good thing)
+    if settings['Shelf']:
 
         # Use wall block settings for shelf
         shelfBW=blockWidth
@@ -1725,9 +2261,10 @@ def wallBuild(sRef,rows,holeList):
 
 # Set shelf material/color... on wish list.
 
-
-    if settings['Steps']: # Add blocks to create "steps".
+####
+# Add blocks to create "steps".
 # Does not account for openings (crosses gaps - which is a good thing)
+    if settings['Steps']:
 
         stepsFill=settings['StepsB']
         steps2Left=settings['StepsL']
@@ -1785,12 +2322,14 @@ def wallBuild(sRef,rows,holeList):
             else:
                 StepLft+=StepXMod # move from left
 
-    for row in rows: # Copy all the blocks out of the rows
+####
+# Copy all the blocks out of the rows
+    for row in rows:
         AllBlocks+=row.BlocksEdge
         AllBlocks+=row.BlocksNorm
 
-    # make individual blocks for each block specified in the plan
-
+####
+# make individual blocks for each block specified in the plan
     subDivision=settings['sdv']
 
     for block in AllBlocks:
@@ -1834,7 +2373,7 @@ def openList(sRef):
     areaEnd=dims['e']
 
     SetWid = sRef.properties.blockX
-    wallDisc=settings['Dome']
+    wallDisc=settings['Radial']
 
     for x in openingSpecs:
         if x['a']: # apply opening to object
@@ -2116,7 +2655,7 @@ class opening:
         wallBase=edgeParms.z
 
         # set the row radius: 1 for standard wall (flat)
-        if settings['Dome']:
+        if settings['Radial']:
             if settings['Slope']: r1 = abs(wallTopZ*sin(ht*cPie/(wallTopZ*2)))
             else: r1 = abs(ht)
         else: r1 = 1
@@ -2178,7 +2717,7 @@ class opening:
         dist = abs(self.x-ht)
 
         def radialAdjust(dist, sideVal): # adjust distance and for radial geometry.
-            if settings['Dome']:
+            if settings['Radial']:
                 if settings['Slope']:
                     dist = dist * abs(wallTopZ*sin(sideVal*cPie/(wallTopZ*2)))
                 else:
@@ -2233,7 +2772,7 @@ class opening:
         wallTopZ=dims['t']
         if ht > (self.z + self.h/2): return 0.0
         if ht < (self.z - self.h/2): return 0.0
-        if settings['Dome']:
+        if settings['Radial']:
             if settings['Slope']: r1 = abs(wallTopZ*sin(ht*cPie/(wallTopZ*2)))
             else: r1 = abs(ht)
         else: r1 = 1
@@ -2310,7 +2849,7 @@ class rowOb:
         wallTopZ=dims['t']
 
         # Set the radius variable, in the case of radial geometry
-        if settings['Dome']:
+        if settings['Radial']:
             if settings['Slope']: self.radius = wallTopZ*(sin(self.z*cPie/(wallTopZ*2)))
             else: self.radius = self.z
 
@@ -2385,7 +2924,7 @@ def arch(ra,rt,x,z, archStart, archEnd, bevel, bevAngle, vll):
     SetDepthVar = settings['dv']
     wallTopZ=dims['t']
 
-    wallDome=settings['Dome']
+    wallDome=settings['Radial']
 
     ArchInner = ra-rt/2
     ArchOuter = ra+rt/2-SetGrt
@@ -2453,7 +2992,7 @@ def arch(ra,rt,x,z, archStart, archEnd, bevel, bevAngle, vll):
 #
 # Make wedge blocks for openings.
 #
-#  example:
+#  examples:
 #   wedgeBlocks(row, LeftWedgeEdge, LNerEdge, LEB, r1)
 #   wedgeBlocks(row, RNerEdge, RightWedgeEdge, rSide, r1)
 #
@@ -2499,7 +3038,7 @@ def wedgeBlocks(row, opening, leftPos, rightPos, edgeSide, r1):
 #
 def rowProcessing(row, holeList, WallBoundaries):
 
-    if settings['Dome']:# radial stonework sets the row radius
+    if settings['Radial']: # radial stonework sets the row radius
         if settings['Slope']: r1 = abs(dims['t']*sin(row.z*cPie/(dims['t']*2)))
         else: r1 = abs(row.z)
     else: r1 = 1
@@ -2820,7 +3359,7 @@ def archGeneration(hole, vlist, flist, sideSign):
         if Wdth >= blockHMin:
             avlist,aflist = MakeAKeystone(x, Wdth, MidZ, TopHt, BtmHt, Dpth, keystoneBevel, len(vlist))
 
-            if settings['Dome']:
+            if settings['Radial']:
                 for i,vert in enumerate(avlist):
                     if settings['Slope']: r1 = dims['t']*sin(vert[2]*cPie/(dims['t']*2))
                     else: r1 = vert[2]
@@ -2860,7 +3399,7 @@ def archGeneration(hole, vlist, flist, sideSign):
 
         if c > blockHMin and c < archBW:
             subdivision=settings['sdv']
-            if settings['Dome']:
+            if settings['Radial']:
                 subdivision*=(zpos+(h/2)*sideSign)
 
             #set the height of the block, it should be as high as the max corner position, minus grout
@@ -2889,7 +3428,7 @@ def archGeneration(hole, vlist, flist, sideSign):
             avlist,aflist = MakeABlock([x-xstart-archBWG, x-xstart- woffset, btmSide, topSide, -depth/2, depth/2], subdivision, len(vlist), Offsets=offsets)
 
 # top didn't use radialized in prev version; just noting for clarity - may need to revise for "sideSign == 1"
-            if settings['Dome']:
+            if settings['Radial']:
                 for i,vert in enumerate(avlist): avlist[i] = [((vert[0]-x)/vert[2])+x,vert[1],vert[2]]
 
             vlist += avlist
@@ -2910,7 +3449,7 @@ def archGeneration(hole, vlist, flist, sideSign):
             avlist,aflist = MakeABlock([x+xstart+woffset, x+xstart+archBWG, btmSide, topSide, -depth/2, depth/2], subdivision, len(vlist), Offsets=offsets)
 
 # top didn't use radialized in prev version; just noting for clarity - may need to revise for "sideSign == 1"
-            if settings['Dome']:
+            if settings['Radial']:
                 for i,vert in enumerate(avlist): avlist[i] = [((vert[0]-x)/vert[2])+x,vert[1],vert[2]]
 
             vlist += avlist

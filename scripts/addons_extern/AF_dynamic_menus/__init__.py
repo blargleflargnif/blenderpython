@@ -37,6 +37,7 @@ if "bpy" in locals():
     importlib.reload(toolshelf_menu)
     importlib.reload(navigation)
     importlib.reload(snap_menu)
+    importlib.reload(origin_tools)
 
 
 
@@ -48,6 +49,8 @@ else:
     from . import toolshelf_menu
     from . import navigation
     from . import snap_menu
+    from . import origin_tools
+
 
 import bpy
 from math import *
@@ -534,12 +537,14 @@ def register():
     bpy.types.VIEW3D_PT_tools_object.append(panel_func)
     bpy.types.VIEW3D_MT_snap.append(panel_func)	
 
+    #add spacebar keybinding
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:
         km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
         kmi = km.keymap_items.new('wm.call_menu', 'SPACE', 'PRESS')
         kmi.properties.name = "VIEW3D_MT_Space_Dynamic_Menu"
+
     #add multiselect keybinding
     km = bpy.context.window_manager.keyconfigs.active.keymaps['Mesh']
     kmi = km.keymap_items.new('wm.call_menu', 'TAB', 'PRESS', ctrl=True)
@@ -600,7 +605,7 @@ def unregister():
                 km.keymap_items.remove(kmi)
                 break
 
-    #remove manipulator
+    #remove context menu??
     km = wm.keyconfigs.addon.keymaps['3D View']
     for kmi in km.keymap_items:
         if kmi.idname == 'wm.call_menu':

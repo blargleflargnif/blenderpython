@@ -2,8 +2,10 @@
 if "bpy" in locals():
     import importlib
     importlib.reload(mirror_tools)
+
 else:
     from . import mirror_tools
+
 ################
 # Bisect_Utils by smoke_fumus
 ################
@@ -51,6 +53,8 @@ class BisectUtilMenu(bpy.types.Menu):
         props.planevector=Vector((0.0,0.0,1.0))
         props.clearinner=False
         props.clearoutter=True
+
+
 
 
   
@@ -599,6 +603,7 @@ class BooleanMenu(bpy.types.Menu):
 	bl_description = "Quick Boolean Specials"
 	
 	def draw(self, context):
+		layout = self.layout
 		self.layout.operator(AddBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean Add (cross)").mode = "INTERSECT"
 		self.layout.operator(AddBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean Add (integrated)").mode = "UNION"
 		self.layout.operator(AddBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean Add (diff)").mode = "DIFFERENCE"
@@ -606,7 +611,6 @@ class BooleanMenu(bpy.types.Menu):
 		self.layout.operator(ApplyBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean apply (cross)").mode = "INTERSECT"
 		self.layout.operator(ApplyBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean apply (integrated)").mode = "UNION"
 		self.layout.operator(ApplyBoolean.bl_idname, icon='MOD_BOOLEAN', text="Boolean apply (diff)").mode = "DIFFERENCE"
-
 
 class ArmatureMenu(bpy.types.Menu):
 	bl_idname = "DATA_PT_modifiers_armature"

@@ -58,13 +58,39 @@ class Move3DCursorFar(bpy.types.Operator):
 	def execute(self, context):
 		bpy.context.space_data.cursor_location = (24210, 102260, 38750)
 		return {'FINISHED'}
+## Origin To Selected Edit Mode ##
+def main(context):
+    cursorPositionX = bpy.context.scene.cursor_location[0]
+    cursorPositionY = bpy.context.scene.cursor_location[1]
+    cursorPositionZ = bpy.context.scene.cursor_location[2]
+    bpy.ops.view3d.snap_cursor_to_selected()
+    bpy.ops.object.mode_set()
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.scene.cursor_location[0] = cursorPositionX
+    bpy.context.scene.cursor_location[1] = cursorPositionY
+    bpy.context.scene.cursor_location[2] = cursorPositionZ
+    
+class SetOriginToSelected(bpy.types.Operator):
+    '''Tooltip'''
+    bl_idname = "object.setorigintoselected"
+    bl_label = "Set Origin to Selected"
 
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
 
+    def execute(self, context):
+        main(context)
+        
+        
+        return {'FINISHED'}
 # menu
 def menu(self, context):
 
 	self.layout.separator()
-	self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor-position", icon="PLUGIN")
-	self.layout.operator(Move3DCursorFar.bl_idname, text="Cursor to hide (to)", icon="PLUGIN")
+	self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor-View", icon="PLUGIN")
+	self.layout.operator(Move3DCursorFar.bl_idname, text="Temp Hide", icon="PLUGIN")
 	self.layout.operator(SnapMesh3DCursor.bl_idname, text="Cursor → mesh surface", icon="PLUGIN")
-
+	self.layout.label(text="Edit Mode")
+	self.layout.operator(SetOriginToSelected.bl_idname, text="Origin To F/V/E", icon="PLUGIN")

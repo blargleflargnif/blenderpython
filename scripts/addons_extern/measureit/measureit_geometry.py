@@ -40,7 +40,7 @@ import bmesh
 from bpy_extras import view3d_utils, mesh_utils
 # noinspection PyUnresolvedReferences
 import bpy_extras.object_utils as object_utils
-#  import sys
+import sys
 
 
 # -------------------------------------------------------------
@@ -569,9 +569,9 @@ def draw_segments(context, myobj, op, region, rv3d):
                             screen_point_p1 = get_2d_point(region, rv3d, p1_)
                             screen_point_p2 = get_2d_point(region, rv3d, p2_)
                             if i == 0:
-                                draw_arrow(screen_point_p1, screen_point_p2, ms.glarc_s, ms.glarc_a, 99)
+                                draw_arrow(screen_point_p1, screen_point_p2, ms.glarc_s, ms.glarc_a, "99")
                             elif i == int(n_step) - 1:
-                                draw_arrow(screen_point_p1, screen_point_p2, ms.glarc_s, 99, ms.glarc_b)
+                                draw_arrow(screen_point_p1, screen_point_p2, ms.glarc_s, "99", ms.glarc_b)
                             else:
                                 draw_line(screen_point_p1, screen_point_p2)
 
@@ -874,7 +874,7 @@ def draw_triangle(v1, v2, v3):
 # Draw an Arrow
 # 
 # -------------------------------------------------------------
-def draw_arrow(v1, v2, size=20, a_typ=1, b_typ=1):
+def draw_arrow(v1, v2, size=20, a_typ="1", b_typ="1"):
     
     rad45 = math.radians(45)
     rad315 = math.radians(315)
@@ -948,6 +948,160 @@ def draw_rectangle(v1, v2):
             draw_line(v2b, v1)
     except:
         pass
+
+
+# -------------------------------------------------------------
+# format a point as (x, y, z) for display
+#
+# -------------------------------------------------------------
+def format_point(mypoint, pr):
+    pf = "%1." + str(pr) + "f"
+    fmt = " ("
+    fmt += pf % mypoint[0]
+    fmt += ", "
+    fmt += pf % mypoint[1]
+    fmt += ", "
+    fmt += pf % mypoint[2]
+    fmt += ")"
+
+    return fmt
+
+
+# -------------------------------------------------------------
+# Draw vertex num for debug
+#
+# -------------------------------------------------------------
+# noinspection PyUnresolvedReferences,PyUnboundLocalVariable,PyUnusedLocal
+def draw_vertices(context, myobj, region, rv3d):
+    # Only meshes
+    if myobj.type != "MESH":
+        return
+
+    scene = bpy.context.scene
+    rgb = scene.measureit_debug_color
+    fsize = scene.measureit_debug_font
+    precision = scene.measureit_debug_precision
+    # --------------------
+    # vertex Loop
+    # --------------------
+    if myobj.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(myobj.data)
+        obverts = bm.verts
+    else:
+        obverts = myobj.data.vertices
+
+    for v in obverts:
+        # Display only selected
+        if scene.measureit_debug_select is True:
+            if v.select is False:
+                continue
+        # noinspection PyBroadException
+        try:
+            a_p1 = get_point(v.co, myobj)
+            # colour
+            bgl.glColor4f(rgb[0], rgb[1], rgb[2], rgb[3])
+            # converting to screen coordinates
+            txtpoint2d = get_2d_point(region, rv3d, a_p1)
+            # Text
+            txt = str(v.index)
+            if scene.measureit_debug_location is True:
+                txt += format_point(v.co, precision)
+            draw_text(myobj, txtpoint2d[0], txtpoint2d[1], txt, rgb, fsize)
+        except:
+            print("Unexpected error:" + str(sys.exc_info()))
+            pass
+
+    return
+
+
+# -------------------------------------------------------------
+# Draw face num for debug
+#
+# -------------------------------------------------------------
+# noinspection PyUnresolvedReferences,PyUnboundLocalVariable,PyUnusedLocal
+def draw_faces(context, myobj, region, rv3d):
+    # Only meshes
+    if myobj.type != "MESH":
+        return
+
+    scene = bpy.context.scene
+    rgb = scene.measureit_debug_color2
+    rgb2 = scene.measureit_debug_color3
+    fsize = scene.measureit_debug_font
+    ln = scene.measureit_debug_normal_size
+    th = scene.measureit_debug_width
+    precision = scene.measureit_debug_precision
+
+    # --------------------
+    # face Loop
+    # --------------------
+    if myobj.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(myobj.data)
+        obverts = bm.verts
+        myfaces = bm.faces
+    else:
+        obverts = myobj.data.vertices
+        myfaces = myobj.data.polygons
+
+    for f in myfaces:
+        normal = f.normal
+        # Display only selected
+        if scene.measureit_debug_select is True:
+            if f.select is False:
+                continue
+        # noinspection PyBroadException
+        try:
+            if myobj.mode == 'EDIT':
+                a_p1 = get_point(f.calc_center_median(), myobj)
+            else:
+                a_p1 = get_point(f.center, myobj)
+
+            a_p2 = (a_p1[0] + normal[0] * ln, a_p1[1] + normal[1] * ln, a_p1[2] + normal[2] * ln)
+            # colour + line setup
+            bgl.glEnable(bgl.GL_BLEND)
+            bgl.glLineWidth(th)
+            bgl.glColor4f(rgb[0], rgb[1], rgb[2], rgb[3])
+            # converting to screen coordinates
+            txtpoint2d = get_2d_point(region, rv3d, a_p1)
+            point2 = get_2d_point(region, rv3d, a_p2)
+            # Text
+            if scene.measureit_debug_faces is True:
+                draw_text(myobj, txtpoint2d[0], txtpoint2d[1], str(f.index), rgb, fsize)
+            # Draw Normal
+            if scene.measureit_debug_normals is True:
+                bgl.glEnable(bgl.GL_BLEND)
+                bgl.glColor4f(rgb2[0], rgb2[1], rgb2[2], rgb2[3])
+                draw_arrow(txtpoint2d, point2, 10, "99", "1")
+
+                if len(obverts) > 2 and scene.measureit_debug_normal_details is True:
+                    if myobj.mode == 'EDIT':
+                        i1 = f.verts[0].index
+                        i2 = f.verts[1].index
+                        i3 = f.verts[2].index
+                    else:
+                        i1 = f.vertices[0]
+                        i2 = f.vertices[1]
+                        i3 = f.vertices[2]
+
+                    a_p1 = get_point(obverts[i1].co, myobj)
+                    a_p2 = get_point(obverts[i2].co, myobj)
+                    a_p3 = get_point(obverts[i3].co, myobj)
+                    # converting to screen coordinates
+                    a2d = get_2d_point(region, rv3d, a_p1)
+                    b2d = get_2d_point(region, rv3d, a_p2)
+                    c2d = get_2d_point(region, rv3d, a_p3)
+                    # draw vectors
+                    draw_arrow(a2d, b2d, 10, "99", "1")
+                    draw_arrow(b2d, c2d, 10, "99", "1")
+                    # Normal vector data
+                    txt = format_point(normal, precision)
+                    draw_text(myobj, point2[0], point2[1], txt, rgb2, fsize)
+
+        except:
+            print("Unexpected error:" + str(sys.exc_info()))
+            pass
+
+    return
 
 
 # --------------------------------------------------------------------

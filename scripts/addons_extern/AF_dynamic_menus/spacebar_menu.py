@@ -23,7 +23,7 @@ bl_info = {
     "author": "meta-androcto, JayDez, sim88, sam",
     "version": (1, 7, 4),
     "blender": (2, 72, 0),
-    "location": "View3D > Spacebar for menu then 's' key for Search",
+    "location": "View3D > Spacebar for menu then 'enter' key for Search",
     "description": "Context Sensitive Spacebar Menu",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
@@ -47,6 +47,9 @@ class VIEW3D_MT_Space_Dynamic_Menu(bpy.types.Menu):
             # Object mode
 
             # Search Menu
+            row = layout.row()
+            layout.row(align=True)
+            layout.label(text="Press 's' or 'Enter' to Search")
             layout.operator("wm.search_menu", text="Search", icon='VIEWZOOM')
             layout.separator()
 

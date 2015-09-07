@@ -48,6 +48,7 @@ if "bpy" in locals():
     importlib.reload(unfold_transition)
     importlib.reload(add_light_template)
     importlib.reload(advanced_camera_rigs)
+    importlib.reload(trilighting)
 
 else:
     from . import scene_camera
@@ -66,6 +67,7 @@ else:
     from . import unfold_transition
     from . import add_light_template
     from . import advanced_camera_rigs
+    from . import trilighting
 
 import bpy
 
@@ -166,6 +168,8 @@ class INFO_MT_mesh_lamps_add(bpy.types.Menu):
             text="Add 3 Point Setup")
         layout.operator("object.add_light_template",
             text="Add Light Template")
+        layout.operator("object.trilighting",
+            text="Add Tri Lighting")
 
 
 # Define "Extras" menu

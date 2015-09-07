@@ -224,6 +224,47 @@ class SubsurfMenu(bpy.types.Menu):
 		self.layout.separator()
 		self.layout.operator(SyncAllSubsurfRenderLevels.bl_idname, text="Sync Subsurf Render Levels", icon="MOD_SUBSURF")
 
+class RenderToolsMenu(bpy.types.Operator):
+	bl_idname = "render.render_tools"
+	bl_label = "Render Menu"
+	bl_description = "Pop up Render Settings"
+	
+	def draw(self, context):
+		self.layout.separator()
+		self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
+		self.layout.separator()
+		self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
+		self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
+		self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Render Resolution (currently:"+str(context.scene.render.resolution_percentage)+"%)", icon="CAMERA_DATA")
+		if (bpy.data.images.find("Render Result") != -1):
+			self.layout.menu(SlotsRenderMenu.bl_idname, text="Set Render Slot (Currently:"+str(bpy.data.images["Render Result"].render_slots.active_index+1)+")", icon="RENDERLAYERS")
+		self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
+		self.layout.separator()
+		self.layout.prop(context.scene, 'frame_start', text="Start Frame", icon="COLOR_GREEN")
+		self.layout.prop(context.scene, 'frame_end', text="End Frame", icon="COLOR_RED")
+		self.layout.prop(context.scene, 'frame_step', text="Frame Step", icon="ALIGN")
+		self.layout.prop(context.scene.render, 'fps', text="FPS", icon="AUTO")
+		self.layout.separator()
+		self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="PLUGIN")
+		self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="PLUGIN")
+		self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="PLUGIN")
+		self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
+		self.layout.separator()
+		text = ToggleThreadsMode.bl_label
+		if (context.scene.render.threads_mode == 'AUTO'):
+			text = text + " (Current auto-sensing)"
+		else:
+			text = text + " Current value：" + str(context.scene.render.threads) + ")"
+		self.layout.operator(ToggleThreadsMode.bl_idname, text=text, icon="PLUGIN")
+		self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+		self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="The number of anti-aliasing sample", icon="ANTIALIASED")
+		self.layout.prop(context.scene.world.light_settings, 'samples', text="AO number of samples", icon="WORLD")
+		self.layout.separator()
+		self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+	def execute(self, context):
+		return {'FINISHED'}
+	def invoke(self, context, event):
+		return context.window_manager.invoke_popup(self, width = 350)
 ################
 # メニュー追加 #
 ################
@@ -240,34 +281,5 @@ def IsMenuEnable(self_id):
 def menu(self, context):
 
 	self.layout.separator()
-	self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
-	self.layout.separator()
-	self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
-	self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
-	self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Render Resolution (currently:"+str(context.scene.render.resolution_percentage)+"%)", icon="CAMERA_DATA")
-	if (bpy.data.images.find("Render Result") != -1):
-		self.layout.menu(SlotsRenderMenu.bl_idname, text="Set Render Slot (Currently:"+str(bpy.data.images["Render Result"].render_slots.active_index+1)+")", icon="RENDERLAYERS")
-	self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
-	self.layout.separator()
-	self.layout.prop(context.scene, 'frame_start', text="Start Frame", icon="COLOR_GREEN")
-	self.layout.prop(context.scene, 'frame_end', text="End Frame", icon="COLOR_RED")
-	self.layout.prop(context.scene, 'frame_step', text="Frame Step", icon="ALIGN")
-	self.layout.prop(context.scene.render, 'fps', text="FPS", icon="AUTO")
-	self.layout.separator()
-	self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="PLUGIN")
-	self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="PLUGIN")
-	self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="PLUGIN")
-	self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
-	self.layout.separator()
-	text = ToggleThreadsMode.bl_label
-	if (context.scene.render.threads_mode == 'AUTO'):
-		text = text + " (Current auto-sensing)"
-	else:
-		text = text + " Current value：" + str(context.scene.render.threads) + ")"
-	self.layout.operator(ToggleThreadsMode.bl_idname, text=text, icon="PLUGIN")
-	self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
-	self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="The number of anti-aliasing sample", icon="ANTIALIASED")
-	self.layout.prop(context.scene.world.light_settings, 'samples', text="AO number of samples", icon="WORLD")
-	self.layout.separator()
-	self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+	self.layout.operator(RenderToolsMenu.bl_idname, icon="RENDER_RESULT")
 

@@ -39,6 +39,7 @@ if "bpy" in locals():
     importlib.reload(VIEW3D_PT_view3d_shading)
     importlib.reload(OBJECT_PT_context_object)
     importlib.reload(quick_prefs)
+    importlib.reload(easy_lightmap)
 
 
 else:
@@ -48,6 +49,7 @@ else:
     from . import VIEW3D_PT_view3d_shading
     from . import OBJECT_PT_context_object
     from . import quick_prefs
+    from . import easy_lightmap
 
 ##Item Panel
 #  Author: Trentin Frederick (a.k.a, proxe)
@@ -55,8 +57,9 @@ else:
 #  Version: 0.8.9
 # imports
 import bpy
-import bpy
+import os
 import re
+from subprocess import Popen, PIPE
 from bpy.props import *
 from bpy.types import Operator, Panel, PropertyGroup
 
@@ -3185,8 +3188,14 @@ class name():
 ##############
 ## REGISTER ##
 ##############
-
-
+class EasyLightMapProperties(bpy.types.PropertyGroup):
+    
+    bake_path = StringProperty(name="Bake folder:", default="", subtype="DIR_PATH", description="Path for saving baked maps.")
+    image_w = IntProperty(name="Width", default=1024, min=1, description="Image width")
+    image_h = IntProperty(name="Height", default=1024, min=1, description="Image height")
+    check_uv = BoolProperty(name="Check/Create UV Layers", default=True, description="Create two uv layers if there is not any.")
+    bake_diffuse = BoolProperty(name="Bake diffuse color", default=False, description="Bake material diffuse color into map.")
+    bake_textures = BoolProperty(name="Bake textures", default=False, description="Bake material textures into map.")
 
 
 # Addons Preferences
@@ -3206,9 +3215,9 @@ class AddonPreferences(bpy.types.AddonPreferences):
 
 def register():
     """ Register """
-
+    bpy.utils.register_class(EasyLightMapProperties)
+    bpy.types.Scene.easyLightMap = bpy.props.PointerProperty(type=EasyLightMapProperties)
     windowManager = bpy.types.WindowManager
-
     bpy.types.VIEW3D_PT_view3d_name.remove(bpy.types.VIEW3D_PT_view3d_name.draw)
     bpy.types.VIEW3D_PT_view3d_name.remove(name.draw)
     bpy.utils.register_class(batchNamingUI)
@@ -3226,6 +3235,7 @@ def register():
     bpy.types.VIEW3D_PT_view3d_name.prepend(VIEW3D_PT_view3d_name.menu)
     bpy.types.VIEW3D_PT_view3d_properties.append(VIEW3D_PT_view3d_properties.menu)
     bpy.types.VIEW3D_PT_view3d_shading.append(VIEW3D_PT_view3d_shading.menu)
+
     bpy.utils.register_module(__name__)
 def unregister():
 

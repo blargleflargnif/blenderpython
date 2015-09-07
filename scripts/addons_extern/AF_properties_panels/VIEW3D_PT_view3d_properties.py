@@ -8,11 +8,11 @@ import bpy
 
 class SaveView(bpy.types.Operator):
 	bl_idname = "view3d.save_view"
-	bl_label = "Temp Save Views"
-	bl_description = "Save the current 3D view perspective. Will not save with .blend"
+	bl_label = "Save View Prefs"
+	bl_description = "Save Views to User prefs(Save User Settings to keep)"
 	bl_options = {'REGISTER', 'UNDO'}
 	
-	save_name = bpy.props.StringProperty(name="Current Temp View", default="Saved View")
+	save_name = bpy.props.StringProperty(name="Current View Pref", default="Saved View")
 	
 	def execute(self, context):
 		data = ""
@@ -45,7 +45,7 @@ class SaveView(bpy.types.Operator):
 class LoadView(bpy.types.Operator):
 	bl_idname = "view3d.load_view"
 	bl_label = "Load View"
-	bl_description = "Load the current 3D view perspective"
+	bl_description = "Load the current 3D view pref"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	index = bpy.props.StringProperty(name="Saved View", default="Saved View")
@@ -75,7 +75,7 @@ class LoadView(bpy.types.Operator):
 
 class DeleteViewSavedata(bpy.types.Operator):
 	bl_idname = "view3d.delete_view_savedata"
-	bl_label = "View save to discard"
+	bl_label = "Delete All Views"
 	bl_description = "Removes all viewpoints save data"
 	bl_options = {'REGISTER', 'UNDO'}
 	

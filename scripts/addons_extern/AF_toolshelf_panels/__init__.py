@@ -22,13 +22,13 @@ if "bpy" in locals():
     import importlib
     importlib.reload(analyse_dicom_3d_models)
     importlib.reload(display_tools)
-#    importlib.reload(Auto_Mirror)
+    importlib.reload(curve_convert0_7)
     importlib.reload(bevel_curve)
 
 else:
     from . import analyse_dicom_3d_models
     from . import display_tools
-#    from . import Auto_Mirror
+    from . import curve_convert0_7
     from . import bevel_curve
 
 

@@ -71,6 +71,7 @@ if "bpy" in locals():
     importlib.reload(add_mesh_beam_builder)
     importlib.reload(terrain_gen)
     importlib.reload(duel_poly)
+    importlib.reload(add_mesh_grating)
 
 else:
     from . import add_mesh_star
@@ -98,6 +99,7 @@ else:
     from . import add_mesh_beam_builder
     from . import terrain_gen
     from . import duel_poly
+    from . import add_mesh_grating
 
 
 import bpy
@@ -321,6 +323,8 @@ class INFO_MT_mesh_building_add(bpy.types.Menu):
             text="Wall Factory")
         layout.operator("mesh.stairs",
             text="Stair Builder")
+        layout.operator("mesh.primitive_add_grating",
+            text="Grating")
 
 # Define "Extras" menu
 def menu(self, context):

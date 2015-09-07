@@ -82,7 +82,7 @@ def createOutline(curve, outline):
 
 class CurveOutline(bpy.types.Operator):
     """Curve Outliner"""
-    bl_idname = "object._curve_outline"
+    bl_idname = "object.curve_outline"
     bl_label = "Create Outline"
     bl_options = {'REGISTER', 'UNDO'}
     outline = bpy.props.FloatProperty(name="Amount", default=0.1, min=-10, max=10)

@@ -45,6 +45,7 @@ if "bpy" in locals():
     importlib.reload(add_curve_ivygen)
     importlib.reload(curve_simplify)
     importlib.reload(add_surface_plane_cone)
+    importlib.reload(curve_edit_outline)
 
 
 else:
@@ -60,6 +61,7 @@ else:
     from . import add_curve_ivygen
     from . import curve_simplify
     from . import add_surface_plane_cone
+    from . import curve_edit_outline
 
 import bpy
 
@@ -112,6 +114,8 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
         layout.label(text="Curve Utils")
         layout.operator("curve.simplify",
             text="Simplify Curves")
+        layout.operator("object._curve_outline",
+            text="Outline")
 
 def IsMenuEnable(self_id):
 	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
@@ -138,6 +142,7 @@ def menu(self, context):
 	self.layout.separator()
 	layout.label(text="Curve Utils")
 	self.layout.operator("curve.simplify", text="Curve Simplify", icon="CURVE_DATA")
+	self.layout.operator("object.curve_outline", text="Curve Outline", icon="CURVE_DATA")
 
 def menu_surface(self, context):
 

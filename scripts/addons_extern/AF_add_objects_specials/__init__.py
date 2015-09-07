@@ -49,6 +49,7 @@ if "bpy" in locals():
     importlib.reload(add_light_template)
     importlib.reload(advanced_camera_rigs)
     importlib.reload(trilighting)
+    importlib.reload(copy2)
 
 else:
     from . import scene_camera
@@ -68,6 +69,7 @@ else:
     from . import add_light_template
     from . import advanced_camera_rigs
     from . import trilighting
+    from . import copy2
 
 import bpy
 
@@ -117,6 +119,8 @@ class INFO_MT_array_mods_add(bpy.types.Menu):
             text="Dupli Spin", icon='MOD_ARRAY')
         layout.operator("object.agregar",
             text="Aggregate Mesh", icon='MOD_ARRAY')
+        layout.operator("mesh.copy2",
+            text="Copy To Vert/Edge", icon='MOD_ARRAY')
 
 class INFO_MT_quick_tools_add(bpy.types.Menu):
     # Define the "mesh objects" menu

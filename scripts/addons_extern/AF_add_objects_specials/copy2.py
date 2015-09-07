@@ -110,15 +110,7 @@ def add_to_menu(self, context) :
     self.layout.operator(Copy2.bl_idname)
     return
 
-def register() :
-    bpy.utils.register_class(Copy2)     
-    bpy.types.VIEW3D_MT_object.append(add_to_menu)
-    return
- 
-def unregister() :
-    bpy.utils.unregister_class(Copy2)    
-    bpy.types.VIEW3D_MT_object.remove(add_to_menu)
-    return
+
 
 #-----------------------------------------------------------------
 
@@ -276,9 +268,14 @@ def face_copy(scene, obj, source_obj, axes):
 #-------------------------------------------------------------------
  
 def register():
-    bpy.utils.register_module(__name__)
 
+    bpy.utils.register_module(__name__)
+    bpy.types.VIEW3D_MT_object.append(add_to_menu)
+
+ 
 def unregister():
+
+    bpy.types.VIEW3D_MT_object.remove(add_to_menu)
     bpy.utils.unregister_module(__name__)
 
 

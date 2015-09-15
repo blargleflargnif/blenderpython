@@ -835,8 +835,7 @@ class StairsPanel(bpy.types.Panel):
             layout.label("JARCH Vis Doesn't Work In Edit Mode", icon = "ERROR")
         else:
             if o != None:                
-                #if o.object_add == "none" and o.f_object_add == "none":
-                if True:
+                if o.object_add == "none" and o.f_object_add == "none" and o.ro_object_add == "none":
                     if o.s_object_add != "mesh":
                         if o.s_object_add == "add":
                             layout.label("Style:", icon = "OBJECT_DATA"); layout.prop(o, "s_style"); layout.separator(); layout.prop(o, "s_width"); layout.separator()                        
@@ -932,7 +931,7 @@ class StairsPanel(bpy.types.Panel):
                 
 class StairsAdd(bpy.types.Operator):
     bl_idname = "mesh.jarch_stairs_add"
-    bl_label = "JARCH Vis: Add Stairs"
+    bl_label = "Add Stairs"
     bl_description = "JARCH Vis: Stair Generator"
     bl_options = {"UNDO"}
     @classmethod

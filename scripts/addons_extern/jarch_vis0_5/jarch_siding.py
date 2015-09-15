@@ -2373,7 +2373,7 @@ class SidingPanel(bpy.types.Panel):
             o = context.object
             if o != None:
                 if o.type == "MESH":                    
-                    if o.f_object_add == "none" and o.s_object_add == "none":                         
+                    if o.f_object_add == "none" and o.s_object_add == "none" and o.ro_object_add == "none":                         
                         if o.object_add in ("convert", "add"): 
                             layout.label("Material:"); layout.prop(o, "mat", icon = "MATERIAL"); layout.label("Type(s):")
                             if o.mat == "1": layout.prop(o, "if_wood", icon = "OBJECT_DATA")
@@ -2496,7 +2496,7 @@ class SidingPanel(bpy.types.Panel):
             
 class SidingAdd(bpy.types.Operator):
     bl_idname = "mesh.jarch_siding_add"
-    bl_label = "JARCH Vis: Add Siding"
+    bl_label = "Add Siding"
     bl_description = "JARCH Vis: Siding Generator"
     @classmethod
     def poll(self, context):
@@ -2509,7 +2509,7 @@ class SidingAdd(bpy.types.Operator):
     
 class SidingConvert(bpy.types.Operator):
     bl_idname = "mesh.jarch_siding_convert"
-    bl_label = "JARCH Vis: Convert To Siding"
+    bl_label = "Convert To Siding"
     bl_options = {"UNDO"}
     
     def execute(self, context):

@@ -618,7 +618,7 @@ class FlooringPanel(bpy.types.Panel):
             o = context.object
             if o != None:
                 if o.type == "MESH":                    
-                    if o.object_add == "none" and o.s_object_add == "none":                            
+                    if o.object_add == "none" and o.s_object_add == "none" and o.ro_object_add == "none":                            
                         if o.f_object_add in ("convert", "add"):            
                             layout.label("Material:"); layout.prop(o, "f_mat", icon = "MATERIAL"); layout.label("Types:")
                             if o.f_mat == "1": layout.prop(o, "f_if_wood", icon = "OBJECT_DATA")
@@ -628,6 +628,7 @@ class FlooringPanel(bpy.types.Panel):
                                 layout.prop(o, "f_over_width"); layout.prop(o, "f_over_length"); layout.separator()
                             #width and lengths
                             layout.prop(o, "f_thickness"); layout.separator()
+                            
                             if o.f_mat == "1":
                                 layout.prop(o, "f_b_width")
                                 if o.f_if_wood == "1": layout.prop(o, "f_b_length")
@@ -646,6 +647,7 @@ class FlooringPanel(bpy.types.Panel):
                                 if o.f_if_wood == "2": layout.prop(o, "f_num_boards"); layout.separator()
                                 layout.prop(o, "f_is_bevel", icon = "MOD_BEVEL")
                                 if o.f_is_bevel == True: layout.prop(o, "f_res", icon = "OUTLINER_DATA_CURVE"); layout.prop(o, "f_bevel_amo"); layout.separator()                                                
+                            
                             elif o.f_mat == "2":
                                 if o.f_if_tile != "4": layout.prop(o, "f_t_width"); layout.prop(o, "f_t_length"); layout.separator()
                                 else:
@@ -659,11 +661,14 @@ class FlooringPanel(bpy.types.Panel):
                                     layout.separator()
                                 layout.prop(o, "f_grout_depth"); layout.prop(o, "f_spacing"); layout.separator()
                             layout.prop(o, "f_unwrap", icon = "GROUP_UVS")
+                            
                             if o.f_unwrap == True:
                                 layout.prop(o, "f_random_uv", icon = "RNDCURVE") 
                             layout.separator()
+                            
                             if context.scene.render.engine == "CYCLES": layout.prop(o, "f_is_material", icon = "MATERIAL")
                             else: layout.label("Materials Only Supported With Cycles", icon = "POTATO")
+                            
                             if o.f_is_material == True and context.render.engine == "CYCLES":
                                 layout.separator(); layout.prop(o, "f_col_image", icon = "COLOR"); layout.prop(o, "f_is_bump", icon = "SMOOTHCURVE")
                                 if o.f_is_bump == True: layout.prop(o, "f_norm_image", icon = "TEXTURE"); layout.prop(o, "f_bump_amo")
@@ -702,7 +707,7 @@ class FlooringAdd(bpy.types.Operator):
     
 class FlooringConvert(bpy.types.Operator):
     bl_idname = "mesh.jarch_flooring_convert"
-    bl_label = "JARCH Vis: Convert To Flooring"
+    bl_label = "Convert To Flooring"
     bl_options = {"UNDO"}
     
     def execute(self, context):

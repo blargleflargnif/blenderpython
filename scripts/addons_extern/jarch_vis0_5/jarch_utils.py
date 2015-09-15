@@ -96,3 +96,9 @@ def object_dimensions(obj):
     dia = sqrt(x ** 2 + y ** 2)
     
     return [dia, z]
+
+def round_tuple(tup, digits):
+    temp = []
+    for i in tup:
+        temp.append(round(i, digits))
+    return tuple(temp)

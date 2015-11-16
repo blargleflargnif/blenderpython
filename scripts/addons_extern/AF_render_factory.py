@@ -221,6 +221,9 @@ class RenderToolsMenu(bpy.types.Operator):
 	# Cycles
 		layout = self.layout
 		layout.operator_context = 'INVOKE_REGION_WIN'
+		scene = context.scene
+		cscene = scene.cycles
+
 		if context.scene.render.engine == "CYCLES":
 			self.layout.label(text="Render Cycles")
 			self.layout.separator()
@@ -237,15 +240,15 @@ class RenderToolsMenu(bpy.types.Operator):
 			self.layout.separator()
 			self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
 			self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
-			self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
-			self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
-			self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
+			self.layout.separator()
+			self.layout.label(text="Samples:")
+			self.layout.prop(cscene, "samples", text="Render")
+			self.layout.prop(cscene, "preview_samples", text="Preview")
+			self.layout.separator()
 			self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
-			self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
 			self.layout.separator()
 			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
 			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
-
 			self.layout.separator()
 			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
 			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
@@ -275,10 +278,10 @@ class RenderToolsMenu(bpy.types.Operator):
 			self.layout.separator()
 			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
 			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
-
 			self.layout.separator()
 			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
 			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
+
 	def execute(self, context):
 		return {'FINISHED'}
 

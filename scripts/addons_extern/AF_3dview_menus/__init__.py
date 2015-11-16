@@ -22,8 +22,8 @@ bl_info = {
     "author": "Meta Androcto, ",
     "version": (0, 2),
     "blender": (2, 75, 0),
-    "location": "View3D > Add > Scene Elements",
-    "description": "View, Select & Object Menu's",
+    "location": "View3D > Add Menu",
+    "description": "Extended View, Select & Object Menu's",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6"\
         "/Py/Scripts",
@@ -62,11 +62,18 @@ class AddonPreferences(bpy.types.AddonPreferences):
 	
 	def draw(self, context):
 		layout = self.layout
-
+		layout.label(text="Save your Views to addons preferences")
+		layout.label(text="Per Session ues only")
+		layout.label(text="Save User Settings to store permenantly")
 		layout.prop(self, 'view_savedata')
 
-		box = layout.box()
-		box.label(text = 'Preferences')
+		layout.label(text="----3d View Menu's----")
+		layout.label(text="Adds additional features & concepts")
+		layout.label(text="View Menu: Pies, Switch Local, Save View Prefs, Align Menu")
+		layout.label(text="Select Menu: Additional selection methods: Object mode")
+		layout.label(text="Object Menu:")
+		layout.label(text="Pies, Shortcut Concept, Show Hide & Make Links Menu's")
+
 
 def register():
     bpy.utils.register_module(__name__)

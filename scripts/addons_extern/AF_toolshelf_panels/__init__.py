@@ -47,6 +47,22 @@ bl_info = {
 
 import bpy
 
+# Addons Preferences
+class AddonPreferences1(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="Tools Shelf Panels")
+		layout.label(text="----Tools Tab---")
+		layout.label(text="Align & Advanced Align")
+		layout.label(text="Selection Tools")
+		layout.label(text="Modify Tools: Trim, Intersect, Bisect")
+		layout.label(text="Transform Extended")
+		layout.label(text="Display Tools: Set up Object display")
+		layout.label(text="Curve Converter: Curve to Mesh re-editing")
+		layout.label(text="Bevel Curve Tool")
+
 def register():
     bpy.utils.register_module(__name__)
 

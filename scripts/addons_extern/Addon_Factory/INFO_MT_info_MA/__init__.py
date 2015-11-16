@@ -36,14 +36,12 @@ if "bpy" in locals():
     importlib.reload(INFO_MT_file_external_data)
     importlib.reload(INFO_MT_file)
     importlib.reload(INFO_MT_help)
-    importlib.reload(INFO_MT_render)
     importlib.reload(INFO_MT_window)
 
 else:
     from . import INFO_MT_file
     from . import INFO_MT_file_external_data
     from . import INFO_MT_help
-    from . import INFO_MT_render
     from . import INFO_MT_window
 
 import bpy
@@ -55,7 +53,6 @@ def register():
     bpy.types.INFO_MT_file_external_data.append(INFO_MT_file_external_data.menu)
     bpy.types.INFO_MT_help.append(INFO_MT_help.menu)
     bpy.types.INFO_MT_help.append(INFO_MT_help.menu_func)
-    bpy.types.INFO_MT_render.append(INFO_MT_render.menu)
     bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
 
 
@@ -66,7 +63,6 @@ def unregister():
 	bpy.types.INFO_MT_file_external_data.remove(INFO_MT_file_external_data.menu)
 	bpy.types.INFO_MT_help.remove(INFO_MT_help.menu)
 	bpy.types.INFO_MT_help.remove(INFO_MT_help.menu_func)
-	bpy.types.INFO_MT_render.remove(INFO_MT_render.menu)
 	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
 
 if __name__ == "__main__":

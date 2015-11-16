@@ -22,7 +22,7 @@ bl_info = {
     "author": "Meta Androcto",
     "version": (0, 2),
     "blender": (2, 75, 0),
-    "location": "Materials Specilas Menu",
+    "location": "Materials Specilas Menu/Shift Q",
     "description": "Extended Specials: Materials Properties",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6"\
@@ -1041,6 +1041,17 @@ def menu_move(self, context):
         self.layout.operator("material.move_material_slot_top", icon='TRIA_UP', text="Slot to top")
         self.layout.operator("material.move_material_slot_bottom", icon='TRIA_DOWN', text="Slot to bottom")
 # -----------------------------------------------------------------------------
+
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Materials Specials----")
+		layout.label(text="proto type for materials specials")
+		layout.label(text="Materials Conversion does not include BI Textures execpt single Image type.")
+
 def register():
     bpy.utils.register_module(__name__)
 

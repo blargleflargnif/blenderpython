@@ -18,7 +18,7 @@
 # by meta-androcto, parts based on work by Erich Toven #
 
 bl_info = {
-    "name": "Modifiers Menu",
+    "name": "Modifier Specials",
     "author": "Meta Androcto, ",
     "version": (0, 2),
     "blender": (2, 75, 0),
@@ -35,16 +35,23 @@ if "bpy" in locals():
     import importlib
     importlib.reload(DATA_PT_modifiers)
 
-
-
 else:
     from . import DATA_PT_modifiers
 
-
-
-
 import bpy
 
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Modifier Specials----")
+		layout.label(text="Prototype/Experimental")
+		layout.label(text="Quick access to common Modifier settings")
+		layout.label(text="Includes some batch operations for subsurf")
+		layout.label(text="Includes Apply/Delete All")
+		layout.label(text="Includes View & Expand All")
 
 def register():
 	bpy.utils.register_module(__name__)

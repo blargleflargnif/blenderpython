@@ -33,7 +33,7 @@ from .add_mesh_building_objects import build
 from .add_mesh_rocks import rock_generator
 
 bl_info = {
-    "name": "Add Mesh",
+    "name": "Add Mesh Factory",
     "author": "Multiple Authors",
     "version": (0, 3, 0),
     "blender": (2, 7, 5),
@@ -342,6 +342,16 @@ def menu(self, context):
 	self.layout.menu("INFO_MT_mesh_building_add", text="Building", icon="UV_ISLANDSEL")
 	self.layout.menu("INFO_MT_mesh_extras_add", text="Extras", icon="MESH_DATA")
 	self.layout.menu("INFO_MT_mesh_boundbox_add", text="Bound Box", icon="LATTICE_DATA")
+
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Add Mesh Objects----")
+		layout.label(text="Merges most Mesh Object Addons into One")
+		layout.label(text="New sub menu's & organization")
 
 def register():
     bpy.utils.register_module(__name__)

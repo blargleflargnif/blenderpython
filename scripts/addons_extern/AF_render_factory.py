@@ -1,10 +1,10 @@
 bl_info = {
 	"name" : "Render Factory",
-	"author" : "Saidenka, meta-androcto",
+	"author" : "meta-androcto, Saidenka",
 	"version" : (0, 1, 1),
 	"blender" : (2, 7, 5),
-	"location" : "Everywhere",
-	"description" : "Extended Menu's",
+	"location" : "Render Menu, UV Editor Render Tab",
+	"description" : "Render Settings BI & Cycles",
 	"warning" : "",
 	"wiki_url" : "",
 	"tracker_url" : "",
@@ -218,34 +218,67 @@ class RenderToolsMenu(bpy.types.Operator):
 	bl_description = "Pop up Render Settings"
 
 	def draw(self, context):
-		self.layout.label(text="Render Factory")
-		self.layout.separator()
-		self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
-		self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
-		self.layout.separator()
-		self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
-		self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
-		self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
-		self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
-		self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
-		self.layout.separator()
-		self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
-		self.layout.separator()
-		self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
-		self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
-		self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
-		self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
-		self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
-		self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
-		self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
-		self.layout.separator()
-		self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
-		self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+	# Cycles
+		layout = self.layout
+		layout.operator_context = 'INVOKE_REGION_WIN'
+		if context.scene.render.engine == "CYCLES":
+			self.layout.label(text="Render Cycles")
+			self.layout.separator()
+			self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
+			self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
+			self.layout.separator()
+			self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
+			self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
+			self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
+			self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
+			self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
+			self.layout.separator()
+			self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
+			self.layout.separator()
+			self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
+			self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
+			self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
+			self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
+			self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
+			self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
+			self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
+			self.layout.separator()
+			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
 
-		self.layout.separator()
-		self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
-		self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
+			self.layout.separator()
+			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
+			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
 
+	#Blender Internal
+		elif context.scene.render.engine == "BLENDER_RENDER":
+			self.layout.label(text="Render Internal")
+			self.layout.separator()
+			self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
+			self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
+			self.layout.separator()
+			self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
+			self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
+			self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
+			self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
+			self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
+			self.layout.separator()
+			self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
+			self.layout.separator()
+			self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
+			self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
+			self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
+			self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
+			self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
+			self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
+			self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
+			self.layout.separator()
+			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+
+			self.layout.separator()
+			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
+			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
 	def execute(self, context):
 		return {'FINISHED'}
 
@@ -277,33 +310,69 @@ class RenderSettingsPanel(bpy.types.Panel):
 	bl_category = 'Render'
 
 	def draw(self, context):
-		self.layout.label(text="Render Factory")
-		self.layout.separator()
-		self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
-		self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
-		self.layout.separator()
-		self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
-		self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
-		self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
-		self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
-		self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
-		self.layout.separator()
-		self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
-		self.layout.separator()
-		self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
-		self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
-		self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
-		self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
-		self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
-		self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
-		self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
-		self.layout.separator()
-		self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
-		self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+	# Cycles
+		layout = self.layout
+		layout.operator_context = 'INVOKE_REGION_WIN'
+		scene = context.scene
+		cscene = scene.cycles
 
-		self.layout.separator()
-		self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
-		self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
+		if context.scene.render.engine == "CYCLES":
+			self.layout.label(text="Render Cycles")
+			self.layout.separator()
+			self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
+			self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
+			self.layout.separator()
+			self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
+			self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
+			self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
+			self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
+			self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
+			self.layout.separator()
+			self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
+			self.layout.separator()
+			self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
+			self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
+			self.layout.separator()
+			self.layout.label(text="Samples:")
+			self.layout.prop(cscene, "samples", text="Render")
+			self.layout.prop(cscene, "preview_samples", text="Preview")
+			self.layout.separator()
+			self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
+			self.layout.separator()
+			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+			self.layout.separator()
+			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
+			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
+
+	#Blender Internal
+		elif context.scene.render.engine == "BLENDER_RENDER":
+			self.layout.label(text="Render Internal")
+			self.layout.separator()
+			self.layout.operator("render.render", text="Render Image", icon='RENDER_STILL').use_viewport = True
+			self.layout.operator("render.render", text="Render Animation", icon='RENDER_ANIMATION')
+			self.layout.separator()
+			self.layout.prop(context.scene.render, "resolution_percentage", text="Render Resolution", icon="CAMERA_DATA" )
+			self.layout.prop(context.scene.render, 'resolution_x', text="Resolution X", icon="CAMERA_DATA")
+			self.layout.prop(context.scene.render, 'resolution_y', text="Resolution Y", icon="CAMERA_DATA")
+			self.layout.menu(RenderResolutionPercentageMenu.bl_idname, text="Resolution Presets", icon="CAMERA_DATA")
+			self.layout.prop_menu_enum(context.scene.render.image_settings, 'file_format', text="File Format", icon="PACKAGE")
+			self.layout.separator()
+			self.layout.menu(AnimateRenderMenu.bl_idname, text="Animation", icon="CLIP")
+			self.layout.separator()
+			self.layout.prop(context.scene.world.light_settings, 'use_ambient_occlusion', text="Use the AO", icon="WORLD_DATA")
+			self.layout.prop(context.scene.world.light_settings, "ao_factor", text="AO Factor")
+			self.layout.prop(context.scene.render, 'use_antialiasing', text="Anti-aliasing use", icon="ALIASED")
+			self.layout.prop_menu_enum(context.scene.render, 'antialiasing_samples', text="Set Anti-Aliasing", icon="ANTIALIASED")
+			self.layout.prop(context.scene.world.light_settings, 'samples', text="Ray Samples", icon="WORLD")
+			self.layout.prop(context.scene.render, 'use_freestyle', text="FreeStyle Use", icon="WIRE")
+			self.layout.menu(ShadeingMenu.bl_idname, icon="TEXTURE_SHADED")
+			self.layout.separator()
+			self.layout.menu(SimplifyRenderMenu.bl_idname, icon="RENDER_RESULT")
+			self.layout.menu(SubsurfMenu.bl_idname, icon="MOD_SUBSURF")
+			self.layout.separator()
+			self.layout.operator(ToggleThreadsMode.bl_idname, text='Set Threads', icon="PLUG")
+			self.layout.operator(RenderBackground.bl_idname, icon="COLOR_RED")
 
 	def execute(self, context):
 		return {'FINISHED'}

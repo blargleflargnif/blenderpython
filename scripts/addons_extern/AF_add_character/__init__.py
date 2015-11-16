@@ -23,8 +23,8 @@ bl_info = {
     "author": "Meta-Androcto",
     "version": (0, 1),
     "blender": (2, 7, 3),
-    "location": "View3D > Add > Mesh > Mesh Objects",
-    "description": "Add rigged model",
+    "location": "View3D > Add Menu",
+    "description": "Add rigged Petunia & Mancandy models",
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
@@ -37,8 +37,6 @@ import os
 def import_object_petunia(obname):
 	opath = "//petunia_original.blend\\Group\\" + obname
 	s = os.sep
-	#dpath = bpy.utils.script_paths()[0] + \
-	#	 '%saddons%sobject_fracture%sdata.blend\\Object\\' % (s, s, s)
 	dpath=''
 	fpath=''
 	for p in bpy.utils.script_paths():
@@ -80,8 +78,6 @@ class Import_Petunia(bpy.types.Operator):
 def import_object_mancandy(obname):
 	opath = "//mancandy.blend\\Group\\" + obname
 	s = os.sep
-	#dpath = bpy.utils.script_paths()[0] + \
-	#	 '%saddons%sobject_fracture%sdata.blend\\Object\\' % (s, s, s)
 	dpath=''
 	fpath=''
 	for p in bpy.utils.script_paths():

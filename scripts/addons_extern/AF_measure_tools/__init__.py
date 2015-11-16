@@ -283,25 +283,6 @@ def isNormalsOrientationClean(mesh, do_check=True):
 # ------ Mesh Summary ------
 from operator import itemgetter
 
-class MeshSummaryPreferences(bpy.types.AddonPreferences):
-    bl_idname = __name__
-
-    display_limit = IntProperty(name="Display limit",
-                        description="Maximum number of items to list",
-                        default=5, min=2, max=20)
-    calculate_modifier_verts = BoolProperty(name="Calculate mod. vertices",
-                        description="Calculate vertex count after applying modifiers.",
-                        default=False)
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-
-        row = col.row()
-        row.prop(self,"calculate_modifier_verts")
-        row = col.row()
-        row.prop(self, "display_limit")
-        col = row.column() # this stops the button stretching
 
 def us(qty):
     """
@@ -935,7 +916,31 @@ def menu_(self, context):
 class_list = [
 	dt_op0,
 	dt_p_group0,
-]            
+]
+
+class AddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    display_limit = IntProperty(name="Display limit",
+                        description="Maximum number of items to list",
+                        default=5, min=2, max=20)
+    calculate_modifier_verts = BoolProperty(name="Calculate mod. vertices",
+                        description="Calculate vertex count after applying modifiers.",
+                        default=False)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="----Measure Tools----")
+        layout.label(text="Experimental")
+        layout.label(text="Mesh Lint, Measure, Index View & more.")
+        layout.label(text="----Mesh Summary----")
+        col = layout.column()
+        row = col.row()
+        row.prop(self,"calculate_modifier_verts")
+        row = col.row()
+        row.prop(self, "display_limit")
+        col = row.column() # this stops the button stretching
+		
 # ------ register ------
 def register():
     for c in class_list:

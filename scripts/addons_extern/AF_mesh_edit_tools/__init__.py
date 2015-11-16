@@ -23,7 +23,7 @@ bl_info = {
     "author": "various",
     "version": (0, 1),
     "blender": (2, 71, 0),
-    "location": "View3D > Toolshelf > Addons Tab & Specials (W-key)",
+    "location": "View3D > Toolshelf > Tools & Specials (W-key)",
     "description": "Add extra mesh edit tools",
     "warning": "",
     "wiki_url": "",
@@ -146,25 +146,15 @@ class ExtrasPanel(bpy.types.Panel):
         row = layout.row()
         row.operator('mesh.remove_doubles', text = 'Remove Doubles')
 
-'''
-# Multi Extrude Panel
-
-class ExtrudePanel(bpy.types.Panel):
-    bl_label = 'Multi Extrude Plus'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = 'Addons'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.split(0.80)
-        row.operator('object.mextrude', text = 'Multi Face Extrude')
-        row.operator('help.mextrude', text = '', icon = 'INFO')
-        row = layout.split(0.80)
-        row.operator('object.mesh2bones', text = 'Add Armature')
-        row.operator('help.addarm', text = '', icon = 'INFO')
-'''
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Mesh Edit Tools----")
+		layout.label(text="Collection of extra Mesh Edit Functions")
+		layout.label(text="Edit Mode toolshelf or W key specials")
 
 # Define "Extras" menu
 def menu_func(self, context):

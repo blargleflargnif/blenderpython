@@ -48,6 +48,16 @@ else:
     from . import VIEW3D_MT_select_edit_mesh
 
 import bpy
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Mesh Edit Menu's----")
+		layout.label(text="Experimental extra Functions in the edit mesh menu's")
+		layout.label(text="New features have the Plugin icon")
+		layout.label(text="Mesh, Select, Show Hide & more ")
 
 def register():
     bpy.utils.register_module(__name__)

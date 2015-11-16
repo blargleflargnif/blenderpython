@@ -57,7 +57,7 @@ from math import *
 from bpy.props import IntProperty, BoolProperty, FloatProperty, EnumProperty, PointerProperty, StringProperty, CollectionProperty
 from bpy.types import PropertyGroup
 
-#//////////////////////////////// - Black Hole by Crocodillian- ///////////////////////////   
+#//////////////////////////////// - Black Hole by Crocadillian- ///////////////////////////   
 def Update_ObjectOrigin(self, context):
     
     # Create an array to store all found objects
@@ -512,7 +512,7 @@ def panel_func(self, context):
 #//////////////////////// - REGISTER/UNREGISTER DEFINITIONS - ////////////////////////
 property_classes = (BH_Object, BH_Menu)
 
-# Register all operators and panels
+# Addons Preferences
 class AddonPreferences1(bpy.types.AddonPreferences):
 	bl_idname = __name__
 	

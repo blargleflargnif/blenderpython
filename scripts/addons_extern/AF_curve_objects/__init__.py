@@ -20,7 +20,7 @@
 
 
 bl_info = {
-    "name": "Add Curve",
+    "name": "Add Curve Factory",
     "author": "Multiple Authors",
     "version": (0, 1),
     "blender": (2, 74, 0),
@@ -117,13 +117,7 @@ class INFO_MT_curve_extras_add(bpy.types.Menu):
         layout.operator("object._curve_outline",
             text="Outline")
 
-def IsMenuEnable(self_id):
-	for id in bpy.context.user_preferences.addons["Addon_Factory"].preferences.disabled_menu.split(','):
-		if (id == self_id):
-			return False
-	else:
-		return True
-# Register all operators and panels
+
 
 # Define "Extras" menu
 def menu(self, context):
@@ -156,17 +150,34 @@ def menu_surface(self, context):
 	self.layout.operator("object.add_surface_plane", text="Plane", icon="MOD_CURVE")
 	self.layout.operator("curve.smooth_x_times", text="Special Smooth", icon="MOD_CURVE")
 
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Add Curve Objects----")
+		layout.label(text="Merges most Curve Object Addons into One")
+		layout.label(text="New sub menu's & organization")
+		layout.label(text="Includes Add Surface Shapes")
+
+		
 def register():
     bpy.utils.register_module(__name__)
     # Add "Extras" menu to the "Add Mesh" menu
     bpy.types.INFO_MT_curve_add.append(menu)
     bpy.types.INFO_MT_surface_add.append(menu_surface)
+    bpy.types.GRAPH_MT_channel.append(curve_simplify.menu_func)
+    bpy.types.DOPESHEET_MT_channel.append(curve_simplify.menu_func)
+
 
 def unregister():
     bpy.utils.unregister_module(__name__)
     # Remove "Extras" menu from the "Add Mesh" menu.
     bpy.types.INFO_MT_curve_add.remove(menu)
     bpy.types.INFO_MT_surface_add.remove(menu_surface)
+    bpy.types.GRAPH_MT_channel.remove(curve_simplify.menu_func)
+    bpy.types.DOPESHEET_MT_channel.remove(curve_simplify.menu_func)
 
 if __name__ == "__main__":
     register()

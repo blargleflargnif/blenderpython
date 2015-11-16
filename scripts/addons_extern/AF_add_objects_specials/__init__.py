@@ -188,6 +188,23 @@ def menu(self, context):
 	self.layout.menu("INFO_MT_array_mods", icon="MOD_ARRAY")
 	self.layout.menu("INFO_MT_quick_tools", icon="MOD_BUILD")
 
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----Add Menu Advanced----")
+		layout.label(text="Quick Tools:")
+		layout.label(text="Drop, Pixelate & Wrecking Ball")
+		layout.label(text="Array Mods:")
+		layout.label(text="Circle Array, Chains, Vert to Edge, Aggregate")
+		layout.label(text="Lighting Sets:")
+		layout.label(text="Spots, Points & Tri Lights")
+		layout.label(text="Test Scenes:")
+		layout.label(text="Basic pre-built test scenes Cycles & BI")
+
+
 def register():
     bpy.utils.register_module(__name__)
     # Add "Extras" menu to the "Add Mesh" menu

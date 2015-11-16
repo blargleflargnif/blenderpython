@@ -49,6 +49,15 @@ else:
 
 
 import bpy
+# Addons Preferences
+class AddonPreferences(bpy.types.AddonPreferences):
+	bl_idname = __name__
+	
+	def draw(self, context):
+		layout = self.layout
+		layout.label(text="----3d View Specials Menu's----")
+		layout.label(text="Concept for populating the w key specials menu's")
+		layout.label(text="W key Specials> Object, Edit, Pose & Armature Modes")
 
 def register():
     bpy.utils.register_module(__name__)

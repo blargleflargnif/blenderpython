@@ -7,7 +7,6 @@ import os, csv, codecs
 from .INFO_MT_info_MA import INFO_MT_file
 from .INFO_MT_info_MA import INFO_MT_file_external_data
 from .INFO_MT_info_MA import INFO_MT_help
-from .INFO_MT_info_MA import INFO_MT_render
 from .INFO_MT_info_MA import INFO_MT_window
 from .IMAGE_MT_image_MA import IMAGE_MT_image
 from .IMAGE_MT_image_MA import IMAGE_MT_select
@@ -134,31 +133,41 @@ bpy.context.user_preferences.system.use_translate_tooltips = True
 # Addons Preferences
 class AddonPreferences(bpy.types.AddonPreferences):
 	bl_idname = __name__
-	
+
 	disabled_menu = bpy.props.StringProperty(name="Disable Menu", default="")
-	use_disabled_menu = bpy.props.BoolProperty(name="Toggle Disable Menu", default=True)
+	use_disabled_menu = bpy.props.BoolProperty(name="Toggle Disable Menu", default=False)
 	view_savedata = bpy.props.StringProperty(name="View Saved Data", default="")
 	key_config_xml_path = bpy.props.StringProperty(name="XML Key Path Config", default="BlenderKeyConfig.xml")
-	
-	image_editor_path_1 = bpy.props.StringProperty(name="Pass 1 of image-editing software", default="", subtype='FILE_PATH')
-	image_editor_path_2 = bpy.props.StringProperty(name="Pass 2 of the image-editing software", default="", subtype='FILE_PATH')
+
+	image_editor_path_1 = bpy.props.StringProperty(name="Path 1 of image-editing software", default="", subtype='FILE_PATH')
+	image_editor_path_2 = bpy.props.StringProperty(name="Path 2 of the image-editing software", default="", subtype='FILE_PATH')
 	image_editor_path_3 = bpy.props.StringProperty(name="Path 3 image editing software", default="", subtype='FILE_PATH')
-	
+
 	text_editor_path_1 = bpy.props.StringProperty(name="Path 1 text editing software", default="", subtype='FILE_PATH')
 	text_editor_path_2 = bpy.props.StringProperty(name="Pass 2 of text editing software", default="", subtype='FILE_PATH')
 	text_editor_path_3 = bpy.props.StringProperty(name="Path 3 text editing software", default="", subtype='FILE_PATH')
 	
 	def draw(self, context):
 		layout = self.layout
+		layout.label(text="----Addon Factory----")
+		layout.label(text="Based on Scramble Addon by Saidenka")
+		layout.label(text="Additional menu Items across the ui")
+
+		layout.label(text="Show/hide option for extra ui elements")
+		layout.label(text="Toggle Disable menu adds button to ui elements to turn on or off menu's")
+		layout.label(text="Options are saveable using Save User Settings")
 		layout.prop(self, 'disabled_menu')
 		layout.prop(self, 'use_disabled_menu')
 		layout.prop(self, 'view_savedata')
 		layout.prop(self, 'key_config_xml_path')
+
 		box = layout.box()
+		box.label(text="Set Image Editor Paths")	
 		box.prop(self, 'image_editor_path_1')
 		box.prop(self, 'image_editor_path_2')
 		box.prop(self, 'image_editor_path_3')
 		box = layout.box()
+		box.label(text="Set Text Editor Paths")
 		box.prop(self, 'text_editor_path_1')
 		box.prop(self, 'text_editor_path_2')
 		box.prop(self, 'text_editor_path_3')
@@ -226,11 +235,9 @@ def register():
 	bpy.types.IMAGE_MT_select.append(IMAGE_MT_select.menu)
 	bpy.types.IMAGE_MT_view.append(IMAGE_MT_view.menu)
 	bpy.types.IMAGE_MT_uvs.append(IMAGE_MT_uvs.menu)
-
 	bpy.types.INFO_MT_file.append(INFO_MT_file.menu)
 	bpy.types.INFO_MT_file_external_data.append(INFO_MT_file_external_data.menu)
 	bpy.types.INFO_MT_help.append(INFO_MT_help.menu)
-	bpy.types.INFO_MT_render.append(INFO_MT_render.menu)
 	bpy.types.INFO_MT_window.append(INFO_MT_window.menu)
 
 
@@ -240,7 +247,6 @@ def register():
 	bpy.types.BONE_PT_display.append(BONE_PT_display.menu)
 	bpy.types.BONE_PT_inverse_kinematics.append(BONE_PT_inverse_kinematics.menu)
 	bpy.types.BONE_PT_transform.append(BONE_PT_transform.menu)
-
 	bpy.types.DATA_PT_bone_groups.append(DATA_PT_bone_groups.menu)
 	bpy.types.DATA_PT_geometry_curve.append(DATA_PT_geometry_curve.menu)
 	bpy.types.DATA_PT_pose_library.append(DATA_PT_pose_library.menu)
@@ -312,7 +318,6 @@ def unregister():
 	bpy.types.INFO_MT_file.remove(INFO_MT_file.menu)
 	bpy.types.INFO_MT_file_external_data.remove(INFO_MT_file_external_data.menu)
 	bpy.types.INFO_MT_help.remove(INFO_MT_help.menu)
-	bpy.types.INFO_MT_render.remove(INFO_MT_render.menu)
 	bpy.types.INFO_MT_window.remove(INFO_MT_window.menu)
 
 ### Scramble Addon unregister ### Saidenka ###	

@@ -8,7 +8,7 @@ import bpy
 
 class InvertHide(bpy.types.Operator):
 	bl_idname = "object.invert_hide"
-	bl_label = "Show / hide flip"
+	bl_label = "Show / Hide Flip"
 	bl_description = "Flips the object\'s view state and non-State"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -28,7 +28,7 @@ class InvertHide(bpy.types.Operator):
 
 class HideOnlyType(bpy.types.Operator):
 	bl_idname = "object.hide_only_mesh"
-	bl_label = "Hide only specific types of objects"
+	bl_label = "Hide Object By Type"
 	bl_description = "Hides the object of a specific type are displayed"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -55,7 +55,7 @@ class HideOnlyType(bpy.types.Operator):
 
 class HideExceptType(bpy.types.Operator):
 	bl_idname = "object.hide_except_mesh"
-	bl_label = "Non-specific types of objects to hide"
+	bl_label = "Show Object by Type"
 	bl_description = "Hides the object non-specific type that is displayed"
 	bl_options = {'REGISTER', 'UNDO'}
 	
@@ -85,8 +85,8 @@ class HideExceptType(bpy.types.Operator):
 def menu(self, context):
 
 	self.layout.separator()
-	self.layout.operator(InvertHide.bl_idname, icon='PLUGIN')
+	self.layout.operator(InvertHide.bl_idname)
 	self.layout.separator()
-	self.layout.operator(HideOnlyType.bl_idname, icon='PLUGIN')
-	self.layout.operator(HideExceptType.bl_idname, icon='PLUGIN')
+	self.layout.operator(HideOnlyType.bl_idname)
+	self.layout.operator(HideExceptType.bl_idname)
 

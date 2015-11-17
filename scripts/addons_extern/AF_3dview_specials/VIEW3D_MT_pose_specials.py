@@ -790,6 +790,7 @@ class SpecialsMenu(bpy.types.Menu):
 def menu(self, context):
 
 	self.layout.separator()
+	self.layout.label(text= "Experimantal")
 	self.layout.menu(BoneNameMenu.bl_idname, icon="PLUGIN")
 	self.layout.separator()
 	self.layout.operator(CopyConstraintsMirror.bl_idname, icon="PLUGIN")

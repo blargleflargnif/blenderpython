@@ -179,6 +179,8 @@ class SelectedVertexGroupAverage(bpy.types.Operator):
 # Menu
 def menu(self, context):
 
+	self.layout.separator()
+	self.layout.label(text= "Experimantal")
 	self.layout.operator(SelectTopShape.bl_idname, icon="PLUGIN")
 	self.layout.separator()
 	self.layout.prop(context.object.data, "use_mirror_x", icon="PLUGIN", text="X axis mirror edit")

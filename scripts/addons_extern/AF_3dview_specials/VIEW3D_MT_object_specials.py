@@ -1035,6 +1035,7 @@ class SpecialsMenu(bpy.types.Menu):
 def menu(self, context):
 
 	self.layout.separator()
+	self.layout.label(text= "Experimantal")
 	self.layout.menu(RenderHideMenu.bl_idname, icon="PLUGIN")
 	self.layout.menu(HideSelectMenu.bl_idname, icon="PLUGIN")
 	self.layout.separator()

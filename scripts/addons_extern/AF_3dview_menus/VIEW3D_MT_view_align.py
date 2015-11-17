@@ -8,8 +8,8 @@ import bpy
 
 class ViewSelectedEX(bpy.types.Operator):
 	bl_idname = "view3d.view_selected_ex"
-	bl_label = "Display selection (non-zoom)"
-	bl_description = "Food choice in over the center of the 3D view (zoom is not)"
+	bl_label = "Center selection (non-zoom)"
+	bl_description = "Center Selected to View (non-zoom)"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -31,8 +31,8 @@ class ViewSelectedEX(bpy.types.Operator):
 
 class ResetView(bpy.types.Operator):
 	bl_idname = "view3d.reset_view"
-	bl_label = "Viewpoint at the origin"
-	bl_description = "3D view perspective moves in the center of the coordinate"
+	bl_label = "Center Grid"
+	bl_description = "3D view Grid moves to the center"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):
@@ -44,8 +44,8 @@ class ResetView(bpy.types.Operator):
 
 class SelectAndView(bpy.types.Operator):
 	bl_idname = "view3d.select_and_view"
-	bl_label = "In the center of the selection + POV"
-	bl_description = "Select the object under the mouse, the center point of (shift in additional selection)"
+	bl_label = "Center Selected Objects"
+	bl_description = "Center the selected objects in the viewport"
 	bl_options = {'REGISTER'}
 	
 	items = [
@@ -107,7 +107,7 @@ class SnapMeshView(bpy.types.Operator):
 
 class ReverseView(bpy.types.Operator):
 	bl_idname = "view3d.reverse_view"
-	bl_label = "On the other side of the view"
+	bl_label = "Flip View"
 	bl_description = "Orbit to the reverse side of the current view"
 	bl_options = {'REGISTER'}
 	
@@ -119,8 +119,8 @@ class ReverseView(bpy.types.Operator):
 
 class ResetViewAndCursor(bpy.types.Operator):
 	bl_idname = "view3d.reset_view_and_cursor"
-	bl_label = "3D cursor with the viewpoint at the origin"
-	bl_description = "Perspective and 3D cursor position move to origin (XYZ=0.0)"
+	bl_label = "Center Grid ^ Cursor"
+	bl_description = "Grid and 3D cursor position move to origin (XYZ=0.0)"
 	bl_options = {'REGISTER'}
 	
 	def execute(self, context):
@@ -163,17 +163,16 @@ class SnapMeshViewAndCursor(bpy.types.Operator):
 		return self.execute(context)
 
 
-# メニューを登録する関数
+# menu
 def menu(self, context):
 
 		self.layout.separator()
-		self.layout.operator(ResetView.bl_idname, icon="PLUGIN")
-		self.layout.operator(ResetViewAndCursor.bl_idname, icon="PLUGIN")
+		self.layout.label(text= "Experimental")
+		self.layout.operator(ResetView.bl_idname)
+		self.layout.operator(ResetViewAndCursor.bl_idname)
 		self.layout.separator()
-		self.layout.operator(ViewSelectedEX.bl_idname, icon="PLUGIN")
-		self.layout.operator(SelectAndView.bl_idname, icon="PLUGIN")
+		self.layout.operator(ViewSelectedEX.bl_idname)
+		self.layout.operator(SelectAndView.bl_idname)
 		self.layout.separator()
-		self.layout.operator(SnapMeshView.bl_idname, icon="PLUGIN")
-		self.layout.operator(SnapMeshViewAndCursor.bl_idname, icon="PLUGIN")
-		self.layout.operator(ReverseView.bl_idname, icon="PLUGIN")
+		self.layout.operator(ReverseView.bl_idname)
 

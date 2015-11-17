@@ -8,8 +8,8 @@ import bpy
 
 class Viewnumpad7AlignEX(bpy.types.Operator):
 	bl_idname = "view3d.viewnumpad_7_align_ex"
-	bl_label = "Viewed from the front side"
-	bl_description = "The watch face from the selected surface normal direction"
+	bl_label = "Align Vert Face Edge to View"
+	bl_description = "align the selected element to the viewport. Vert Face Edge Normal"
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	def execute(self, context):

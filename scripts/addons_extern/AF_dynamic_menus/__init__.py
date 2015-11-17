@@ -221,14 +221,16 @@ class VIEW3D_PT_tools_object_Interface(bpy.types.Menu):
     
     def draw(self, context):
         layout = self.layout
+        layout.label(text="Object Origin")
+        obj = context.object.BHObj
+        mnu = context.object.BHMnu
         layout.operator("object.origin_set",
                         text="Geometry to Origin").type = 'GEOMETRY_ORIGIN'
         layout.operator("object.origin_set",
                         text="Origin to Geometry").type = 'ORIGIN_GEOMETRY'
         layout.operator("object.origin_set",
                         text="Origin to 3D Cursor").type = 'ORIGIN_CURSOR'        
-        obj = context.object.BHObj
-        mnu = context.object.BHMnu
+
         
         # Core user interface for the plugin
         
@@ -259,7 +261,7 @@ def FocusObject(target):
     
 def SelectObject(target):
     
-    # If the target isnt visible, MAKE IT FUCKING VISIBLE.
+    # If the target isnt visible, MAKE IT VISIBLE.
     if target.hide is True:
         target.hide = False
         
@@ -270,7 +272,7 @@ def SelectObject(target):
     
 def ActivateObject(target):
     
-    # If the target isnt visible, MAKE IT FUCKING VISIBLE.
+    # If the target isnt visible, MAKE IT VISIBLE.
     if target.hide is True:
         target.hide = False
         
@@ -506,7 +508,7 @@ def SetObjectOrigin(object, enum, context):
         bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
 
 def panel_func(self, context):
-    self.layout.label(text="Object Origin:")
+
     self.layout.menu("VIEW3D_PT_tools_object_Interface", text="Origin Tools")
 
 #//////////////////////// - REGISTER/UNREGISTER DEFINITIONS - ////////////////////////

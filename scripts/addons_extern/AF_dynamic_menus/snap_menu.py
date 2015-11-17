@@ -89,8 +89,9 @@ class SetOriginToSelected(bpy.types.Operator):
 def menu(self, context):
 
 	self.layout.separator()
-	self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor-View", icon="PLUGIN")
-	self.layout.operator(Move3DCursorFar.bl_idname, text="Temp Hide", icon="PLUGIN")
-	self.layout.operator(SnapMesh3DCursor.bl_idname, text="Cursor → mesh surface", icon="PLUGIN")
-	self.layout.label(text="Edit Mode")
-	self.layout.operator(SetOriginToSelected.bl_idname, text="Origin To F/V/E", icon="PLUGIN")
+	self.layout.operator(Move3DCursorToViewLocation.bl_idname, text="Cursor To View")
+	self.layout.operator(Move3DCursorFar.bl_idname, text="Temp Hide Cursor")
+	self.layout.operator(SnapMesh3DCursor.bl_idname, text="Cursor → mesh surface")
+	self.layout.separator()
+	self.layout.label(text="Object Origin")
+	self.layout.operator(SetOriginToSelected.bl_idname, text="Origin To F/V/E")

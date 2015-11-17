@@ -152,6 +152,7 @@ class RenameOppositeBone(bpy.types.Operator):
 def menu(self, context):
 
 	self.layout.separator()
+	self.layout.label(text= "Experimantal")
 	self.layout.prop(context.object.data, "use_mirror_x", icon="PLUGIN", text="X axis mirror edit")
 	self.layout.operator(CreateMirror.bl_idname, icon="PLUGIN")
 	self.layout.operator(RenameOppositeBone.bl_idname, icon="PLUGIN")
